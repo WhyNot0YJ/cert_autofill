@@ -1,5 +1,17 @@
 <template>
   <div class="upload-container">
+    <!-- AI提取说明 -->
+    <div class="ai-info">
+      <el-alert
+        title="AI智能提取"
+        description="上传申请书文档，AI将自动提取关键信息并填充到表单中。目前仅支持申请书文件上传，测试报告功能暂未开放。"
+        type="info"
+        :closable="false"
+        show-icon
+      />
+    </div>
+
+    <!-- 文件上传区域 -->
     <div class="upload-area" @drop="handleDrop" @dragover.prevent @dragenter.prevent>
       <div class="upload-content">
         <div class="upload-icon">
@@ -8,7 +20,7 @@
             <path d="M3 15V16C3 18.8284 3 20.2426 3.87868 21.1213C4.75736 22 6.17157 22 9 22H15C17.8284 22 19.2426 22 20.1213 21.1213C21 20.2426 21 18.8284 21 16V15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </div>
-        <h3 class="upload-title">拖拽文件到此处</h3>
+        <h3 class="upload-title">拖拽申请书文档到此处</h3>
         <p class="upload-subtitle">或点击选择文件</p>
         <p class="upload-formats">支持 .doc, .docx, .pdf 格式</p>
         
@@ -23,7 +35,7 @@
           :show-file-list="false"
         >
           <el-button type="primary" size="large" class="select-btn">
-            选择文件
+            选择申请书文件
           </el-button>
         </el-upload>
       </div>
@@ -42,18 +54,156 @@
           <div class="file-details">
             <div class="file-name">{{ file.name }}</div>
             <div class="file-size">{{ formatFileSize(file.size) }}</div>
+            <div class="file-type">申请书文档</div>
           </div>
         </div>
         <el-button 
           type="primary" 
           size="small" 
-          @click="onSubmit" 
+          @click="onAIExtract" 
           :disabled="loading"
           :loading="loading"
           class="extract-btn"
         >
-          {{ loading ? '提取中...' : '提取信息' }}
+          {{ loading ? 'AI提取中...' : 'AI提取信息' }}
         </el-button>
+      </div>
+    </div>
+
+    <!-- 测试报告上传（已禁用） -->
+    <div class="disabled-upload">
+      <el-alert
+        title="测试报告上传"
+        description="测试报告文件上传功能正在开发中，敬请期待..."
+        type="warning"
+        :closable="false"
+        show-icon
+      />
+      <div class="disabled-upload-area">
+        <div class="disabled-content">
+          <div class="disabled-icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 9V13M12 17H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 21 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="#909399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <h4 class="disabled-title">测试报告上传</h4>
+          <p class="disabled-subtitle">功能开发中，暂未开放</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI提取结果预览 -->
+    <div v-if="extractionResult" class="extraction-result">
+      <el-divider content-position="left">
+        <span class="result-title">
+          <el-icon><Check /></el-icon>
+          AI提取结果
+        </span>
+      </el-divider>
+      
+      <div class="result-content">
+        <el-row :gutter="20">
+          <!-- 企业信息 -->
+          <el-col :span="12">
+            <el-card class="result-card" shadow="hover">
+              <template #header>
+                <div class="card-header">
+                  <span>企业信息</span>
+                </div>
+              </template>
+              <div class="result-item">
+                <label>企业名称:</label>
+                <span>{{ extractionResult.enterprise_info.name || '未提取到' }}</span>
+              </div>
+              <div class="result-item">
+                <label>英文名称:</label>
+                <span>{{ extractionResult.enterprise_info.english_name || '未提取到' }}</span>
+              </div>
+              <div class="result-item">
+                <label>地址:</label>
+                <span>{{ extractionResult.enterprise_info.address || '未提取到' }}</span>
+              </div>
+            </el-card>
+          </el-col>
+          
+          <!-- 认证信息 -->
+          <el-col :span="12">
+            <el-card class="result-card" shadow="hover">
+              <template #header>
+                <div class="card-header">
+                  <span>认证信息</span>
+                </div>
+              </template>
+              <div class="result-item">
+                <label>认证类型:</label>
+                <span>{{ extractionResult.certification_info.type || '未提取到' }}</span>
+              </div>
+              <div class="result-item">
+                <label>产品名称:</label>
+                <span>{{ extractionResult.certification_info.product_name || '未提取到' }}</span>
+              </div>
+            </el-card>
+          </el-col>
+        </el-row>
+        
+        <!-- 技术规格 -->
+        <el-card class="result-card" shadow="hover" style="margin-top: 20px;">
+          <template #header>
+            <div class="card-header">
+              <span>技术规格</span>
+            </div>
+          </template>
+          <el-row :gutter="20">
+            <el-col :span="8">
+              <div class="result-item">
+                <label>风窗厚度:</label>
+                <span>{{ extractionResult.technical_specs.windscreen_thickness || '未提取到' }}</span>
+              </div>
+            </el-col>
+            <el-col :span="8">
+              <div class="result-item">
+                <label>夹层厚度:</label>
+                <span>{{ extractionResult.technical_specs.interlayer_thickness || '未提取到' }}</span>
+              </div>
+            </el-col>
+            <el-col :span="8">
+              <div class="result-item">
+                <label>玻璃层数:</label>
+                <span>{{ extractionResult.technical_specs.glass_layers || '未提取到' }}</span>
+              </div>
+            </el-col>
+            <el-col :span="8">
+              <div class="result-item">
+                <label>夹层类型:</label>
+                <span>{{ extractionResult.technical_specs.interlayer_type || '未提取到' }}</span>
+              </div>
+            </el-col>
+            <el-col :span="8">
+              <div class="result-item">
+                <label>玻璃处理:</label>
+                <span>{{ extractionResult.technical_specs.glass_treatment || '未提取到' }}</span>
+              </div>
+            </el-col>
+            <el-col :span="8">
+              <div class="result-item">
+                <label>涂层类型:</label>
+                <span>{{ extractionResult.technical_specs.coating_type || '未提取到' }}</span>
+              </div>
+            </el-col>
+          </el-row>
+        </el-card>
+        
+        <!-- 操作按钮 -->
+        <div class="result-actions">
+          <el-button type="primary" @click="applyToForm">
+            <el-icon><Check /></el-icon>
+            应用到表单
+          </el-button>
+          <el-button @click="clearResult">
+            <el-icon><Delete /></el-icon>
+            清除结果
+          </el-button>
+        </div>
       </div>
     </div>
   </div>
@@ -61,19 +211,24 @@
 
 <script setup lang="ts">
 import { ElMessage } from 'element-plus';
+import { Check, Delete } from '@element-plus/icons-vue';
 import { ref } from 'vue';
-import { extractFields } from '../api';
+import { applicationAPI } from '../api/application';
+import type { AIExtractionResult } from '../api/application';
 
-const emit = defineEmits(['success', 'error']);
+const emit = defineEmits(['success', 'error', 'extraction-complete']);
 
 const file = ref<File | null>(null);
 const fileList = ref<any[]>([]);
 const loading = ref(false);
 const uploadRef = ref();
+const extractionResult = ref<AIExtractionResult | null>(null);
 
 function handleChange(fileObj: any) {
   file.value = fileObj.raw;
   fileList.value = [fileObj];
+  // 清除之前的提取结果
+  extractionResult.value = null;
 }
 
 function handleDrop(e: DragEvent) {
@@ -89,6 +244,8 @@ function handleDrop(e: DragEvent) {
     };
     file.value = droppedFile;
     fileList.value = [fileObj];
+    // 清除之前的提取结果
+    extractionResult.value = null;
   }
 }
 
@@ -100,7 +257,7 @@ function formatFileSize(bytes: number): string {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
-async function onSubmit() {
+async function onAIExtract() {
   if (!file.value) {
     ElMessage.warning('请先选择文件');
     return;
@@ -109,32 +266,48 @@ async function onSubmit() {
   loading.value = true;
   
   try {
-    const formData = new FormData();
-    formData.append('file', file.value);
-    
-    const response = await extractFields(formData);
+    const response = await applicationAPI.extractDocument(file.value);
     
     if (response.data.success) {
-      ElMessage.success('提取成功！');
-      emit('success', response.data);
+      ElMessage.success('AI提取成功！');
+      extractionResult.value = response.data.data;
+      emit('extraction-complete', response.data.data);
     } else {
-      ElMessage.error(response.data.error || '提取失败');
+      ElMessage.error(response.data.error || 'AI提取失败');
       emit('error', response.data.error);
     }
   } catch (error: any) {
-    console.error('提取失败:', error);
-    const errorMessage = error.response?.data?.error || error.message || '提取失败';
+    console.error('AI提取失败:', error);
+    const errorMessage = error.response?.data?.error || error.message || 'AI提取失败';
     ElMessage.error(errorMessage);
     emit('error', errorMessage);
   } finally {
     loading.value = false;
   }
 }
+
+function applyToForm() {
+  if (extractionResult.value) {
+    emit('success', extractionResult.value);
+    ElMessage.success('提取结果已应用到表单');
+  }
+}
+
+function clearResult() {
+  extractionResult.value = null;
+  fileList.value = [];
+  file.value = null;
+  ElMessage.info('已清除提取结果');
+}
 </script>
 
 <style scoped>
 .upload-container {
   width: 100%;
+}
+
+.ai-info {
+  margin-bottom: 1.5rem;
 }
 
 .upload-area {
@@ -145,6 +318,7 @@ async function onSubmit() {
   background: rgba(255, 255, 255, 0.5);
   transition: all 0.3s ease;
   cursor: pointer;
+  margin-bottom: 2rem;
 }
 
 .upload-area:hover {
@@ -209,7 +383,7 @@ async function onSubmit() {
 
 /* 文件列表 */
 .file-list {
-  margin-top: 2rem;
+  margin-bottom: 2rem;
 }
 
 .file-item {
@@ -249,6 +423,16 @@ async function onSubmit() {
 .file-size {
   font-size: 0.875rem;
   color: #6b7280;
+  margin-bottom: 0.25rem;
+}
+
+.file-type {
+  font-size: 0.75rem;
+  color: #2A3B8F;
+  background: rgba(42, 59, 143, 0.1);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  display: inline-block;
 }
 
 .extract-btn {
@@ -262,6 +446,109 @@ async function onSubmit() {
 .extract-btn:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(42, 59, 143, 0.3);
+}
+
+/* 禁用的测试报告上传 */
+.disabled-upload {
+  margin-bottom: 2rem;
+}
+
+.disabled-upload-area {
+  border: 2px dashed #e4e7ed;
+  border-radius: 16px;
+  padding: 2rem;
+  text-align: center;
+  background: rgba(245, 247, 250, 0.8);
+  margin-top: 1rem;
+}
+
+.disabled-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.disabled-icon {
+  color: #909399;
+  margin-bottom: 0.5rem;
+}
+
+.disabled-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #909399;
+  margin: 0;
+}
+
+.disabled-subtitle {
+  font-size: 0.875rem;
+  color: #c0c4cc;
+  margin: 0;
+}
+
+/* AI提取结果 */
+.extraction-result {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 16px;
+  border: 1px solid rgba(42, 59, 143, 0.1);
+}
+
+.result-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #2A3B8F;
+  font-weight: 600;
+}
+
+.result-content {
+  margin-top: 1.5rem;
+}
+
+.result-card {
+  margin-bottom: 1rem;
+}
+
+.card-header {
+  font-weight: 600;
+  color: #2A3B8F;
+}
+
+.result-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.result-item:last-child {
+  border-bottom: none;
+}
+
+.result-item label {
+  font-weight: 500;
+  color: #606266;
+  min-width: 100px;
+}
+
+.result-item span {
+  color: #303133;
+  text-align: right;
+  flex: 1;
+  margin-left: 1rem;
+}
+
+.result-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #f0f0f0;
 }
 
 /* 响应式设计 */
@@ -278,6 +565,21 @@ async function onSubmit() {
   
   .extract-btn {
     width: 100%;
+  }
+  
+  .result-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .result-item span {
+    text-align: left;
+    margin-left: 0;
+  }
+  
+  .result-actions {
+    flex-direction: column;
   }
 }
 </style>

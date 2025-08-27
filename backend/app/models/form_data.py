@@ -1,5 +1,6 @@
-from datetime import datetime
-from sqlalchemy import Column, Integer, String, DateTime, Text, Boolean, JSON, ForeignKey
+from datetime import datetime, date, timedelta
+from sqlalchemy import Column, Integer, String, DateTime, Date, Text, Boolean, JSON, ForeignKey
+from sqlalchemy.orm import relationship
 from ..main import db
 
 class FormData(db.Model):
@@ -10,7 +11,7 @@ class FormData(db.Model):
     session_id = Column(String(100), unique=True, index=True, nullable=False)  # 会话ID
     title = Column(String(200))  # 项目标题
     
-    # IF_Template_2.docx 相关字段
+    # IF_Template.docx 相关字段
     approval_no = Column(String(100))                    # 批准号
     information_folder_no = Column(String(100))          # 信息文件夹号
     safety_class = Column(String(50))                    # 安全等级
@@ -25,10 +26,31 @@ class FormData(db.Model):
     coating_thick = Column(String(50))                   # 涂层厚度
     material_nature = Column(String(100))                # 材料性质
     coating_color = Column(String(50))                   # 涂层颜色
+    
+    # 新增字段 - 玻璃颜色和夹层相关
+    glass_color_choice = Column(String(20), default='tinted_struck')  # 玻璃颜色选择
+    interlayer_total = Column(Boolean, default=False)                  # 总夹层
+    interlayer_partial = Column(Boolean, default=False)               # 部分夹层
+    interlayer_colourless = Column(Boolean, default=False)            # 无色夹层
+    
+    # 新增字段 - 导体和不透明相关
+    conductors_choice = Column(String(20), default='yes_struck')      # 导体选择
+    opaque_obscure_choice = Column(String(20), default='yes_struck')  # 不透明/模糊选择
+    
     remarks = Column(Text)                               # 备注
     
-    # 公司信息
+    # 报告号和公司信息
+    report_no = Column(String(100))                      # 报告号
+    company_id = Column(Integer, ForeignKey('companies.id'), nullable=True)  # 公司ID（保留用于快速填充）
     company_name = Column(String(200))                   # 公司名称
+    company_address = Column(Text)                       # 公司地址
+    trade_names = Column(String(500))                    # 商标名称（分号分隔的字符串）
+    trade_marks = Column(JSON, default=lambda: [])      # 商标图片URL数组
+    
+    # 新增日期字段
+    approval_date = Column(Date, nullable=False, default=lambda: date.today() - timedelta(days=14))   # 批准日期，默认今天-14天
+    test_date = Column(Date, nullable=False, default=lambda: date.today() - timedelta(days=7))        # 测试日期，默认今天-7天  
+    report_date = Column(Date, nullable=False, default=date.today)                                    # 报告日期，默认今天
     
     # 车辆信息 (JSON数组)
     vehicles = Column(JSON, default=lambda: [])                # 车辆信息数组
@@ -38,6 +60,9 @@ class FormData(db.Model):
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # 关联关系
+    company = relationship("Company", back_populates="form_data")
     
     def __repr__(self):
         return f"<FormData(id={self.id}, session_id='{self.session_id}', title='{self.title}')>" 

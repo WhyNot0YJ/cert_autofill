@@ -32,13 +32,20 @@
             申请书管理
           </el-button>
         </router-link>
+        
+        <router-link to="/companies" class="nav-link" active-class="active">
+          <el-button :type="$route.path === '/companies' ? 'primary' : 'default'" size="small">
+            <el-icon><OfficeBuilding /></el-icon>
+            公司管理
+          </el-button>
+        </router-link>
       </div>
     </div>
   </nav>
 </template>
 
 <script setup lang="ts">
-import { Document, Setting } from '@element-plus/icons-vue';
+import { Document, Setting, OfficeBuilding } from '@element-plus/icons-vue';
 </script>
 
 <style scoped>

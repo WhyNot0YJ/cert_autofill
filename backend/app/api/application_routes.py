@@ -4,6 +4,7 @@ from datetime import datetime
 import uuid
 import os
 from ..main import db
+from ..services.ai_extract import ai_extraction_service
 
 application_bp = Blueprint('application', __name__)
 
@@ -161,3 +162,4 @@ def list_applications():
         
     except Exception as e:
         return jsonify({"error": f"获取申请书列表失败: {str(e)}"}), 500 
+

@@ -7,34 +7,29 @@ import logging
 logger = logging.getLogger(__name__)
 
 class AIExtractionService:
-    """AI文档信息提取服务"""
+    """AI文档信息提取服务 - 集成Dify API"""
     
     def __init__(self):
-        # 配置AI模型API（这里使用OpenAI作为示例，可以根据需要修改）
-        self.api_key = os.environ.get('OPENAI_API_KEY', '')
-        self.api_base = os.environ.get('OPENAI_API_BASE', 'https://api.openai.com/v1')
-        self.model = os.environ.get('OPENAI_MODEL', 'gpt-4')
+        # Dify API配置
+        self.api_key = os.environ.get('DIFY_API_KEY', 'app-aOHstplRYJhO3uadmVwKnf8E')
+        self.api_base = os.environ.get('DIFY_API_BASE', 'https://api.dify.ai/v1')
         
-    def extract_from_documents(self, application_text: str, report_text: str) -> Dict[str, Any]:
+    def extract_from_document(self, file_path: str) -> Dict[str, Any]:
         """
-        从申请书和检测报告中提取结构化信息
+        从单个文档中提取结构化信息
         
         Args:
-            application_text: 申请书文本内容
-            report_text: 检测报告文本内容
+            file_path: 文档文件路径
             
         Returns:
             Dict[str, Any]: 提取的结构化数据
         """
         try:
-            # 构建提示词
-            prompt = self._build_extraction_prompt(application_text, report_text)
-            
-            # 调用AI模型
-            response = self._call_ai_model(prompt)
+            # 调用Dify API进行文档提取
+            response = self._call_dify_api(file_path)
             
             # 解析响应
-            extracted_data = self._parse_ai_response(response)
+            extracted_data = self._parse_dify_response(response)
             
             return {
                 "success": True,
@@ -50,172 +45,129 @@ class AIExtractionService:
                 "data": {}
             }
     
-    def _build_extraction_prompt(self, application_text: str, report_text: str) -> str:
-        """构建AI提取提示词"""
-        prompt = f"""
-请从以下申请书和检测报告中提取关键信息，并按照指定的JSON格式返回：
-
-申请书内容：
-{application_text[:2000]}...
-
-检测报告内容：
-{report_text[:2000]}...
-
-请提取以下信息并以JSON格式返回：
-
-{{
-    "enterprise_info": {{
-        "name": "企业名称",
-        "english_name": "企业英文名",
-        "registration_number": "注册号",
-        "legal_representative": "法定代表人",
-        "contact_person": "联系人",
-        "contact_phone": "联系电话",
-        "contact_email": "联系邮箱",
-        "address": "地址"
-    }},
-    "certification_info": {{
-        "type": "认证类型",
-        "product_name": "产品名称",
-        "product_model": "产品型号",
-        "scope": "认证范围"
-    }},
-    "technical_specs": {{
-        "specifications": "技术规格参数"
-    }},
-    "test_info": {{
-        "standards": "测试标准",
-        "results": "测试结果"
-    }},
-    "certificate_info": {{
-        "number": "证书编号",
-        "issue_date": "发证日期",
-        "expiry_date": "有效期至",
-        "authority": "发证机构"
-    }},
-    "additional_info": {{
-        "remarks": "备注信息"
-    }}
-}}
-
-请确保：
-1. 只返回JSON格式数据，不要包含其他文字
-2. 如果某个字段无法从文档中提取，请填写null
-3. 日期格式使用YYYY-MM-DD
-4. 所有文本内容保持原始格式，不要修改
-"""
-        return prompt
-    
-    def _call_ai_model(self, prompt: str) -> str:
-        """调用AI模型API"""
+    def _call_dify_api(self, file_path: str) -> Dict[str, Any]:
+        """调用Dify API进行文档提取"""
         if not self.api_key:
-            # 如果没有配置API密钥，返回模拟数据
-            return self._get_mock_response()
+            raise Exception("Dify API密钥未配置")
         
         try:
+            # 1) 上传文件以获取 file_id
+            file_id = self._upload_file_to_dify(file_path)
+            if not file_id:
+                raise Exception("文件上传到Dify失败，未获取到file_id")
+            
+            # 2) 调用工作流运行接口（JSON请求）
+            url = f"{self.api_base}/workflows/run"
             headers = {
                 'Authorization': f'Bearer {self.api_key}',
                 'Content-Type': 'application/json'
             }
-            
-            data = {
-                'model': self.model,
-                'messages': [
-                    {
-                        'role': 'system',
-                        'content': '你是一个专业的文档信息提取助手，擅长从认证申请书和检测报告中提取结构化信息。'
-                    },
-                    {
-                        'role': 'user',
-                        'content': prompt
+            # 固定按工作流要求使用 file 参数（单文件变量）
+            payload = {
+                "inputs": {
+                    "file": {
+                        "type": "document",
+                        "transfer_method": "local_file",
+                        "upload_file_id": file_id
                     }
-                ],
-                'temperature': 0.1,
-                'max_tokens': 2000
+                },
+                "response_mode": "blocking",
+                "user": "web-user"
             }
+
+            resp = requests.post(url, headers=headers, data=json.dumps(payload), timeout=120)
+            if resp.status_code != 200:
+                logger.error(f"Dify 工作流调用失败({resp.status_code})，payload={payload}，响应={resp.text}")
+                raise Exception(f"Dify 工作流调用失败: {resp.status_code} - {resp.text}")
+            data = resp.json()
             
-            response = requests.post(
-                f'{self.api_base}/chat/completions',
-                headers=headers,
-                json=data,
-                timeout=30
-            )
+            # 规范化返回，确保下游解析时含有 'result'
+            if isinstance(data, dict):
+                if 'data' in data and isinstance(data['data'], dict):
+                    outputs = data['data'].get('outputs')
+                    if isinstance(outputs, dict) and 'result' in outputs:
+                        return { 'result': outputs['result'] }
+                    if isinstance(outputs, dict):
+                        return { 'result': outputs }
+                if 'result' in data:
+                    return { 'result': data['result'] }
             
-            if response.status_code == 200:
-                result = response.json()
-                return result['choices'][0]['message']['content']
-            else:
-                raise Exception(f"API调用失败: {response.status_code} - {response.text}")
-                
+            # 未命中已知结构
+            raise Exception("Dify 工作流返回结构不包含期望的 result 字段")
         except Exception as e:
-            logger.error(f"AI模型调用失败: {str(e)}")
-            # 返回模拟数据作为备选
-            return self._get_mock_response()
-    
-    def _parse_ai_response(self, response: str) -> Dict[str, Any]:
-        """解析AI响应"""
-        try:
-            # 尝试提取JSON部分
-            start_idx = response.find('{')
-            end_idx = response.rfind('}') + 1
-            
-            if start_idx != -1 and end_idx != 0:
-                json_str = response[start_idx:end_idx]
-                return json.loads(json_str)
-            else:
-                raise ValueError("未找到有效的JSON数据")
-                
-        except Exception as e:
-            logger.error(f"解析AI响应失败: {str(e)}")
-            return self._get_default_structure()
-    
-    def _get_mock_response(self) -> str:
-        """获取模拟响应数据（用于测试）"""
-        mock_data = {
-            "enterprise_info": {
-                "name": "广州福耀玻璃有限公司",
-                "english_name": "FUYAO GLASS INDUSTRY GROUP CO., LTD.",
-                "registration_number": "91440101MA9CQ8KX3R",
-                "legal_representative": "曹德旺",
-                "contact_person": "张工程师",
-                "contact_phone": "020-12345678",
-                "contact_email": "contact@fuyao.com",
-                "address": "广州市黄埔区科学城科学大道"
-            },
-            "certification_info": {
-                "type": "夹层玻璃前风窗认证",
-                "product_name": "4.76mm普通PVB夹层玻璃",
-                "product_model": "AY7",
-                "scope": "前风窗夹层玻璃认证"
-            },
-            "technical_specs": {
-                "specifications": "厚度: 4.76mm, 夹层类型: PVB, 玻璃类型: 夹层玻璃"
-            },
-            "test_info": {
-                "standards": "GB 9656-2021",
-                "results": "通过所有测试项目"
-            },
-            "certificate_info": {
-                "number": "TUV-2024-001",
-                "issue_date": "2024-01-15",
-                "expiry_date": "2027-01-14",
-                "authority": "TÜV NORD"
-            },
-            "additional_info": {
-                "remarks": "认证延期申请"
-            }
+            logger.error(f"Dify API调用失败: {str(e)}")
+            # 失败时直接抛出异常，由上层捕获并返回错误
+            raise
+
+    def _upload_file_to_dify(self, file_path: str) -> str:
+        """上传文件到Dify，返回 file_id"""
+        url = f"{self.api_base}/files/upload"
+        headers = {
+            'Authorization': f'Bearer {self.api_key}',
         }
-        return json.dumps(mock_data, ensure_ascii=False)
+        filename = os.path.basename(file_path)
+        ext = os.path.splitext(filename)[1].lower()
+        # 基于扩展名推断 MIME
+        mime = 'application/octet-stream'
+        if ext == '.pdf':
+            mime = 'application/pdf'
+        elif ext == '.docx':
+            mime = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        elif ext == '.doc':
+            mime = 'application/msword'
+        
+        with open(file_path, 'rb') as f:
+            files = { 'file': (filename, f, mime) }
+            # Dify 需要指定文件类型（image/document），文档应为 document；同时指定 user 与工作流调用一致
+            data = { 'type': 'document', 'user': 'web-user' }
+            resp = requests.post(url, headers=headers, files=files, data=data, timeout=120)
+        if resp.status_code not in (200, 201):
+            raise Exception(f"Dify 文件上传失败: {resp.status_code} - {resp.text}")
+        body = resp.json()
+        # 常见结构: { data: { id: 'file_...' } } 或 { id: 'file_...' }
+        if isinstance(body, dict):
+            if 'data' in body and isinstance(body['data'], dict) and 'id' in body['data']:
+                return body['data']['id']
+            if 'id' in body:
+                return body['id']
+        raise Exception("Dify 文件上传响应中未找到 file_id")
+    
+    def _parse_dify_response(self, response: Dict[str, Any]) -> Dict[str, Any]:
+        """解析Dify API响应"""
+        try:
+            return response['result']
+        except Exception as e:
+            logger.error(f"解析Dify响应失败: {str(e)}")
+            return self._get_default_structure()
     
     def _get_default_structure(self) -> Dict[str, Any]:
         """获取默认数据结构"""
         return {
-            "enterprise_info": {},
-            "certification_info": {},
-            "technical_specs": {},
-            "test_info": {},
-            "certificate_info": {},
-            "additional_info": {}
+            "approval_no": "",
+            "info_folder_no": "",
+            "safety_class": "",
+            "pane_desc": "",
+            "trade_names": "",
+            "company_name": "",
+            "company_address": "",
+            "glass_layers": "",
+            "interlayer_layers": "",
+            "windscreen_thick": "",
+            "interlayer_thick": "",
+            "glass_treatment": "",
+            "interlayer_type": "",
+            "coating_type": "",
+            "coating_thick": "",
+            "material_nature": "",
+            "glass_color_choice": "",
+            "coating_color": "",
+            "interlayer_total": False,
+            "interlayer_partial": False,
+            "interlayer_colourless": False,
+            "conductors_choice": [],
+            "opaque_obscure_choice": [],
+            "remarks": "",
+            "vehicles": []
         }
 
 # 创建全局实例

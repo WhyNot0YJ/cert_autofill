@@ -1,135 +1,210 @@
-# 认证文档自动填充系统
+# 证书管理系统 - AI智能文档提取
 
-## 项目简介
+## 项目概述
 
-这是一个用于自动生成认证文档的系统，支持玻璃制品认证申请文档的自动填充和生成。
+这是一个基于Vue 3 + Flask的证书管理系统，集成了AI智能文档提取功能，能够自动从申请书文档中提取关键信息并填充到表单中。
 
-## 技术栈
+## 主要功能
 
-### 后端
-- Python 3.8+
-- Flask
-- SQLAlchemy
-- python-docx
-- docxtpl
-- docxcompose (多模板合并)
+### 🚀 AI智能文档提取
+- **智能识别**: 支持上传 .doc, .docx, .pdf 格式的申请书文档
+- **自动提取**: 使用Dify AI平台自动提取文档中的关键信息
+- **智能填充**: 提取的信息自动填充到对应的表单字段
+- **数据映射**: 支持企业信息、技术参数、车辆信息等结构化数据提取
 
-### 前端
-- Vue 3
-- TypeScript
-- Element Plus
-- Vite
+### 📋 申请书管理
+- 申请书创建、编辑、删除
+- 状态跟踪（草稿、已提交、处理中、已批准、已拒绝）
+- 搜索和筛选功能
+- 分页显示
 
-## 项目结构
+### 🏢 公司管理
+- 企业信息管理
+- 商标和图案管理
+- 文件上传和管理
 
-```
-cert_autofill/
-├── backend/                 # 后端代码
-│   ├── app/                # 应用代码
-│   │   ├── api/           # API接口
-│   │   ├── models/        # 数据模型
-│   │   ├── services/      # 业务服务
-│   │   └── utils/         # 工具函数
-│   ├── templates/         # Word模板文件
-│   ├── client/           # 客户端资源
-│   ├── generated_files/   # 生成的文档
-│   ├── uploads/          # 上传文件
-│   └── requirements.txt   # Python依赖
-├── frontend/              # 前端代码
-│   ├── src/              # 源代码
-│   │   ├── api/          # API调用
-│   │   ├── components/   # Vue组件
-│   │   ├── views/        # 页面视图
-│   │   └── router/       # 路由配置
-│   ├── package.json      # Node.js依赖
-│   └── vite.config.ts    # Vite配置
-└── README.md             # 项目说明
-```
+### 📄 模板管理
+- 多种证书模板支持
+- 模板生成和编辑
+- 批量处理功能
+
+## 技术架构
+
+### 前端 (Frontend)
+- **框架**: Vue 3 + TypeScript
+- **UI组件**: Element Plus
+- **路由**: Vue Router 4
+- **构建工具**: Vite
+
+### 后端 (Backend)
+- **框架**: Flask (Python)
+- **数据库**: SQLAlchemy + SQLite
+- **AI服务**: Dify API集成
+- **文件处理**: 支持多种文档格式
+
+### AI服务配置
+- **平台**: Dify AI
+- **API地址**: https://api.dify.ai/v1
+- **API密钥**: app-aOHstplRYJhO3uadmVwKnf8E
 
 ## 安装和运行
 
-### 后端设置
+### 环境要求
+- Node.js 16+
+- Python 3.8+
+- pip
 
-1. 进入后端目录：
-```bash
-cd backend
-```
-
-2. 创建虚拟环境：
-```bash
-python -m venv venv
-source venv/bin/activate  # Linux/Mac
-# 或
-venv\Scripts\activate   # Windows
-```
-
-3. 安装依赖：
-```bash
-pip install -r requirements.txt
-```
-
-4. 运行后端服务：
-```bash
-python run.py
-```
-
-### 前端设置
-
-1. 进入前端目录：
+### 前端启动
 ```bash
 cd frontend
-```
-
-2. 安装依赖：
-```bash
 npm install
-```
-
-3. 运行开发服务器：
-```bash
 npm run dev
 ```
 
-## 功能特性
+### 后端启动
+```bash
+cd backend
+pip install -r requirements.txt
+python run.py
+```
 
-- ✅ 文档模板管理
-- ✅ 表单数据收集
-- ✅ 自动文档生成
-- ✅ 多车辆信息支持
-- ✅ 文档预览和下载
-- ✅ 申请记录管理
+## AI提取功能使用说明
+
+### 1. 访问AI提取页面
+- 在导航栏中点击"AI提取"按钮
+- 或直接访问 `/ai-extraction` 路径
+
+### 2. 上传文档
+- 支持拖拽上传或点击选择文件
+- 目前仅支持申请书文档上传（.doc, .docx, .pdf）
+- 测试报告功能暂未开放
+
+### 3. AI提取过程
+- 点击"AI提取信息"按钮
+- 系统将文档发送到Dify AI平台进行分析
+- 提取完成后显示结果预览
+
+### 4. 结果应用
+- 查看提取的信息是否正确
+- 点击"应用到表单"自动填充到申请书表单
+- 可以手动编辑和调整提取的数据
+
+### 5. 保存申请书
+- 完善必填信息
+- 点击"保存申请书"完成创建
+
+## 支持的数据字段
+
+### 企业信息
+- 企业名称
+- 企业英文名
+- 企业地址
+
+### 认证信息
+- 认证类型
+- 产品名称
+
+### 技术参数
+- 风窗厚度
+- 夹层厚度
+- 玻璃层数
+- 夹层数
+- 夹层类型
+- 玻璃处理
+- 涂层类型
+- 涂层厚度
+- 涂层颜色
+- 材料性质
+- 玻璃着色
+- 导体集成
+- 遮光带
+
+### 车辆信息
+- 车辆制造商
+- 车辆类型
+- 车辆类别
+- 开发区域
+- 其他技术参数
+
+### 商标信息
+- 商标名称列表
+- 夹层着色信息
+
+## 配置说明
+
+### 环境变量
+```bash
+# Dify API配置
+DIFY_API_KEY=app-aOHstplRYJhO3uadmVwKnf8E
+DIFY_API_BASE=https://api.dify.ai/v1
+```
+
+### API端点
+- `POST /api/ai-extract`: AI文档提取
+- `GET /api/applications`: 获取申请书列表
+- `POST /api/applications`: 创建申请书
+- `PUT /api/applications/:id`: 更新申请书
+- `DELETE /api/applications/:id`: 删除申请书
 
 ## 开发说明
 
-### 文档生成逻辑
+### 项目结构
+```
+cert_autofill/
+├── backend/                 # 后端Flask应用
+│   ├── app/
+│   │   ├── services/       # 业务逻辑服务
+│   │   │   └── ai_extract.py  # AI提取服务
+│   │   ├── api/            # API路由
+│   │   └── models/         # 数据模型
+│   └── run.py              # 启动文件
+├── frontend/                # 前端Vue应用
+│   ├── src/
+│   │   ├── components/     # 组件
+│   │   │   └── UploadForm.vue  # 文件上传组件
+│   │   ├── views/          # 页面
+│   │   │   └── AIExtraction.vue # AI提取页面
+│   │   └── api/            # API接口
+│   └── package.json
+└── README.md
+```
 
-系统使用多模板合并渲染方案，完美保留Word格式：
+### 扩展开发
+- 添加新的文档类型支持
+- 扩展提取字段
+- 集成其他AI服务
+- 优化提取准确率
 
-- **基础模板**: `backend/templates/IF_Template_Base.docx` (固定部分)
-- **车辆模板**: `backend/templates/IF_Template_Vehicle.docx` (循环部分)
-- **生成逻辑**: `backend/app/services/generate.py` - `generate_if_template_document()`
-- **技术方案**: 使用 `docxcompose` 进行多模板合并，完整保留格式
-- **变量规范**: 使用标准化的变量名（如 `veh_mfr`, `veh_type`, `dev_area` 等）
-- **优势**: 完美保留页眉页脚、分页符、样式继承等复杂格式
+## 注意事项
 
-### 数据库
+1. **文件格式**: 目前仅支持申请书文档，测试报告功能开发中
+2. **文件大小**: 建议单个文件不超过10MB
+3. **网络要求**: 需要稳定的网络连接以访问Dify AI服务
+4. **数据安全**: 上传的文档会临时存储，处理完成后自动删除
 
-- 使用SQLite作为开发数据库
-- 支持企业信息、申请记录、文档模板等管理
+## 故障排除
 
-## 部署
+### 常见问题
+1. **AI提取失败**: 检查网络连接和API密钥配置
+2. **文件上传失败**: 确认文件格式和大小
+3. **表单验证错误**: 检查必填字段是否完整
 
-### 生产环境
+### 日志查看
+- 后端日志: `backend/logs/`
+- 前端控制台: 浏览器开发者工具
 
-1. 配置环境变量
-2. 使用生产级数据库（如PostgreSQL）
-3. 配置Web服务器（如Nginx）
-4. 使用进程管理器（如PM2）
+## 更新日志
 
-## 贡献
-
-欢迎提交Issue和Pull Request！
+### v1.0.0 (2024-12-19)
+- ✨ 新增AI智能文档提取功能
+- 🔧 集成Dify AI平台
+- 📱 优化移动端响应式设计
+- 🎨 改进用户界面和交互体验
 
 ## 许可证
 
-MIT License
+本项目采用MIT许可证，详见LICENSE文件。
+
+## 联系方式
+
+如有问题或建议，请联系开发团队。

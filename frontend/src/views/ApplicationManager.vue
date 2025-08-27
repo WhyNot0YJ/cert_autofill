@@ -79,6 +79,17 @@
               </template>
             </el-table-column>
             
+            <el-table-column label="商标名称/图案 (Trade Names/Marks)" width="300">
+              <template #default="{ row }">
+                <TradeNamesMarksDisplay 
+                  :trade-names="row.trade_names ? row.trade_names.split(';').filter(n => n.trim()) : []"
+                  :trade-marks="row.trade_marks || []"
+                  size="small"
+                  :max-images="3"
+                />
+              </template>
+            </el-table-column>
+            
             <el-table-column prop="status" label="状态" width="100">
               <template #default="{ row }">
                 <el-tag :type="getStatusType(row.status)">
@@ -269,6 +280,7 @@
 <script setup lang="ts">
 import { Delete, Edit, Refresh, Search, View } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import TradeNamesMarksDisplay from '../components/TradeNamesMarksDisplay.vue'
 import { onMounted, ref } from 'vue'
 import { applicationAPI } from '../api/application'
 

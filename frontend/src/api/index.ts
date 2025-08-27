@@ -1,9 +1,10 @@
 import axios from 'axios';
+import type { ApiError, ErrorCode } from '../types/api';
 
 // 创建axios实例
 const api = axios.create({
   baseURL: 'http://localhost:5000/api',
-  timeout: 10000,
+  timeout: 120000,
 });
 
 // 请求拦截器
@@ -20,131 +21,79 @@ api.interceptors.request.use(
 // 响应拦截器
 api.interceptors.response.use(
   (response) => {
-    return response;
+    // 统一提取业务数据，直接返回 response.data
+    return response.data;
   },
   (error) => {
     console.error('API Error:', error);
-    return Promise.reject(error);
+    
+    // 统一错误处理
+    let errorMessage = '网络请求失败';
+    let errorCode = 'NETWORK_ERROR';
+    
+    if (error.response) {
+      // 服务器返回了错误状态码
+      const { status, data } = error.response;
+      
+      switch (status) {
+        case 400:
+          errorMessage = data?.message || '请求参数错误';
+          errorCode = 'BAD_REQUEST';
+          break;
+        case 401:
+          errorMessage = '未授权，请重新登录';
+          errorCode = 'UNAUTHORIZED';
+          break;
+        case 403:
+          errorMessage = '禁止访问';
+          errorCode = 'FORBIDDEN';
+          break;
+        case 404:
+          errorMessage = '请求的资源不存在';
+          errorCode = 'NOT_FOUND';
+          break;
+        case 422:
+          errorMessage = data?.message || '数据验证失败';
+          errorCode = 'VALIDATION_ERROR';
+          break;
+        case 500:
+          errorMessage = '服务器内部错误';
+          errorCode = 'SERVER_ERROR';
+          break;
+        case 502:
+          errorMessage = '网关错误';
+          errorCode = 'BAD_GATEWAY';
+          break;
+        case 503:
+          errorMessage = '服务不可用';
+          errorCode = 'SERVICE_UNAVAILABLE';
+          break;
+        default:
+          errorMessage = data?.message || `请求失败 (${status})`;
+          errorCode = `HTTP_${status}`;
+      }
+    } else if (error.request) {
+      // 请求已发出但没有收到响应
+      errorMessage = '服务器无响应';
+      errorCode = 'NO_RESPONSE';
+    } else {
+      // 请求配置出错
+      errorMessage = error.message || '请求配置错误';
+      errorCode = 'REQUEST_ERROR';
+    }
+    
+    // 创建标准化的错误对象
+    const normalizedError: ApiError = {
+      message: errorMessage,
+      code: errorCode as ErrorCode,
+      originalError: error,
+      status: error.response?.status,
+      data: error.response?.data
+    };
+    
+    console.error('标准化错误信息:', normalizedError);
+    return Promise.reject(normalizedError);
   }
 );
-
-// 企业相关API
-export const enterpriseAPI = {
-  // 获取企业列表
-  getEnterprises: (params?: any) => api.get('/enterprises', { params }),
-  
-  // 创建企业
-  createEnterprise: (data: any) => api.post('/enterprises', data),
-  
-  // 获取企业详情
-  getEnterprise: (id: number) => api.get(`/enterprises/${id}`),
-  
-  // 更新企业
-  updateEnterprise: (id: number, data: any) => api.put(`/enterprises/${id}`, data),
-  
-  // 删除企业
-  deleteEnterprise: (id: number) => api.delete(`/enterprises/${id}`),
-  
-  // 获取模拟企业数据
-  getMockEnterprises: () => api.get('/mock/enterprises'),
-};
-
-// 申请书相关API
-export const applicationAPI = {
-  // 获取申请书列表
-  getApplications: (params?: any) => api.get('/applications', { params }),
-  
-  // 创建申请书
-  createApplication: (data: any) => api.post('/applications', data),
-  
-  // 获取申请书详情
-  getApplication: (id: number) => api.get(`/applications/${id}`),
-  
-  // 更新申请书
-  updateApplication: (id: number, data: any) => api.put(`/applications/${id}`, data),
-  
-  // 删除申请书
-  deleteApplication: (id: number) => api.delete(`/applications/${id}`),
-  
-  // 上传申请书文件
-  uploadApplicationFile: (id: number, file: File) => {
-    const formData = new FormData();
-    formData.append('file', file);
-    return api.post(`/applications/${id}/upload`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-  },
-  
-  // 获取模拟申请书数据
-  getMockApplications: () => api.get('/mock/applications'),
-};
-
-// 证书相关API
-export const certificateAPI = {
-  // 获取证书列表
-  getCertificates: (params?: any) => api.get('/certificates', { params }),
-  
-  // 生成证书
-  generateCertificate: (data: any) => api.post('/certificates/generate', data),
-  
-  // 获取证书详情
-  getCertificate: (id: number) => api.get(`/certificates/${id}`),
-  
-  // 更新证书
-  updateCertificate: (id: number, data: any) => api.put(`/certificates/${id}`, data),
-  
-  // 删除证书
-  deleteCertificate: (id: number) => api.delete(`/certificates/${id}`),
-  
-  // 获取模拟证书数据
-  getMockCertificates: () => api.get('/mock/certificates'),
-};
-
-// 报告相关API
-export const reportAPI = {
-  // 获取报告列表
-  getReports: (params?: any) => api.get('/reports', { params }),
-  
-  // 创建报告
-  createReport: (data: any) => api.post('/reports', data),
-  
-  // 获取报告详情
-  getReport: (id: number) => api.get(`/reports/${id}`),
-  
-  // 更新报告
-  updateReport: (id: number, data: any) => api.put(`/reports/${id}`, data),
-  
-  // 删除报告
-  deleteReport: (id: number) => api.delete(`/reports/${id}`),
-};
-
-// 文件相关API
-export const fileAPI = {
-  // 下载文件
-  downloadFile: (filename: string) => api.get(`/download/${filename}`, {
-    responseType: 'blob',
-  }),
-};
-
-// 系统相关API
-export const systemAPI = {
-  // 健康检查
-  healthCheck: () => api.get('/health'),
-};
-
-// 保留原有的API函数以保持兼容性
-export const extractFields = (file: File) => {
-  const formData = new FormData();
-  formData.append('file', file);
-  return api.post('/extract', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  });
-};
-
-export const generateDoc = (data: any) => api.post('/generate', data);
 
 export default api;
