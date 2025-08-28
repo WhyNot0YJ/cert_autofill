@@ -9,17 +9,20 @@ services:
     container_name: cert-autofill-backend
     restart: unless-stopped
     environment:
-      - FLASK_ENV=production
+      - ENV=${ENV:-production}
+      - FLASK_ENV=${FLASK_ENV:-production}
       - SECRET_KEY=${SECRET_KEY:-your-super-secret-production-key-here}
       - DATABASE_URL=${DATABASE_URL:-sqlite:///cert_autofill.db}
       - SERVER_URL=${SERVER_URL:-http://localhost}
       - DIFY_API_KEY=${DIFY_API_KEY:-app-aOHstplRYJhO3uadmVwKnf8E}
       - DIFY_API_BASE=${DIFY_API_BASE:-https://api.dify.ai/v1}
+      - BACKEND_PORT_DEV=${BACKEND_PORT_DEV:-5000}
+      - BACKEND_PORT_PROD=${BACKEND_PORT_PROD:-5001}
     volumes:
       - backend_data:/app/uploads
       - backend_db:/app
     ports:
-      - "5000:5000"
+      - "${BACKEND_PORT_PROD:-5001}:5000"
     networks:
       - cert-autofill-network
     healthcheck:
@@ -36,8 +39,14 @@ services:
       dockerfile: Dockerfile
     container_name: cert-autofill-frontend
     restart: unless-stopped
+    environment:
+      - ENV=${ENV:-production}
+      - FRONTEND_PORT_DEV=${FRONTEND_PORT_DEV:-80}
+      - FRONTEND_PORT_PROD=${FRONTEND_PORT_PROD:-81}
+      - BACKEND_PORT_DEV=${BACKEND_PORT_DEV:-5000}
+      - BACKEND_PORT_PROD=${BACKEND_PORT_PROD:-5001}
     ports:
-      - "80:80"
+      - "${FRONTEND_PORT_PROD:-81}:80"
     depends_on:
       - backend
     networks:

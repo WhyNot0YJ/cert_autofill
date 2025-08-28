@@ -14,6 +14,18 @@ class Config:
     # 服务器配置
     SERVER_URL = os.environ.get('SERVER_URL', 'http://localhost:5000')  # 可通过环境变量配置
     
+    # 端口配置
+    ENV = os.environ.get('ENV', 'development')
+    BACKEND_PORT_DEV = int(os.environ.get('BACKEND_PORT_DEV', 5000))
+    BACKEND_PORT_PROD = int(os.environ.get('BACKEND_PORT_PROD', 5001))
+    
+    @property
+    def BACKEND_PORT(self):
+        """根据环境返回对应的端口"""
+        if self.ENV == 'production':
+            return self.BACKEND_PORT_PROD
+        return self.BACKEND_PORT_DEV
+    
     # 会话配置
     PERMANENT_SESSION_LIFETIME = timedelta(hours=24)
     

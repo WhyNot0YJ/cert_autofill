@@ -282,7 +282,7 @@ class MVPAPI {
     const formData = new FormData()
     formData.append('file', file)
     
-    return api.post('/ai-extract', formData, {
+    return api.post(`${this.basePath}/ai-extract`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }

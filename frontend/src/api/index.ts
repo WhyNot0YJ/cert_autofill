@@ -1,9 +1,32 @@
 import axios from 'axios';
 import type { ApiError, ErrorCode } from '../types/api';
 
+// 获取后端端口配置
+const getBackendPort = (): string => {
+  // 优先使用环境变量中的端口
+  if (import.meta.env.VITE_BACKEND_PORT) {
+    return import.meta.env.VITE_BACKEND_PORT;
+  }
+  
+  // 使用注入的全局变量
+  if (typeof __BACKEND_PORT__ !== 'undefined') {
+    return __BACKEND_PORT__;
+  }
+  
+  // 默认端口 - 根据环境判断
+  const isProduction = import.meta.env.PROD;
+  return isProduction ? '5001' : '5000';
+};
+
+// 获取后端基础URL
+const getBackendBaseURL = (): string => {
+  const port = getBackendPort();
+  return `http://localhost:${port}/api`;
+};
+
 // 创建axios实例
 const api = axios.create({
-  baseURL: 'http://localhost:5000/api',
+  baseURL: getBackendBaseURL(),
   timeout: 120000,
 });
 
