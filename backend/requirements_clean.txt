@@ -6,6 +6,9 @@ Flask-Migrate==4.0.5
 Flask-Login==0.6.3
 Flask-Bcrypt==1.0.1
 
+# WSGI服务器
+gunicorn==21.2.0
+
 # 文档处理
 python-docx==1.2.0
 docxtpl==0.20.1
