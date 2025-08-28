@@ -79,15 +79,26 @@ build_images() {
 # 启动服务
 start_services() {
     local profile=$1
-    
+    local use_build=$2
+
     log_info "启动服务 (profile: $profile)..."
-    
+
     if [ "$profile" = "prod" ]; then
-        docker-compose --profile production up -d
+        if [ "$use_build" = "true" ]; then
+            log_info "强制重新构建镜像..."
+            docker-compose --profile production up --build -d
+        else
+            docker-compose --profile production up -d
+        fi
     else
-        docker-compose up -d
+        if [ "$use_build" = "true" ]; then
+            log_info "强制重新构建镜像..."
+            docker-compose up --build -d
+        else
+            docker-compose up -d
+        fi
     fi
-    
+
     log_success "服务启动完成"
 }
 
@@ -182,22 +193,39 @@ backup_data() {
 # 主函数
 main() {
     local action=${1:-"dev"}
-    
+    local use_build="false"
+
+    # 检查是否有--build参数
+    if [ "$2" = "--build" ] || [ "$1" = "--build" ]; then
+        use_build="true"
+        if [ "$2" = "--build" ]; then
+            # 如果第二个参数是--build，第一个参数是action
+            action=${1:-"dev"}
+        else
+            # 如果第一个参数是--build，默认使用dev
+            action="dev"
+        fi
+    fi
+
     case $action in
         "dev")
             log_info "部署开发环境..."
             check_docker
             check_env "dev"
-            build_images
-            start_services "dev"
+            if [ "$use_build" != "true" ]; then
+                build_images
+            fi
+            start_services "dev" "$use_build"
             check_services
             ;;
         "prod")
             log_info "部署生产环境..."
             check_docker
             check_env "prod"
-            build_images
-            start_services "prod"
+            if [ "$use_build" != "true" ]; then
+                build_images
+            fi
+            start_services "prod" "$use_build"
             check_services
             ;;
         "stop")
@@ -216,17 +244,20 @@ main() {
             cleanup
             ;;
         "help"|"-h"|"--help")
-            echo "使用方法: $0 [命令]"
+            echo "使用方法: $0 [命令] [--build]"
             echo ""
             echo "命令:"
-            echo "  dev     部署开发环境"
-            echo "  prod    部署生产环境"
-            echo "  stop    停止服务"
-            echo "  restart 重启服务"
-            echo "  logs    查看日志 (可选: 服务名)"
-            echo "  backup  备份数据"
-            echo "  cleanup 清理资源"
-            echo "  help    显示帮助信息"
+            echo "  dev [--build]     部署开发环境"
+            echo "  prod [--build]    部署生产环境"
+            echo "  stop              停止服务"
+            echo "  restart           重启服务"
+            echo "  logs              查看日志 (可选: 服务名)"
+            echo "  backup            备份数据"
+            echo "  cleanup           清理资源"
+            echo "  help              显示帮助信息"
+            echo ""
+            echo "选项:"
+            echo "  --build           强制重新构建镜像 (解决依赖更新问题)"
             ;;
         *)
             log_error "未知命令: $action"
