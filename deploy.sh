@@ -104,25 +104,46 @@ start_services() {
 
 # 检查服务状态
 check_services() {
+    local profile=$1
     log_info "检查服务状态..."
-    
+
     # 等待服务启动
     sleep 10
-    
+
     # 检查容器状态
     if docker-compose ps | grep -q "Up"; then
         log_success "所有服务运行正常"
-        
+
         # 显示服务状态
         echo ""
         docker-compose ps
         echo ""
-        
-        # 显示访问地址
+
+        # 根据环境配置显示访问地址
         log_info "服务访问地址:"
-        log_info "前端: http://localhost"
-        log_info "后端API: http://localhost:5000"
-        
+
+        if [ "$profile" = "prod" ]; then
+            # 生产环境：从环境变量获取服务器地址
+            local server_url=$(grep "^SERVER_URL=" .env 2>/dev/null | cut -d'=' -f2- || echo "http://localhost")
+            local backend_port=$(grep "^BACKEND_PORT_PROD=" .env 2>/dev/null | cut -d'=' -f2- || echo "5001")
+            local frontend_port=$(grep "^FRONTEND_PORT_PROD=" .env 2>/dev/null | cut -d'=' -f2- || echo "81")
+
+            # 提取主机部分（去掉协议和端口）
+            local host=$(echo "$server_url" | sed 's|http://||' | sed 's/:.*//')
+
+            log_info "前端: http://$host"
+            log_info "后端API: http://$host:$backend_port"
+            log_info "健康检查: http://$host:$backend_port/api/health"
+        else
+            # 开发环境：使用localhost
+            local backend_port=$(grep "^BACKEND_PORT_DEV=" .env 2>/dev/null | cut -d'=' -f2- || echo "5000")
+            local frontend_port=$(grep "^FRONTEND_PORT_DEV=" .env 2>/dev/null | cut -d'=' -f2- || echo "80")
+
+            log_info "前端: http://localhost:$frontend_port"
+            log_info "后端API: http://localhost:$backend_port"
+            log_info "健康检查: http://localhost:$backend_port/api/health"
+        fi
+
     else
         log_error "服务启动失败，请检查日志"
         docker-compose logs
@@ -216,7 +237,7 @@ main() {
                 build_images
             fi
             start_services "dev" "$use_build"
-            check_services
+            check_services "dev"
             ;;
         "prod")
             log_info "部署生产环境..."
@@ -226,7 +247,7 @@ main() {
                 build_images
             fi
             start_services "prod" "$use_build"
-            check_services
+            check_services "prod"
             ;;
         "stop")
             stop_services
