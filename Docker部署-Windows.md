@@ -27,14 +27,20 @@ git clone <your-repo-url>
 cd cert_autofill
 
 # 2) 准备环境变量
-cp env.example .env
+# 开发环境：
+cp env.development .env
+# 或生产环境：
+# cp env.production .env
 nano .env
-# 至少设置：SECRET_KEY、DIFY_API_KEY、SERVER_URL（无域名用 http://本机IP 或 http://WSL分配的IP）
+# 根据需要修改：SECRET_KEY、DIFY_API_KEY、SERVER_URL（无域名用 http://本机IP 或 http://WSL分配的IP）
 ```
 
 如果使用 PowerShell，可用：
 ```powershell
-Copy-Item env.example .env
+# 开发环境：
+Copy-Item env.development .env
+# 或生产环境：
+# Copy-Item env.production .env
 notepad .env  # 编辑后保存
 ```
 

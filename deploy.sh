@@ -46,10 +46,16 @@ check_docker() {
 
 # 检查环境变量文件
 check_env() {
+    local env_type=$1
     if [ ! -f .env ]; then
         log_warning "未找到 .env 文件，将使用默认配置"
-        cp env.example .env
-        log_info "已创建 .env 文件，请根据实际情况修改配置"
+        if [ "$env_type" = "prod" ]; then
+            cp env.production .env
+            log_info "已创建生产环境配置文件 .env，请根据实际情况修改配置"
+        else
+            cp env.development .env
+            log_info "已创建开发环境配置文件 .env，请根据实际情况修改配置"
+        fi
     else
         log_success "环境变量文件检查通过"
     fi
@@ -181,7 +187,7 @@ main() {
         "dev")
             log_info "部署开发环境..."
             check_docker
-            check_env
+            check_env "dev"
             build_images
             start_services "dev"
             check_services
@@ -189,7 +195,7 @@ main() {
         "prod")
             log_info "部署生产环境..."
             check_docker
-            check_env
+            check_env "prod"
             build_images
             start_services "prod"
             check_services
