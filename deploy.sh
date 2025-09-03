@@ -47,18 +47,17 @@ check_docker() {
 # 检查环境变量文件
 check_env() {
     local env_type=$1
-    if [ ! -f .env ]; then
-        log_warning "未找到 .env 文件，将使用默认配置"
-        if [ "$env_type" = "prod" ]; then
-            cp env.production .env
-            log_info "已创建生产环境配置文件 .env，请根据实际情况修改配置"
-        else
-            cp env.development .env
-            log_info "已创建开发环境配置文件 .env，请根据实际情况修改配置"
-        fi
-    else
-        log_success "环境变量文件检查通过"
+    local env_file="env.development"
+    if [ "$env_type" = "prod" ]; then
+        env_file="env.production"
     fi
+
+    if [ ! -f "$env_file" ]; then
+        log_error "未找到 $env_file，请先创建该文件"
+        exit 1
+    fi
+
+    log_success "环境变量文件检查通过 ($env_file)"
 }
 
 # 构建镜像
@@ -86,17 +85,17 @@ start_services() {
     if [ "$profile" = "prod" ]; then
         if [ "$use_build" = "true" ]; then
             log_info "强制重新构建镜像..."
-            docker-compose --profile production up --build -d
+            docker-compose --env-file env.production --profile production up --build -d
         else
-            docker-compose --profile production up -d
+            docker-compose --env-file env.production --profile production up -d
         fi
     else
         # 开发环境使用dev配置文件
         if [ "$use_build" = "true" ]; then
             log_info "强制重新构建镜像..."
-            docker-compose -f docker-compose.dev.yml up --build -d
+            docker-compose --env-file env.development -f docker-compose.dev.yml up --build -d
         else
-            docker-compose -f docker-compose.dev.yml up -d
+            docker-compose --env-file env.development -f docker-compose.dev.yml up -d
         fi
     fi
 
@@ -112,10 +111,12 @@ check_services() {
     sleep 10
 
     # 检查容器状态
+    local env_file="env.development"
     if [ "$profile" = "prod" ]; then
-        compose_cmd="docker-compose"
+        compose_cmd="docker-compose --env-file env.production"
+        env_file="env.production"
     else
-        compose_cmd="docker-compose -f docker-compose.dev.yml"
+        compose_cmd="docker-compose --env-file env.development -f docker-compose.dev.yml"
     fi
     
     if $compose_cmd ps | grep -q "Up"; then
@@ -129,26 +130,24 @@ check_services() {
         # 根据环境配置显示访问地址
         log_info "服务访问地址:"
 
+        # 读取对应 env 文件
+        local server_url=$(grep "^SERVER_URL=" "$env_file" 2>/dev/null | cut -d'=' -f2- || echo "http://localhost")
+        local backend_port_prod=$(grep "^BACKEND_PORT_PROD=" "$env_file" 2>/dev/null | cut -d'=' -f2- || echo "5000")
+        local frontend_port_prod=$(grep "^FRONTEND_PORT_PROD=" "$env_file" 2>/dev/null | cut -d'=' -f2- || echo "80")
+        local backend_port_dev=$(grep "^BACKEND_PORT_DEV=" "$env_file" 2>/dev/null | cut -d'=' -f2- || echo "5000")
+        local frontend_port_dev=$(grep "^FRONTEND_PORT_DEV=" "$env_file" 2>/dev/null | cut -d'=' -f2- || echo "80")
+
+        # 提取主机部分（去掉协议和端口）
+        local host=$(echo "$server_url" | sed 's|http://||' | sed 's/:.*//')
+
         if [ "$profile" = "prod" ]; then
-            # 生产环境：从环境变量获取服务器地址
-            local server_url=$(grep "^SERVER_URL=" .env 2>/dev/null | cut -d'=' -f2- || echo "http://localhost")
-            local backend_port=$(grep "^BACKEND_PORT_PROD=" .env 2>/dev/null | cut -d'=' -f2- || echo "5000")
-            local frontend_port=$(grep "^FRONTEND_PORT_PROD=" .env 2>/dev/null | cut -d'=' -f2- || echo "80")
-
-            # 提取主机部分（去掉协议和端口）
-            local host=$(echo "$server_url" | sed 's|http://||' | sed 's/:.*//')
-
-            log_info "前端: http://$host:$frontend_port"
-            log_info "后端API: http://$host:$backend_port"
-            log_info "健康检查: http://$host:$backend_port/api/health"
+            log_info "前端: http://$host:$frontend_port_prod"
+            log_info "后端API: http://$host:$backend_port_prod"
+            log_info "健康检查: http://$host:$backend_port_prod/api/health"
         else
-            # 开发环境：使用localhost
-            local backend_port=$(grep "^BACKEND_PORT_DEV=" .env 2>/dev/null | cut -d'=' -f2- || echo "5000")
-            local frontend_port=$(grep "^FRONTEND_PORT_DEV=" .env 2>/dev/null | cut -d'=' -f2- || echo "80")
-
-            log_info "前端: http://localhost:$frontend_port"
-            log_info "后端API: http://localhost:$backend_port"
-            log_info "健康检查: http://localhost:$backend_port/api/health"
+            log_info "前端: http://localhost:$frontend_port_dev"
+            log_info "后端API: http://localhost:$backend_port_dev"
+            log_info "健康检查: http://localhost:$backend_port_dev/api/health"
         fi
 
     else
