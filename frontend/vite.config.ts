@@ -43,7 +43,7 @@ export default defineConfig(({ command, mode }) => {
     define: {
       // 将后端端口和服务器URL注入到前端代码中
       __BACKEND_PORT__: JSON.stringify(backendPort),
-      __SERVER_URL__: JSON.stringify(env.SERVER_URL || `http://localhost:${backendPort}`)
+      __SERVER_URL__: JSON.stringify(env.SERVER_URL || 'http://localhost')
     }
   }
 })

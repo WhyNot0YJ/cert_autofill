@@ -34,7 +34,7 @@ class Company(db.Model):
         from flask import current_app
         
         # 获取配置的服务器地址
-        server_url = current_app.config.get('SERVER_URL', 'http://localhost:5000')
+        server_url = current_app.config.get('SERVER_URL', 'http://localhost')
         
         # 解析trade_names JSON字符串
         trade_names_list = []

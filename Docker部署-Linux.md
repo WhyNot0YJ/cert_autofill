@@ -278,7 +278,7 @@ docker network inspect cert-autofill-network
 ### 9.2 服务状态检查
 ```bash
 # 检查服务健康状态
-curl -f http://localhost:5001/api/health
+curl -f http://localhost:5000/api/health
 
 # 检查前端服务
 curl -I http://localhost

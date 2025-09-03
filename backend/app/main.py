@@ -47,7 +47,8 @@ def create_app(config_name='default'):
         """健康检查接口"""
         try:
             # 检查数据库连接
-            db.session.execute('SELECT 1')
+            from sqlalchemy import text
+            db.session.execute(text('SELECT 1'))
             return {"status": "healthy", "database": "connected"}, 200
         except Exception as e:
             return {"status": "unhealthy", "database": str(e)}, 500
@@ -78,6 +79,8 @@ def create_app(config_name='default'):
     
     return app
 
+# 创建应用实例供Gunicorn使用
+app = create_app()
+
 if __name__ == "__main__":
-    app = create_app()
     app.run(debug=True, host='0.0.0.0', port=5000)

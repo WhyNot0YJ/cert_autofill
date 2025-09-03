@@ -178,7 +178,7 @@ docker-compose ps
 ./deploy.sh logs
 
 # 测试健康检查
-curl http://localhost:5001/api/health
+curl http://localhost:5000/api/health
 ```
 
 **或在 PowerShell 中验证**：
@@ -187,7 +187,7 @@ curl http://localhost:5001/api/health
 docker-compose ps
 
 # 测试健康检查
-Invoke-WebRequest -Uri "http://localhost:5001/api/health"
+Invoke-WebRequest -Uri "http://localhost:5000/api/health"
 ```
 
 ## 五、手动部署（可选）
@@ -297,7 +297,7 @@ netstat -aon | findstr ":5001"
 ### 10.2 服务状态检查
 ```powershell
 # 检查服务健康状态
-Invoke-WebRequest -Uri "http://localhost:5001/api/health"
+Invoke-WebRequest -Uri "http://localhost:5000/api/health"
 
 # 检查前端服务
 Invoke-WebRequest -Uri "http://localhost"

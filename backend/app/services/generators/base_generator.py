@@ -116,7 +116,7 @@ class BaseGenerator:
             str: 本地文件路径，如果不存在则返回None
         """
         try:
-            server_url = current_app.config.get('SERVER_URL', 'http://localhost:5000')
+            server_url = current_app.config.get('SERVER_URL', 'http://localhost')
             if url.startswith(f'{server_url}/uploads/'):
                 # 提取相对路径
                 relative_path = url.replace(f'{server_url}/', '')
@@ -343,7 +343,7 @@ class BaseGenerator:
                 return None
             
             # 处理HTTP URL
-            server_url = current_app.config.get('SERVER_URL', 'http://localhost:5000')
+            server_url = current_app.config.get('SERVER_URL', 'http://localhost')
             if image_path.startswith(f'{server_url}/uploads/'):
                 # 提取相对路径
                 relative_path = image_path.replace(f'{server_url}/', '')

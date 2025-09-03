@@ -15,12 +15,12 @@ services:
       - DIFY_API_KEY=${DIFY_API_KEY:-app-aOHstplRYJhO3uadmVwKnf8E}
       - DIFY_API_BASE=${DIFY_API_BASE:-https://api.dify.ai/v1}
       - BACKEND_PORT_DEV=${BACKEND_PORT_DEV:-5000}
-      - BACKEND_PORT_PROD=${BACKEND_PORT_PROD:-5001}
+      - BACKEND_PORT_PROD=${BACKEND_PORT_PROD:-5000}
     volumes:
       - backend_data:/app/uploads
       - backend_db:/app
     ports:
-      - "${BACKEND_PORT_PROD:-5001}:5000"
+      - "${BACKEND_PORT_PROD:-5000}:5000"
     networks:
       - cert-autofill-network
     healthcheck:
@@ -40,11 +40,11 @@ services:
     environment:
       - ENV=${ENV:-production}
       - FRONTEND_PORT_DEV=${FRONTEND_PORT_DEV:-80}
-      - FRONTEND_PORT_PROD=${FRONTEND_PORT_PROD:-81}
+      - FRONTEND_PORT_PROD=${FRONTEND_PORT_PROD:-80}
       - BACKEND_PORT_DEV=${BACKEND_PORT_DEV:-5000}
-      - BACKEND_PORT_PROD=${BACKEND_PORT_PROD:-5001}
+      - BACKEND_PORT_PROD=${BACKEND_PORT_PROD:-5000}
     ports:
-      - "${FRONTEND_PORT_PROD:-81}:80"
+      - "${FRONTEND_PORT_PROD:-80}:80"
     depends_on:
       - backend
     networks:

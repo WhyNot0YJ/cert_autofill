@@ -132,13 +132,13 @@ check_services() {
         if [ "$profile" = "prod" ]; then
             # 生产环境：从环境变量获取服务器地址
             local server_url=$(grep "^SERVER_URL=" .env 2>/dev/null | cut -d'=' -f2- || echo "http://localhost")
-            local backend_port=$(grep "^BACKEND_PORT_PROD=" .env 2>/dev/null | cut -d'=' -f2- || echo "5001")
-            local frontend_port=$(grep "^FRONTEND_PORT_PROD=" .env 2>/dev/null | cut -d'=' -f2- || echo "81")
+            local backend_port=$(grep "^BACKEND_PORT_PROD=" .env 2>/dev/null | cut -d'=' -f2- || echo "5000")
+            local frontend_port=$(grep "^FRONTEND_PORT_PROD=" .env 2>/dev/null | cut -d'=' -f2- || echo "80")
 
             # 提取主机部分（去掉协议和端口）
             local host=$(echo "$server_url" | sed 's|http://||' | sed 's/:.*//')
 
-            log_info "前端: http://$host"
+            log_info "前端: http://$host:$frontend_port"
             log_info "后端API: http://$host:$backend_port"
             log_info "健康检查: http://$host:$backend_port/api/health"
         else

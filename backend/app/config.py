@@ -12,12 +12,12 @@ class Config:
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB
     
     # 服务器配置
-    SERVER_URL = os.environ.get('SERVER_URL', 'http://localhost:5000')  # 可通过环境变量配置
+    SERVER_URL = os.environ.get('SERVER_URL', 'http://localhost')  # 可通过环境变量配置
     
     # 端口配置
     ENV = os.environ.get('ENV', 'development')
     BACKEND_PORT_DEV = int(os.environ.get('BACKEND_PORT_DEV', 5000))
-    BACKEND_PORT_PROD = int(os.environ.get('BACKEND_PORT_PROD', 5001))
+    BACKEND_PORT_PROD = int(os.environ.get('BACKEND_PORT_PROD', 5000))
     
     @property
     def BACKEND_PORT(self):

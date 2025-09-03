@@ -141,16 +141,14 @@ export const getServerBaseURL = (): string => {
   
   // 优先使用环境变量中的服务器地址
   if (import.meta.env.VITE_SERVER_URL) {
-    // 如果URL已经包含端口号，直接使用；否则添加端口号
     const baseUrl = import.meta.env.VITE_SERVER_URL;
-    return baseUrl.includes(':') ? baseUrl : `${baseUrl}:${port}`;
+    return `${baseUrl}:${port}`;
   }
   
   // 使用注入的全局变量
   if (typeof __SERVER_URL__ !== 'undefined') {
-    // 如果URL已经包含端口号，直接使用；否则添加端口号
     const baseUrl = __SERVER_URL__;
-    return baseUrl.includes(':') ? baseUrl : `${baseUrl}:${port}`;
+    return `${baseUrl}:${port}`;
   }
   
   // 默认使用localhost
