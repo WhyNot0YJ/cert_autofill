@@ -365,7 +365,10 @@
                 <el-row :gutter="20">
                   <el-col :span="24">
                     <el-form-item label="玻璃颜色选择 (Glass Color Choice)" prop="glass_color_choice">
-                      <el-input v-model="formData.glass_color_choice" placeholder="例如: colourless/tinted, tinted, colourless" />
+                      <el-checkbox-group v-model="formData.glass_color_choice">
+                        <el-checkbox label="tinted_struck">无色 (Colourless)</el-checkbox>
+                        <el-checkbox label="colourless_struck">有色 (Tinted)</el-checkbox>
+                      </el-checkbox-group>
                     </el-form-item>
                   </el-col>
                 </el-row>
@@ -375,8 +378,8 @@
                   <el-col :span="24">
                     <el-form-item label="导体选择 (Conductors Choice)" prop="conductors_choice">
                       <el-checkbox-group v-model="formData.conductors_choice">
-                        <el-checkbox label="yes_struck">有导体</el-checkbox>
-                        <el-checkbox label="no_struck">无导体</el-checkbox>
+                        <el-checkbox label="no_struck">有导体</el-checkbox>
+                        <el-checkbox label="yes_struck">无导体</el-checkbox>
                       </el-checkbox-group>
                     </el-form-item>
                   </el-col>
@@ -387,8 +390,8 @@
                   <el-col :span="24">
                     <el-form-item label="不透明/模糊选择 (Opaque/Obscure Choice)" prop="opaque_obscure_choice">
                       <el-checkbox-group v-model="formData.opaque_obscure_choice">
-                        <el-checkbox label="yes_struck">有不透明/模糊</el-checkbox>
-                        <el-checkbox label="no_struck">无不透明/模糊</el-checkbox>
+                        <el-checkbox label="no_struck">有不透明/模糊</el-checkbox>
+                        <el-checkbox label="yes_struck">无不透明/模糊</el-checkbox>
                       </el-checkbox-group>
                     </el-form-item>
                   </el-col>
@@ -447,15 +450,30 @@
                     </el-button>
                   </div>
                   
+                  <!-- 车辆制造商 - 改为textarea -->
                   <el-row :gutter="20">
-                    <el-col :span="12">
+                    <el-col :span="24">
                       <el-form-item :label="`车辆制造商 (Vehicle Manufacturer)`" :prop="`vehicles.${index}.veh_mfr`">
-                        <el-input v-model="vehicle.veh_mfr" />
+                        <el-input 
+                          v-model="vehicle.veh_mfr" 
+                          type="textarea" 
+                          :rows="3"
+                          placeholder="请输入车辆制造商信息"
+                        />
                       </el-form-item>
                     </el-col>
-                    <el-col :span="12">
+                  </el-row>
+
+                  <!-- 车辆类型 - 改为textarea -->
+                  <el-row :gutter="20">
+                    <el-col :span="24">
                       <el-form-item :label="`车辆类型 (Vehicle Type)`" :prop="`vehicles.${index}.veh_type`">
-                        <el-input v-model="vehicle.veh_type" />
+                        <el-input 
+                          v-model="vehicle.veh_type" 
+                          type="textarea" 
+                          :rows="2"
+                          placeholder="请输入车辆类型"
+                        />
                       </el-form-item>
                     </el-col>
                   </el-row>
@@ -463,7 +481,7 @@
                   <el-row :gutter="20">
                     <el-col :span="12">
                       <el-form-item :label="`车辆类别 (Vehicle Category)`" :prop="`vehicles.${index}.veh_cat`">
-                        <el-input v-model="vehicle.veh_cat" />
+                        <el-input v-model="vehicle.veh_cat" placeholder="请输入车辆类别" />
                       </el-form-item>
                     </el-col>
                     <el-col :span="12">
@@ -500,14 +518,21 @@
                   </el-row>
 
                   <el-row :gutter="20">
-                    <el-col :span="12">
+                    <el-col :span="24">
                       <el-form-item :label="`参考点坐标 (Reference Point Coordinates)`" :prop="`vehicles.${index}.rpoint_coords`">
                         <el-input v-model="vehicle.rpoint_coords" />
                       </el-form-item>
                     </el-col>
-                    <el-col :span="12">
+                  </el-row>
+
+                  <!-- 开发描述 -->
+                  <el-row :gutter="20">
+                    <el-col :span="24">
                       <el-form-item :label="`开发描述 (Development Description)`" :prop="`vehicles.${index}.dev_desc`">
-                        <el-input v-model="vehicle.dev_desc" />
+                        <el-input 
+                          v-model="vehicle.dev_desc" 
+                          placeholder="请输入开发描述"
+                        />
                       </el-form-item>
                     </el-col>
                   </el-row>
@@ -546,7 +571,7 @@
                       <el-radio-button label="TR">TR 测试报告</el-radio-button>
                       <el-radio-button label="RCS">RCS 审查控制表</el-radio-button>
                       <el-radio-button label="TM">TM 测试记录</el-radio-button>
-                      <el-radio-button label="PM">PM 项目管理表</el-radio-button>
+                      <!-- <el-radio-button label="PM">PM 项目管理表</el-radio-button> -->
                     </el-radio-group>
                   </div>
 
@@ -889,22 +914,22 @@ const formData = reactive<{[key: string]: any}>({
   interlayer_layers: '',              // 夹层数
   windscreen_thick: '',               // 风窗厚度
   interlayer_thick: '',               // 夹层厚度
-  glass_treatment: '',                // 玻璃处理
+  glass_treatment: 'not applicable',  // 玻璃处理 - 默认值
   interlayer_type: '',                // 夹层类型
-  coating_type: '',                   // 涂层类型
-  coating_thick: '',                  // 涂层厚度
+  coating_type: 'not applicable',     // 涂层类型 - 默认值
+  coating_thick: 'not applicable',    // 涂层厚度 - 默认值
   material_nature: '',                // 材料性质
-  glass_color_choice: '',             // 玻璃颜色选择 (字符串格式)
-  coating_color: '',                  // 涂层颜色
+  glass_color_choice: ['colourless_struck', 'tinted_struck'], // 玻璃颜色选择 (数组格式) - 默认全选
+  coating_color: 'not applicable',    // 涂层颜色 - 默认值
   
   // 夹层相关选择
   interlayer_total: false,               // 总夹层
   interlayer_partial: false,             // 部分夹层
   interlayer_colourless: false,          // 无色夹层
   
-  // 选择项数组
-  conductors_choice: [],                 // 导体选择 (数组格式)
-  opaque_obscure_choice: [],             // 不透明/模糊选择 (数组格式)
+  // 选择项数组 - 默认全选
+  conductors_choice: ['yes_struck', 'no_struck'],  // 导体选择 (数组格式) - 默认全选
+  opaque_obscure_choice: ['yes_struck', 'no_struck'], // 不透明/模糊选择 (数组格式) - 默认全选
   
   remarks: '',                        // 备注
   
@@ -1019,7 +1044,7 @@ const formRules = {
     { required: true, message: '请输入夹层厚度', trigger: 'blur' }
   ],
   glass_treatment: [
-    { required: true, message: '请输入玻璃处理', trigger: 'blur' }
+    { required: false, message: '请输入玻璃处理', trigger: 'blur' }
   ],
   interlayer_type: [
     { required: true, message: '请输入夹层类型', trigger: 'blur' }
@@ -1031,16 +1056,18 @@ const formRules = {
     { required: true, message: '请输入涂层厚度', trigger: 'blur' }
   ],
   material_nature: [
-    { required: true, message: '请输入材料性质', trigger: 'blur' }
+    { required: false, message: '请输入材料性质', trigger: 'blur' }
   ],
   coating_color: [
-    { required: true, message: '请输入涂层颜色', trigger: 'blur' }
+    { required: false, message: '请输入涂层颜色', trigger: 'blur' }
   ],
   glass_color_choice: [
     { 
       required: true, 
-      message: '请输入玻璃颜色选择', 
-      trigger: 'blur' 
+      type: 'array',
+      min: 1,
+      message: '请至少选择一个玻璃颜色选项', 
+      trigger: 'change' 
     }
   ],
   conductors_choice: [
@@ -1075,7 +1102,7 @@ const formRules = {
       inst_angle: [{ required: true, message: '请输入安装角度', trigger: 'blur' }],
       seat_angle: [{ required: true, message: '请输入座椅角度', trigger: 'blur' }],
       rpoint_coords: [{ required: true, message: '请输入参考点坐标', trigger: 'blur' }],
-      dev_desc: [{ required: true, message: '请输入开发描述', trigger: 'blur' }]
+      dev_desc: [{ required: false, message: '请输入开发描述', trigger: 'blur' }]
     }
   ]
 }
@@ -1087,8 +1114,8 @@ const generationProgress = ref(0)
 const generationResult = ref<any>(null)
 const generatedDocuments = ref<any[]>([])
 const selectedFormat = ref('docx')
-const selectedDocType = ref<'IF'|'CERT'|'OTHER'|'TR'|'RCS'|'TM'|'PM'>('IF')
-
+// const selectedDocType = ref<'IF'|'CERT'|'OTHER'|'TR'|'RCS'|'TM'|'PM'>('IF')
+const selectedDocType = ref<'IF'|'CERT'|'OTHER'|'TR'|'RCS'|'TM'>('IF')
 const docTypeDisplayName = computed(() => {
   const map: Record<string, string> = {
     IF: 'IF',
@@ -1097,7 +1124,7 @@ const docTypeDisplayName = computed(() => {
     TR: 'TR 测试报告',
     RCS: 'Review Control Sheet 审查控制表',
     TM: 'TM 测试记录',
-    PM: '项目管理表'
+    // PM: '项目管理表'
   }
   const baseName = map[selectedDocType.value] || selectedDocType.value
   return `${baseName} ${selectedFormat.value === 'pdf' ? 'PDF' : 'Word'}`
@@ -1105,7 +1132,8 @@ const docTypeDisplayName = computed(() => {
 
 const filenamePreview = computed(() => {
   const prefixMap: Record<string, string> = {
-    IF: 'IF-', CERT: 'CERT-', OTHER: 'OTHER-', TR: 'TR-', RCS: 'Review Control Sheet V7 ', TM: 'TM-', PM: 'PM-'
+    // IF: 'IF-', CERT: 'CERT-', OTHER: 'OTHER-', TR: 'TR-', RCS: 'Review Control Sheet V7 ', TM: 'TM-', PM: 'PM-'
+    IF: 'IF-', CERT: 'CERT-', OTHER: 'OTHER-', TR: 'TR-', RCS: 'Review Control Sheet V7 ', TM: 'TM-'
   }
   const prefix = prefixMap[selectedDocType.value]
   const safeNo = (formData.approval_no || 'TEST')
@@ -1266,11 +1294,15 @@ const saveFormData = async () => {
       // 处理导体选择：如果选择了两个，转换为"both_visible"；如果只选择一个，保持原值
       conductors_choice: formData.conductors_choice.length === 2 
         ? 'both_visible' 
-        : formData.conductors_choice[0] || 'yes',
+        : formData.conductors_choice[0],
       // 处理不透明选择
       opaque_obscure_choice: formData.opaque_obscure_choice.length === 2 
         ? 'both_visible' 
-        : formData.opaque_obscure_choice[0] || 'yes'
+        : formData.opaque_obscure_choice[0],
+      // 处理玻璃颜色选择：如果选择了两个，转换为"both_visible"；如果只选择一个，保持原值
+      glass_color_choice: formData.glass_color_choice.length === 2 
+        ? 'both_visible' 
+        : formData.glass_color_choice[0]
     }
     
     // 保存表单数据 - 后端会自动生成session_id
@@ -1528,7 +1560,8 @@ const generateAllDocuments = async () => {
 
 const generateSelected = async () => {
   const typeMap: Record<string, 'if'|'cert'|'other'|'tr'|'rcs'|'tm'|'pm'> = {
-    IF: 'if', CERT: 'cert', OTHER: 'other', TR: 'tr', RCS: 'rcs', TM: 'tm', PM: 'pm'
+    // IF: 'if', CERT: 'cert', OTHER: 'other', TR: 'tr', RCS: 'rcs', TM: 'tm', PM: 'pm'
+     IF: 'if', CERT: 'cert', OTHER: 'other', TR: 'tr', RCS: 'rcs', TM: 'tm'
   }
   await generateSingleDocument(typeMap[selectedDocType.value])
 }
@@ -1585,12 +1618,12 @@ const generateTestData = async () => {
     coating_thick: "not applicable",
     material_nature: "float",
     coating_color: "not applicable",
-    glass_color_choice: "colourless/tinted",
+    glass_color_choice: ["colourless_struck", "tinted_struck"],
     interlayer_total: true,
     interlayer_partial: true,
     interlayer_colourless: true,
-    conductors_choice: ["yes", "no"],
-    opaque_obscure_choice: ["yes", "no"],
+    conductors_choice: ["yes_struck", "no_struck"],
+    opaque_obscure_choice: ["yes_struck", "no_struck"],
     remarks: "---",
     
     // 车辆信息
@@ -1604,7 +1637,7 @@ GAC AION NEW ENERGY AUTOMOBILE CO., LTD.
         dev_area: "1.58 m²",
         seg_height: "59.2 mm",
         curv_radius: "1071 mm",
-        inst_angle: "61.6° ",
+        inst_angle: "61.6°",
         seat_angle: "25°",
         rpoint_coords: "A: 381.213 mm B: ±370 mm C: -871.85 mm",
         dev_desc: "not applicable"
@@ -1781,7 +1814,7 @@ const ensureFormDefaults = () => {
   ensure('coating_color', formData.coating_color ?? '')
 
   // 选择项与布尔值
-  ensure('glass_color_choice', typeof formData.glass_color_choice === 'string' ? formData.glass_color_choice : '')
+  ensure('glass_color_choice', Array.isArray(formData.glass_color_choice) ? formData.glass_color_choice : [])
   ensure('conductors_choice', Array.isArray(formData.conductors_choice) ? formData.conductors_choice : [])
   ensure('opaque_obscure_choice', Array.isArray(formData.opaque_obscure_choice) ? formData.opaque_obscure_choice : [])
   ensure('interlayer_total', !!formData.interlayer_total)
@@ -1997,13 +2030,14 @@ const applyAIResult = async () => {
     coating_type: data.coating_type || '',
     coating_thick: data.coating_thick || '',
     material_nature: data.material_nature || '',
-    glass_color_choice: data.glass_color_choice || '',
+    // glass_color_choice 已在下面处理为数组
     coating_color: data.coating_color || '',
     remarks: data.remarks || '',
     
     // 选择项数组 - 确保是数组类型
     conductors_choice: Array.isArray(data.conductors_choice) ? data.conductors_choice : [],
     opaque_obscure_choice: Array.isArray(data.opaque_obscure_choice) ? data.opaque_obscure_choice : [],
+    glass_color_choice: Array.isArray(data.glass_color_choice) ? data.glass_color_choice : [],
     
     // 布尔值字段 - 处理字符串和布尔值的转换
     interlayer_total: data.interlayer_total === true || data.interlayer_total === 'true',
@@ -2067,7 +2101,7 @@ const skipToManualEdit = async () => {
   ensure('coating_thick', '')
   ensure('material_nature', '')
   ensure('coating_color', '')
-  ensure('glass_color_choice', typeof formData.glass_color_choice === 'string' ? formData.glass_color_choice : '')
+  ensure('glass_color_choice', Array.isArray(formData.glass_color_choice) ? formData.glass_color_choice : [])
   ensure('conductors_choice', Array.isArray(formData.conductors_choice) ? formData.conductors_choice : [])
   ensure('opaque_obscure_choice', Array.isArray(formData.opaque_obscure_choice) ? formData.opaque_obscure_choice : [])
   ensure('interlayer_total', !!formData.interlayer_total)
