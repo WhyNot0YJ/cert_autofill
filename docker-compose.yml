@@ -19,8 +19,8 @@ services:
     volumes:
       - backend_data:/app/uploads
       - backend_db:/app
-    ports:
-      - "${BACKEND_PORT_PROD:-5000}:5000"
+    expose:
+      - "5000"
     networks:
       - cert-autofill-network
     healthcheck:
@@ -43,8 +43,8 @@ services:
       - FRONTEND_PORT_PROD=${FRONTEND_PORT_PROD:-80}
       - BACKEND_PORT_DEV=${BACKEND_PORT_DEV:-5000}
       - BACKEND_PORT_PROD=${BACKEND_PORT_PROD:-5000}
-    ports:
-      - "${FRONTEND_PORT_PROD:-80}:80"
+    expose:
+      - "80"
     depends_on:
       - backend
     networks:
@@ -67,8 +67,6 @@ services:
       - backend
     networks:
       - cert-autofill-network
-    profiles:
-      - production
 
   # Redis缓存（可选，用于提升性能）
   redis:
@@ -80,8 +78,6 @@ services:
       - redis_data:/data
     networks:
       - cert-autofill-network
-    profiles:
-      - production
 
 volumes:
   backend_data:
