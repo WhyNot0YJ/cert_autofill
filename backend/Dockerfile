@@ -33,6 +33,16 @@ RUN apt-get update \
         pkg-config \
     && rm -rf /var/lib/apt/lists/*
 
+# 安装 LibreOffice（headless）与常用字体（含中文），以及 JRE（部分转换路径需要）
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        libreoffice \
+        libreoffice-writer \
+        default-jre-headless \
+        fonts-noto-cjk \
+        fonts-noto \
+    && rm -rf /var/lib/apt/lists/*
+
 # 复制requirements文件
 COPY requirements_clean.txt .
 
