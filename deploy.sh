@@ -91,11 +91,12 @@ start_services() {
             docker-compose --profile production up -d
         fi
     else
+        # 开发环境使用dev配置文件
         if [ "$use_build" = "true" ]; then
             log_info "强制重新构建镜像..."
-            docker-compose up --build -d
+            docker-compose -f docker-compose.dev.yml up --build -d
         else
-            docker-compose up -d
+            docker-compose -f docker-compose.dev.yml up -d
         fi
     fi
 
@@ -111,12 +112,18 @@ check_services() {
     sleep 10
 
     # 检查容器状态
-    if docker-compose ps | grep -q "Up"; then
+    if [ "$profile" = "prod" ]; then
+        compose_cmd="docker-compose"
+    else
+        compose_cmd="docker-compose -f docker-compose.dev.yml"
+    fi
+    
+    if $compose_cmd ps | grep -q "Up"; then
         log_success "所有服务运行正常"
 
         # 显示服务状态
         echo ""
-        docker-compose ps
+        $compose_cmd ps
         echo ""
 
         # 根据环境配置显示访问地址
@@ -146,7 +153,7 @@ check_services() {
 
     else
         log_error "服务启动失败，请检查日志"
-        docker-compose logs
+        $compose_cmd logs
         exit 1
     fi
 }
@@ -154,7 +161,15 @@ check_services() {
 # 停止服务
 stop_services() {
     log_info "停止服务..."
-    docker-compose down
+    
+    # 尝试停止开发环境
+    if [ -f docker-compose.dev.yml ]; then
+        docker-compose -f docker-compose.dev.yml down 2>/dev/null || true
+    fi
+    
+    # 停止生产环境
+    docker-compose down 2>/dev/null || true
+    
     log_success "服务已停止"
 }
 
@@ -163,7 +178,10 @@ cleanup() {
     log_info "清理 Docker 资源..."
     
     # 停止并删除容器
-    docker-compose down -v
+    if [ -f docker-compose.dev.yml ]; then
+        docker-compose -f docker-compose.dev.yml down -v 2>/dev/null || true
+    fi
+    docker-compose down -v 2>/dev/null || true
     
     # 删除镜像
     docker rmi cert-autofill-backend:latest cert-autofill-frontend:latest 2>/dev/null || true

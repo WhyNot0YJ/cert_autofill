@@ -1,76 +1,141 @@
 # 证书管理系统 Docker 部署指南（Windows）
 
 ## 一、前提条件
-- 系统：Windows 10/11（专业版优先），或 Windows Server 2019+
-- 已启用 WSL2（Docker Desktop 依赖）
-- 网络端口：80（前端）、5000（后端直连调试时，可选）
+- **系统要求**：Windows 10/11（专业版优先），或 Windows Server 2019+
+- **WSL2要求**：已启用 WSL2（Docker Desktop 依赖）
+- **网络要求**：内网环境，确保服务器间网络互通
+- **端口要求**：80（前端）、5001（后端API）
+- **硬件要求**：至少 4GB RAM，20GB 可用磁盘空间
 
 ## 二、安装 Docker Desktop
-1. 下载并安装 Docker Desktop：`https://www.docker.com/products/docker-desktop`
+
+### 2.1 下载安装
+1. 下载 Docker Desktop：`https://www.docker.com/products/docker-desktop`
 2. 安装过程中勾选 "Use WSL 2 instead of Hyper-V"
-3. 首次启动后，确保 Settings -> Resources -> WSL Integration 启用你的发行版（如 Ubuntu）
-4. 命令行验证：
+3. 重启计算机（如需要）
+
+### 2.2 配置 WSL2 集成
+1. 启动 Docker Desktop
+2. 进入 Settings -> Resources -> WSL Integration
+3. 启用 "Enable integration with my default WSL distro"
+4. 启用您使用的 WSL 发行版（如 Ubuntu）
+
+### 2.3 验证安装
 ```powershell
-# PowerShell
+# PowerShell 验证
 wsl -l -v
 docker --version
-docker-compose --version  # Desktop 内置 v2，可用 docker compose
+docker-compose --version
+
+# 测试 Docker 运行
+docker run hello-world
 ```
+
+### 2.4 常见安装问题
+- **WSL2 未启用**：以管理员身份运行 `wsl --install`
+- **Hyper-V 冲突**：确保选择 WSL2 而不是 Hyper-V
+- **权限问题**：确保用户有管理员权限
 
 ## 三、获取项目并配置环境
-可以在 PowerShell、CMD 或者 WSL Shell 中操作（推荐 WSL Shell 一致 Linux 体验）。
+
+### 3.1 获取项目代码
+**推荐使用 WSL Shell**（避免路径和权限问题）：
 
 ```bash
-# WSL Shell 示例：
-# 1) 获取代码
+# WSL Shell 中执行
 git clone <your-repo-url>
 cd cert_autofill
-
-# 2) 准备环境变量
-# 开发环境：
-cp env.development .env
-# 或生产环境：
-# cp env.production .env
-nano .env
-# 根据需要修改：SECRET_KEY、DIFY_API_KEY、SERVER_URL（无域名用 http://本机IP 或 http://WSL分配的IP）
 ```
 
-如果使用 PowerShell，可用：
+**或使用 PowerShell**：
 ```powershell
-# 开发环境：
-Copy-Item env.development .env
-# 或生产环境：
-# Copy-Item env.production .env
-notepad .env  # 编辑后保存
+# PowerShell 中执行
+git clone <your-repo-url>
+cd cert_autofill
 ```
+
+### 3.2 配置环境变量
+```bash
+# WSL Shell 中执行
+cp env.production .env
+nano .env
+```
+
+**或使用 PowerShell**：
+```powershell
+# PowerShell 中执行
+Copy-Item env.production .env
+notepad .env
+```
+
+### 3.3 重要配置项说明
+```bash
+# 服务器地址配置（内网部署关键）
+SERVER_URL=http://192.168.1.100  # 替换为您的内网IP地址
+
+# 端口配置
+BACKEND_PORT_PROD=5001
+FRONTEND_PORT_PROD=81
+
+# 安全配置
+SECRET_KEY=your-super-secret-production-key-here-change-this  # 请修改为复杂密钥
+
+# AI服务配置
+DIFY_API_KEY=app-aOHstplRYJhO3uadmVwKnf8E
+DIFY_API_BASE=https://api.dify.ai/v1
+
+# 数据库配置
+DATABASE_URL=sqlite:///cert_autofill.db
+```
+
+### 3.4 内网部署特殊配置
+对于Windows内网环境，需要特别注意：
+
+1. **SERVER_URL配置**：设置为内网可访问的IP地址
+2. **Windows防火墙**：确保80和5001端口开放
+3. **WSL网络**：确保WSL可以访问内网其他设备
 
 ## 四、一键部署（推荐）
-Windows 下建议在 WSL Shell 执行脚本，以避免换行符与权限问题。脚本支持多种部署模式和选项。
 
-### 基础部署
+### 4.1 准备部署脚本
+**在 WSL Shell 中执行**（推荐）：
 ```bash
-# 如从 Windows 拷贝过来，先转换换行符并赋权限
+# 转换换行符并赋予执行权限
 dos2unix deploy.sh 2>/dev/null || true
 chmod +x deploy.sh
 
-# 开发/内网（HTTP）
-./deploy.sh dev
-
-# 生产（仅 80 端口、无证书；如需 HTTPS 与域名，见 Linux 文档）
-./deploy.sh prod
+# 验证脚本权限
+ls -la deploy.sh
 ```
 
-### 依赖更新部署
-当修改了依赖文件（如 `requirements_clean.txt`、`package.json`）后，需要强制重新构建镜像：
-```bash
-# 开发环境 - 强制重新构建镜像（解决依赖更新问题）
-./deploy.sh dev --build
+**或在 PowerShell 中执行**：
+```powershell
+# 检查文件权限
+Get-ChildItem deploy.sh
 
-# 生产环境 - 强制重新构建镜像
+# 如果需要，使用 WSL 执行脚本
+wsl chmod +x deploy.sh
+```
+
+### 4.2 内网生产环境部署
+```bash
+# 在 WSL Shell 中执行（前端端口81，后端端口5001）
+./deploy.sh prod
+
+# 如果遇到依赖更新问题，强制重新构建
 ./deploy.sh prod --build
 ```
 
-### 其他管理命令
+### 4.3 开发环境部署（可选）
+```bash
+# 开发环境部署（前端端口80，后端端口5000）
+./deploy.sh dev
+
+# 开发环境强制重新构建
+./deploy.sh dev --build
+```
+
+### 4.4 服务管理命令
 ```bash
 # 查看所有可用命令
 ./deploy.sh help
@@ -91,9 +156,39 @@ chmod +x deploy.sh
 ./deploy.sh cleanup
 ```
 
-访问：
-- 前端：`http://localhost` 或 `http://本机IP`
-- 健康检查：`http://localhost/health` 或 `http://localhost:5000/api/health`
+### 4.5 部署验证
+部署完成后，通过以下方式验证：
+
+**访问地址**：
+- **生产环境**：
+  - 前端：`http://您的内网IP:81`
+  - 后端API：`http://您的内网IP:5001/api`
+  - 健康检查：`http://您的内网IP:5001/api/health`
+- **开发环境**：
+  - 前端：`http://您的内网IP:80`
+  - 后端API：`http://您的内网IP:5000/api`
+  - 健康检查：`http://您的内网IP:5000/api/health`
+
+**验证步骤**：
+```bash
+# 在 WSL Shell 中检查容器状态
+docker-compose ps
+
+# 检查服务日志
+./deploy.sh logs
+
+# 测试健康检查
+curl http://localhost:5001/api/health
+```
+
+**或在 PowerShell 中验证**：
+```powershell
+# 检查容器状态
+docker-compose ps
+
+# 测试健康检查
+Invoke-WebRequest -Uri "http://localhost:5001/api/health"
+```
 
 ## 五、手动部署（可选）
 可在 PowerShell 或 WSL Shell 执行：
@@ -130,18 +225,60 @@ docker-compose logs -f frontend
 ./deploy.sh backup
 ```
 
-## 七、无域名部署
-- `.env` 中 `SERVER_URL=http://本机IP`（或 `http://localhost`）
-- 直接访问 `http://localhost`
-- 当前 `nginx/nginx.conf` 已配置为仅 80 端口、无证书
+## 七、Windows防火墙配置
 
-## 八、注意事项
-- Windows 与 WSL 路径差异：建议在 WSL 的项目目录内执行 Docker 命令，避免路径与权限问题。
-- 文件换行符：从 Windows 编辑的脚本在 WSL 下运行前，执行 `dos2unix deploy.sh`。
-- 端口占用：确保 80/5000 未被其他程序（如 IIS）占用。
-- 权限：首次运行 Docker Desktop 需管理员权限；如提示共享驱动器权限，按提示授权。
+### 7.1 开放必要端口
+```powershell
+# 以管理员身份运行 PowerShell
+# 开放80端口（前端）
+New-NetFirewallRule -DisplayName "Cert System Frontend" -Direction Inbound -Protocol TCP -LocalPort 80 -Action Allow
 
-## 九、排障速查
+# 开放5001端口（后端API）
+New-NetFirewallRule -DisplayName "Cert System Backend" -Direction Inbound -Protocol TCP -LocalPort 5001 -Action Allow
+
+# 查看防火墙规则
+Get-NetFirewallRule -DisplayName "*Cert System*"
+```
+
+### 7.2 图形界面配置
+1. 打开 Windows Defender 防火墙
+2. 点击"高级设置"
+3. 选择"入站规则" -> "新建规则"
+4. 选择"端口" -> "TCP" -> "特定本地端口" -> 输入"80,5001"
+5. 选择"允许连接" -> 应用到所有配置文件
+
+## 八、内网部署配置要点
+
+### 8.1 网络配置
+- **SERVER_URL**：必须设置为内网可访问的IP地址
+- **端口映射**：确保80和5001端口在防火墙中开放
+- **WSL网络**：确保WSL可以访问内网其他设备
+
+### 8.2 访问方式
+- **生产环境**：
+  - 内网访问：`http://内网IP:81`
+  - API访问：`http://内网IP:5001/api`
+  - 健康检查：`http://内网IP:5001/api/health`
+- **开发环境**：
+  - 内网访问：`http://内网IP:80`
+  - API访问：`http://内网IP:5000/api`
+  - 健康检查：`http://内网IP:5000/api/health`
+
+### 8.3 安全建议
+- 修改默认的SECRET_KEY
+- 定期备份数据库和上传文件
+- 监控系统资源使用情况
+
+## 九、注意事项
+- **WSL路径**：建议在WSL的项目目录内执行Docker命令，避免路径与权限问题
+- **文件换行符**：从Windows编辑的脚本在WSL下运行前，执行 `dos2unix deploy.sh`
+- **端口占用**：确保80/5001未被其他程序（如IIS）占用
+- **权限问题**：首次运行Docker Desktop需管理员权限
+- **WSL集成**：确保Docker Desktop的WSL集成已正确配置
+
+## 十、排障速查
+
+### 10.1 基础检查命令
 ```powershell
 # 查看服务状态
 docker-compose ps
@@ -149,17 +286,39 @@ docker-compose ps
 # 查看日志
 docker-compose logs -f
 
-# 进入容器（WSL/PowerShell 通用）
+# 进入容器
 docker exec -it cert-autofill-backend bash
 
-# 查看端口占用（PowerShell）
+# 查看端口占用
 netstat -aon | findstr ":80"
-netstat -aon | findstr ":5000"
+netstat -aon | findstr ":5001"
 ```
 
-## 十、常见问题与解决方案
+### 10.2 服务状态检查
+```powershell
+# 检查服务健康状态
+Invoke-WebRequest -Uri "http://localhost:5001/api/health"
 
-### 依赖更新后容器启动失败
+# 检查前端服务
+Invoke-WebRequest -Uri "http://localhost"
+
+# 检查WSL状态
+wsl -l -v
+```
+
+### 10.3 WSL相关检查
+```bash
+# 在WSL中检查
+docker --version
+docker-compose --version
+
+# 检查WSL网络
+ip addr show
+```
+
+## 十一、常见问题与解决方案
+
+### 11.1 依赖更新后容器启动失败
 
 **问题现象**：
 ```
@@ -167,10 +326,8 @@ exec: "gunicorn": executable file not found in $PATH
 ```
 
 **解决方案**：
-```powershell
-# 使用--build选项强制重新构建镜像
-./deploy.sh dev --build
-# 或
+```bash
+# 在WSL Shell中执行
 ./deploy.sh prod --build
 
 # 手动方式
@@ -179,27 +336,35 @@ docker-compose up --build -d
 
 **原因**：修改依赖文件后，Docker使用了旧镜像缓存，新依赖没有被安装。
 
-### 前端构建失败
+### 11.2 前端构建失败
 
 **问题现象**：
 ```
 sh: vite: not found
+npm ERR! missing script: build
 ```
 
 **解决方案**：
-```powershell
-# 强制重新构建前端镜像
-./deploy.sh dev --build
-# 或手动
-docker-compose up --build -d frontend
+```bash
+# 在WSL Shell中执行
+./deploy.sh prod --build
+
+# 手动清理并重建
+docker-compose down
+docker system prune -f
+docker-compose up --build -d
 ```
 
-**原因**：前端依赖未正确安装。
+### 11.3 WSL与Windows文件权限问题
 
-### WSL与Windows文件权限问题
+**问题现象**：
+```
+Permission denied
+bash: ./deploy.sh: Permission denied
+```
 
 **解决方案**：
-```powershell
+```bash
 # 在WSL中重新设置文件权限
 chmod +x deploy.sh
 
@@ -210,7 +375,11 @@ dos2unix deploy.sh
 ls -la deploy.sh
 ```
 
-### Docker Desktop网络连接问题
+### 11.4 Docker Desktop网络连接问题
+
+**问题现象**：
+- Docker命令无法执行
+- WSL集成失败
 
 **解决方案**：
 ```powershell
@@ -219,33 +388,74 @@ ls -la deploy.sh
 
 # 检查WSL集成状态
 wsl -l -v
+
+# 重新启用WSL集成
+wsl --shutdown
+# 然后在Docker Desktop中重新启用WSL集成
 ```
 
-### 磁盘空间不足
+### 11.5 端口占用问题
+
+**问题现象**：
+```
+bind: address already in use
+```
 
 **解决方案**：
 ```powershell
-# 清理Docker资源
+# 查找占用端口的进程
+netstat -aon | findstr ":80"
+netstat -aon | findstr ":5001"
+
+# 停止占用进程
+taskkill /PID <进程ID> /F
+```
+
+### 11.6 磁盘空间不足
+
+**解决方案**：
+```bash
+# 在WSL中清理Docker资源
 docker system prune -a
 
-# 或使用脚本清理
+# 清理未使用的镜像和容器
+docker image prune -a
+docker container prune
+
+# 使用脚本清理
 ./deploy.sh cleanup
 ```
 
-## 十一、升级与回滚
+### 11.7 Windows防火墙阻止访问
 
-### 常规升级
+**问题现象**：
+- 外部无法访问服务
+- 连接被拒绝
+
+**解决方案**：
 ```powershell
+# 以管理员身份运行PowerShell
+# 开放端口
+New-NetFirewallRule -DisplayName "Cert System" -Direction Inbound -Protocol TCP -LocalPort 80,5001 -Action Allow
+
+# 或通过图形界面配置防火墙
+```
+
+## 十二、升级与回滚
+
+### 12.1 常规升级
+```bash
+# 在WSL Shell中执行
 # 拉取最新代码
 git pull
 
 # 使用一键脚本升级（推荐）
-./deploy.sh dev --build  # 开发环境
-./deploy.sh prod --build # 生产环境
+./deploy.sh prod --build  # 生产环境
 ```
 
-### 手动升级
-```powershell
+### 12.2 手动升级
+```bash
+# 在WSL Shell中执行
 # 拉取最新代码
 git pull
 
@@ -257,18 +467,19 @@ docker-compose up -d
 docker-compose --profile production up --build -d
 ```
 
-### 依赖更新升级
+### 12.3 依赖更新升级
 当更新了依赖文件时，必须使用 `--build` 选项：
-```powershell
+```bash
 # 方式1：使用脚本（推荐）
-./deploy.sh dev --build
+./deploy.sh prod --build
 
 # 方式2：手动命令
 docker-compose up --build -d
 ```
 
-### 回滚策略
-```powershell
+### 12.4 回滚策略
+```bash
+# 在WSL Shell中执行
 # 停止当前服务
 docker-compose down
 
@@ -281,4 +492,24 @@ docker-compose pull
 docker-compose up -d
 ```
 
-备注：数据库与上传目录已挂载到命名卷（`backend_data`、`backend_db`），容器重建数据不丢失。
+### 12.5 数据备份与恢复
+```bash
+# 备份数据
+./deploy.sh backup
+
+# 数据恢复（如需要）
+# 停止服务
+docker-compose down
+
+# 恢复数据卷
+docker volume restore backend_data <backup-file>
+docker volume restore backend_db <backup-file>
+
+# 重启服务
+docker-compose up -d
+```
+
+**重要说明**：
+- 数据库与上传目录已挂载到命名卷（`backend_data`、`backend_db`），容器重建数据不丢失
+- 建议定期备份重要数据
+- 升级前请确保已备份当前数据

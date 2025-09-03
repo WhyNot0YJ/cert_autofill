@@ -825,6 +825,7 @@ import { ElMessage, ElMessageBox, ElLoading } from 'element-plus'
 import { computed, reactive, ref, onMounted, nextTick } from 'vue'
 import { mvpAPI } from '../api/mvp'
 import { companyAPI, type Company } from '../api/company'
+import { getServerBaseURL } from '../api'
 import TradeInfoEditor from '../components/TradeInfoEditor.vue'
 import AppleStyleConfirm from '../components/AppleStyleConfirm.vue'
 
@@ -1378,13 +1379,13 @@ const generateSingleDocument = async (type: 'if'|'cert'|'other'|'tr'|'rcs'|'tm'|
 
 const downloadDocument = async () => {
   if (generationResult.value?.download_url) {
-    window.open(`http://localhost:5000${generationResult.value.download_url}`, '_blank')
+    window.open(`${getServerBaseURL()}${generationResult.value.download_url}`, '_blank')
   }
 }
 
 const downloadSpecificFile = async (file: any) => {
   if (file.download_url) {
-    window.open(`http://localhost:5000${file.download_url}`, '_blank')
+    window.open(`${getServerBaseURL()}${file.download_url}`, '_blank')
   }
 }
 
@@ -1395,7 +1396,7 @@ const downloadAllFiles = async () => {
       const file = generationResult.value.generated_files[i]
       if (file.download_url) {
         setTimeout(() => {
-          window.open(`http://localhost:5000${file.download_url}`, '_blank')
+          window.open(`${getServerBaseURL()}${file.download_url}`, '_blank')
         }, i * 500) // 每个文件间隔500ms
       }
     }
@@ -1534,7 +1535,7 @@ const generateSelected = async () => {
 
 const downloadSpecificDocument = (doc: any) => {
   if (doc.download_url) {
-    window.open(`http://localhost:5000${doc.download_url}`, '_blank')
+    window.open(`${getServerBaseURL()}${doc.download_url}`, '_blank')
   }
 }
 

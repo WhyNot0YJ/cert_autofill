@@ -1,15 +1,17 @@
+version: '3.8'
+
 services:
-  # 后端Flask服务（生产环境）
+  # 后端Flask服务（开发环境）
   backend:
     build: 
       context: ./backend
       dockerfile: Dockerfile
-    container_name: cert-autofill-backend
+    container_name: cert-autofill-backend-dev
     restart: unless-stopped
     environment:
-      - ENV=${ENV:-production}
-      - FLASK_ENV=${FLASK_ENV:-production}
-      - SECRET_KEY=${SECRET_KEY:-your-super-secret-production-key-here}
+      - ENV=development
+      - FLASK_ENV=development
+      - SECRET_KEY=${SECRET_KEY:-dev-secret-key-change-in-production}
       - DATABASE_URL=${DATABASE_URL:-sqlite:///cert_autofill.db}
       - SERVER_URL=${SERVER_URL:-http://localhost}
       - DIFY_API_KEY=${DIFY_API_KEY:-app-aOHstplRYJhO3uadmVwKnf8E}
@@ -20,7 +22,7 @@ services:
       - backend_data:/app/uploads
       - backend_db:/app
     ports:
-      - "${BACKEND_PORT_PROD:-5001}:5000"
+      - "${BACKEND_PORT_DEV:-5000}:5000"
     networks:
       - cert-autofill-network
     healthcheck:
@@ -30,67 +32,30 @@ services:
       retries: 3
       start_period: 40s
 
-  # 前端Vue服务（生产环境）
+  # 前端Vue服务（开发环境）
   frontend:
     build: 
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: cert-autofill-frontend
+    container_name: cert-autofill-frontend-dev
     restart: unless-stopped
     environment:
-      - ENV=${ENV:-production}
+      - ENV=development
       - FRONTEND_PORT_DEV=${FRONTEND_PORT_DEV:-80}
       - FRONTEND_PORT_PROD=${FRONTEND_PORT_PROD:-81}
       - BACKEND_PORT_DEV=${BACKEND_PORT_DEV:-5000}
       - BACKEND_PORT_PROD=${BACKEND_PORT_PROD:-5001}
     ports:
-      - "${FRONTEND_PORT_PROD:-81}:80"
+      - "${FRONTEND_PORT_DEV:-80}:80"
     depends_on:
       - backend
     networks:
       - cert-autofill-network
-
-  # Nginx反向代理（可选，用于生产环境）
-  nginx:
-    image: nginx:alpine
-    container_name: cert-autofill-nginx
-    restart: unless-stopped
-    ports:
-      - "443:443"
-      - "80:80"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/ssl:/etc/nginx/ssl:ro
-      - nginx_logs:/var/log/nginx
-    depends_on:
-      - frontend
-      - backend
-    networks:
-      - cert-autofill-network
-    profiles:
-      - production
-
-  # Redis缓存（可选，用于提升性能）
-  redis:
-    image: redis:7-alpine
-    container_name: cert-autofill-redis
-    restart: unless-stopped
-    command: redis-server --appendonly yes
-    volumes:
-      - redis_data:/data
-    networks:
-      - cert-autofill-network
-    profiles:
-      - production
 
 volumes:
   backend_data:
     driver: local
   backend_db:
-    driver: local
-  redis_data:
-    driver: local
-  nginx_logs:
     driver: local
 
 networks:

@@ -270,7 +270,7 @@ class CertGenerator(BaseGenerator):
             'company_name': '示例企业',
             'company_address': '北京市朝阳区汽车工业园区示例路123号',
             'trade_names': '示例商标;企业标识',
-            'trade_marks': ['http://localhost:5000/uploads/company/marks/defaut_mark.png'],
+            'trade_marks': [f'{current_app.config.get("SERVER_URL", "http://localhost:5000")}/uploads/company/marks/defaut_mark.png'],
             'vehicles': [
                 {
                     'veh_mfr': '示例制造商',

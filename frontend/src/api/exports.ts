@@ -2,7 +2,6 @@
 export { companyAPI } from './company'
 export { applicationAPI } from './application'
 export { mvpAPI } from './mvp'
-export { templateAPI } from './template'
 export { uploadAPI } from './upload'
 
 // 导出类型定义
@@ -32,14 +31,7 @@ export type {
   FormDataResponse
 } from './mvp'
 
-export type {
-  Template,
-  CreateTemplateRequest,
-  UpdateTemplateRequest,
-  TemplateListParams,
-  TemplateVariable,
-  TemplateListResponse
-} from './template'
+
 
 export type {
   UploadOptions,

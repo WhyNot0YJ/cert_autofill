@@ -35,11 +35,9 @@ def create_app(config_name='default'):
     
     # 注册蓝图
     from .api.mvp_routes import mvp_bp
-    from .api.template_routes import template_bp
     from .api.application_routes import application_bp
     from .api.company_routes import company_bp
     app.register_blueprint(mvp_bp, url_prefix='/api/mvp')
-    app.register_blueprint(template_bp, url_prefix='/api/template')
     app.register_blueprint(application_bp, url_prefix='/api')
     app.register_blueprint(company_bp, url_prefix='/api')
     

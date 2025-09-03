@@ -21,6 +21,22 @@ const getBackendPort = (): string => {
 // 获取后端基础URL
 const getBackendBaseURL = (): string => {
   const port = getBackendPort();
+  
+  // 优先使用环境变量中的服务器地址
+  if (import.meta.env.VITE_SERVER_URL) {
+    // 如果URL已经包含端口号，直接使用；否则添加端口号
+    const baseUrl = import.meta.env.VITE_SERVER_URL;
+    return baseUrl.includes(':') ? `${baseUrl}/api` : `${baseUrl}:${port}/api`;
+  }
+  
+  // 使用注入的全局变量
+  if (typeof __SERVER_URL__ !== 'undefined') {
+    // 如果URL已经包含端口号，直接使用；否则添加端口号
+    const baseUrl = __SERVER_URL__;
+    return baseUrl.includes(':') ? `${baseUrl}/api` : `${baseUrl}:${port}/api`;
+  }
+  
+  // 默认使用localhost
   return `http://localhost:${port}/api`;
 };
 
@@ -118,5 +134,27 @@ api.interceptors.response.use(
     return Promise.reject(normalizedError);
   }
 );
+
+// 导出获取服务器基础URL的工具函数
+export const getServerBaseURL = (): string => {
+  const port = getBackendPort();
+  
+  // 优先使用环境变量中的服务器地址
+  if (import.meta.env.VITE_SERVER_URL) {
+    // 如果URL已经包含端口号，直接使用；否则添加端口号
+    const baseUrl = import.meta.env.VITE_SERVER_URL;
+    return baseUrl.includes(':') ? baseUrl : `${baseUrl}:${port}`;
+  }
+  
+  // 使用注入的全局变量
+  if (typeof __SERVER_URL__ !== 'undefined') {
+    // 如果URL已经包含端口号，直接使用；否则添加端口号
+    const baseUrl = __SERVER_URL__;
+    return baseUrl.includes(':') ? baseUrl : `${baseUrl}:${port}`;
+  }
+  
+  // 默认使用localhost
+  return `http://localhost:${port}`;
+};
 
 export default api;

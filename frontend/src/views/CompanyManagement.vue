@@ -305,6 +305,7 @@ import { ref, reactive, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Plus, Search, Refresh, View, Edit, Delete, Upload } from '@element-plus/icons-vue'
 import { companyAPI, type Company, type CompanyListParams, type CreateCompanyRequest, type UpdateCompanyRequest } from '@/api/company'
+import { getServerBaseURL } from '@/api'
 import TradeNamesMarksDisplay from '@/components/TradeNamesMarksDisplay.vue'
 import TradeNamesEditor from '@/components/TradeNamesEditor.vue'
 import MarksEditor from '@/components/MarksEditor.vue'
@@ -563,7 +564,7 @@ const getImageUrl = (path: string | undefined) => {
   // 如果是完整URL，直接返回
   if (path.startsWith('http')) return path
   // 否则拼接基础URL
-  const baseUrl = (import.meta as any).env?.VITE_API_BASE_URL || 'http://localhost:5000'
+  const baseUrl = getServerBaseURL()
   return `${baseUrl}${path}`
 }
 

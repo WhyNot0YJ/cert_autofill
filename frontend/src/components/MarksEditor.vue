@@ -82,6 +82,7 @@
 import { ElMessage } from 'element-plus'
 import { Delete, Picture, Upload } from '@element-plus/icons-vue'
 import { uploadAPI } from '@/api/upload'
+import { getServerBaseURL } from '@/api'
 
 interface Props {
   modelValue: string[]
@@ -104,7 +105,7 @@ const getImageUrl = (path: string): string => {
   // 如果是完整URL，直接返回
   if (path.startsWith('http')) return path
   // 否则拼接基础URL
-  const baseUrl = (import.meta as any).env?.VITE_API_BASE_URL || 'http://localhost:5000'
+  const baseUrl = getServerBaseURL()
   return `${baseUrl}${path}`
 }
 

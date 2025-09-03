@@ -19,13 +19,7 @@
           </el-button>
         </router-link>
         
-        <router-link to="/templates" class="nav-link" active-class="active">
-          <el-button :type="$route.path === '/templates' ? 'primary' : 'default'" size="small">
-            <el-icon><Setting /></el-icon>
-            模板管理
-          </el-button>
-        </router-link>
-        
+
         <router-link to="/applications" class="nav-link" active-class="active">
           <el-button :type="$route.path === '/applications' ? 'primary' : 'default'" size="small">
             <el-icon><Document /></el-icon>
@@ -45,7 +39,7 @@
 </template>
 
 <script setup lang="ts">
-import { Document, Setting, OfficeBuilding } from '@element-plus/icons-vue';
+import { Document, OfficeBuilding } from '@element-plus/icons-vue';
 </script>
 
 <style scoped>
