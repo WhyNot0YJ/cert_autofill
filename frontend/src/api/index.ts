@@ -27,12 +27,7 @@ const getBackendBaseURL = (): string => {
     const baseUrl = import.meta.env.VITE_SERVER_URL;
     return baseUrl.includes(':') ? `${baseUrl}/api` : `${baseUrl}:${port}/api`;
   }
-  
-  // 使用注入的全局变量（由 vite.config.ts define 注入）
-  if (typeof __SERVER_URL__ !== 'undefined') {
-    const baseUrl = __SERVER_URL__;
-    return baseUrl.includes(':') ? `${baseUrl}/api` : `${baseUrl}:${port}/api`;
-  }
+  // 不再依赖 __SERVER_URL__，统一使用 VITE_ 或回退
   
   // 智能回退：生产环境使用页面域名，开发环境使用 Vite 代理
   if (import.meta.env.PROD && typeof window !== 'undefined' && window.location?.origin) {
@@ -144,11 +139,7 @@ export const getServerBaseURL = (): string => {
     const baseUrl = import.meta.env.VITE_SERVER_URL;
     return baseUrl.includes(':') ? baseUrl : `${baseUrl}:${port}`;
   }
-  
-  if (typeof __SERVER_URL__ !== 'undefined') {
-    const baseUrl = __SERVER_URL__;
-    return baseUrl.includes(':') ? baseUrl : `${baseUrl}:${port}`;
-  }
+  // 不再依赖 __SERVER_URL__，统一使用 VITE_ 或回退
   
   if (import.meta.env.PROD && typeof window !== 'undefined' && window.location?.origin) {
     return window.location.origin;

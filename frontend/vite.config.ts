@@ -41,9 +41,8 @@ export default defineConfig(({ command, mode }) => {
       }
     },
     define: {
-      // 将后端端口和服务器URL注入到前端代码中
-      __BACKEND_PORT__: JSON.stringify(backendPort),
-      __SERVER_URL__: JSON.stringify(env.SERVER_URL || 'http://localhost')
+      // 仅注入端口；服务器URL改为使用 VITE_ 变量或运行时回退
+      __BACKEND_PORT__: JSON.stringify(backendPort)
     }
   }
 })
