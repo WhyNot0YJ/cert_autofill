@@ -33,28 +33,22 @@ class CertGenerator(BaseGenerator):
         context = super().prepare_context(fields)
         
         # CERT文档特定的数据处理
-        # 计算simple_no：approval_no中最后一个除字母数字之外的字符前面的值
+        # 计算simple_no：approval_no中去掉最后一部分（以*分隔的部分）
         approval_no = fields.get('approval_no', '')
         simple_no = ''
         if approval_no:
-            import re
-            # 找到最后一个非字母数字字符的位置
-            last_non_alnum_match = None
-            for match in re.finditer(r'[^a-zA-Z0-9]', approval_no):
-                last_non_alnum_match = match
-            
-            if last_non_alnum_match:
-                # 取最后一个非字母数字字符前面的部分
-                simple_no = approval_no[:last_non_alnum_match.start()]
+            # 按*分割，去掉最后一部分
+            parts = approval_no.split('*')
+            if len(parts) > 1:
+                # 去掉最后一部分，重新组合
+                simple_no = '*'.join(parts[:-1])
             else:
-                # 如果没有非字母数字字符，使用完整的approval_no
+                # 如果没有*分隔符，使用完整的approval_no
                 simple_no = approval_no
         else:
             simple_no = approval_no
-            
-        # 处理商标图片 - 使用父类方法转换为本地路径数组
-        if 'trade_marks' in fields and fields['trade_marks']:
-            context['trade_marks'] = self._process_image_urls_to_paths(fields['trade_marks'])
+        print("simple_no", simple_no)
+
         
         # 处理公司图片 - 使用父类方法从数据库获取
         context['company_picture'] = self._get_company_picture(fields)
@@ -79,17 +73,8 @@ class CertGenerator(BaseGenerator):
         Returns:
             Dict[str, Any]: 处理后的上下文数据
         """
-        processed_context = context.copy()
-        
-        # 处理商标图片数组 - 使用父类的数组处理方法
-        if 'trade_marks' in processed_context and isinstance(processed_context['trade_marks'], list):
-            processed_context['trade_marks'] = self._create_inline_image_array(
-                doc, 
-                processed_context['trade_marks'], 
-                'trade_marks',
-                height=self._get_image_height_for_field('trade_marks'),
-                width=self._get_image_width_for_field('trade_marks')
-            )
+        # 先让基类处理通用图片（trade_marks 等）
+        processed_context = super()._process_inline_images(context, doc)
         
         # 处理公司图片 - 使用父类的单个图片处理方法
         if 'company_picture' in processed_context and isinstance(processed_context['company_picture'], str) and processed_context['company_picture'] != '[公司图片]':
@@ -271,6 +256,11 @@ class CertGenerator(BaseGenerator):
             'company_address': '北京市朝阳区汽车工业园区示例路123号',
             'trade_names': '示例商标;企业标识',
             'trade_marks': [f'{current_app.config.get("SERVER_URL", "http://localhost")}/uploads/company/marks/defaut_mark.png'],
+            # 设备信息（示例）
+            'equipment': [
+                {'no': 'TST2017223', 'name': 'High and low temperature damp heat test chamber'},
+                {'no': 'Y009942800', 'name': 'Intelligent transmittance tester'}
+            ],
             'vehicles': [
                 {
                     'veh_mfr': '示例制造商',

@@ -1,103 +1,10 @@
-from flask import Blueprint, request, jsonify, current_app
-from sqlalchemy import or_, and_
-from datetime import datetime
-import uuid
-import os
+from flask import Blueprint, request, jsonify
+from sqlalchemy import or_
 from ..main import db
-from ..services.ai_extract import ai_extraction_service
+from ..models.form_data import FormData
 
 application_bp = Blueprint('application', __name__)
 
-# 定义模型类
-class ApplicationManagement(db.Model):
-    """申请书管理模型"""
-    __tablename__ = 'application_management'
-    
-    id = db.Column(db.Integer, primary_key=True, index=True)
-    application_number = db.Column(db.String(100), unique=True, index=True, nullable=False)
-    title = db.Column(db.String(200), nullable=False)
-    application_type = db.Column(db.String(50), nullable=False)  # 认证类型
-    status = db.Column(db.String(20), default='draft')  # draft, submitted, processing, approved, rejected
-    
-    # 基础信息
-    approval_no = db.Column(db.String(100))
-    information_folder_no = db.Column(db.String(100))
-    company_name = db.Column(db.String(200))
-    company_address = db.Column(db.String(500))
-    
-    # 技术参数
-    windscreen_thick = db.Column(db.String(50))
-    interlayer_thick = db.Column(db.String(50))
-    glass_layers = db.Column(db.String(50))
-    interlayer_layers = db.Column(db.String(50))
-    interlayer_type = db.Column(db.String(100))
-    glass_treatment = db.Column(db.String(100))
-    coating_type = db.Column(db.String(100))
-    coating_thick = db.Column(db.String(50))
-    coating_color = db.Column(db.String(100))
-    material_nature = db.Column(db.String(100))
-    safety_class = db.Column(db.String(50))
-    pane_desc = db.Column(db.String(200))
-    
-    # 车辆信息 (JSON格式存储多个车辆)
-    vehicles = db.Column(db.JSON, default=list)
-    
-    # 备注信息
-    remarks = db.Column(db.Text)
-    
-    # 文件路径
-    application_file_path = db.Column(db.String(500))
-    report_file_path = db.Column(db.String(500))
-    generated_document_path = db.Column(db.String(500))
-    
-    # 时间戳
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    submitted_at = db.Column(db.DateTime)
-    approved_at = db.Column(db.DateTime)
-    
-    # 关联用户 (暂时移除外键约束)
-    created_by = db.Column(db.Integer, nullable=True)
-    submitted_by = db.Column(db.Integer, nullable=True)
-    approved_by = db.Column(db.Integer, nullable=True)
-    
-    # 会话ID (用于临时存储)
-    session_id = db.Column(db.String(100), unique=True, index=True)
-    
-    def __repr__(self):
-        return f"<ApplicationManagement(id={self.id}, number='{self.application_number}', status='{self.status}')>"
-
-class ApplicationHistory(db.Model):
-    """申请书历史记录模型"""
-    __tablename__ = 'application_history'
-    
-    id = db.Column(db.Integer, primary_key=True, index=True)
-    application_id = db.Column(db.Integer, db.ForeignKey('application_management.id'), nullable=False)
-    action = db.Column(db.String(50), nullable=False)  # create, update, submit, approve, reject
-    description = db.Column(db.Text)
-    changed_data = db.Column(db.JSON)  # 存储变更的数据
-    created_by = db.Column(db.Integer, nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    def __repr__(self):
-        return f"<ApplicationHistory(id={self.id}, application_id={self.application_id}, action='{self.action}')>"
-
-class ApplicationDocument(db.Model):
-    """申请书文档模型"""
-    __tablename__ = 'application_documents'
-    
-    id = db.Column(db.Integer, primary_key=True, index=True)
-    application_id = db.Column(db.Integer, db.ForeignKey('application_management.id'), nullable=False)
-    document_type = db.Column(db.String(50), nullable=False)  # application, report, generated
-    file_name = db.Column(db.String(200), nullable=False)
-    file_path = db.Column(db.String(500), nullable=False)
-    file_size = db.Column(db.Integer)
-    mime_type = db.Column(db.String(100))
-    uploaded_at = db.Column(db.DateTime, default=datetime.utcnow)
-    uploaded_by = db.Column(db.Integer, nullable=True)
-    
-    def __repr__(self):
-        return f"<ApplicationDocument(id={self.id}, application_id={self.application_id}, type='{self.document_type}')>"
 
 @application_bp.route('/applications', methods=['GET'])
 def list_applications():
@@ -107,30 +14,24 @@ def list_applications():
         per_page = request.args.get('per_page', 10, type=int)
         status = request.args.get('status')
         search = request.args.get('search')
-        
-        # 构建查询
-        query = ApplicationManagement.query
-        
-        # 状态过滤
-        if status:
-            query = query.filter(ApplicationManagement.status == status)
-        
-        # 搜索过滤
+
+        query = FormData.query
+
+        # 已移除状态用法：忽略传入的 status 过滤
+
         if search:
             search_filter = or_(
-                ApplicationManagement.application_number.contains(search),
-                ApplicationManagement.title.contains(search),
-                ApplicationManagement.company_name.contains(search),
-                ApplicationManagement.approval_no.contains(search)
+                FormData.session_id.contains(search),
+                FormData.company_name.contains(search),
+                FormData.approval_no.contains(search),
+                FormData.information_folder_no.contains(search)
             )
             query = query.filter(search_filter)
-        
-        # 排序和分页
-        applications = query.order_by(ApplicationManagement.created_at.desc()).paginate(
+
+        items = query.order_by(FormData.created_at.desc()).paginate(
             page=page, per_page=per_page, error_out=False
         )
-        
-        # 格式化返回数据
+
         result = {
             "success": True,
             "data": {
@@ -138,28 +39,97 @@ def list_applications():
                 "pagination": {
                     "page": page,
                     "per_page": per_page,
-                    "total": applications.total,
-                    "pages": applications.pages
+                    "total": items.total,
+                    "pages": items.pages
                 }
             }
         }
-        
-        for app in applications.items:
+
+        for f in items.items:
             result["data"]["applications"].append({
-                "id": app.id,
-                "application_number": app.application_number,
-                "title": app.title,
-                "application_type": app.application_type,
-                "status": app.status,
-                "company_name": app.company_name,
-                "approval_no": app.approval_no,
-                "created_at": app.created_at.isoformat() if app.created_at else None,
-                "updated_at": app.updated_at.isoformat() if app.updated_at else None,
-                "submitted_at": app.submitted_at.isoformat() if app.submitted_at else None
+                "id": f.id,
+                # 用 session_id 充当 application_number，便于追踪
+                "application_number": f.session_id,
+                # 推断申请类型：如需更准确可从字段或前端传入
+                # 移除认证类型与状态
+                "company_name": f.company_name,
+                "approval_no": f.approval_no,
+                "created_at": f.created_at.isoformat() if f.created_at else None,
+                "updated_at": f.updated_at.isoformat() if f.updated_at else None,
+                "submitted_at": None
             })
-        
+
         return jsonify(result)
-        
+
     except Exception as e:
-        return jsonify({"error": f"获取申请书列表失败: {str(e)}"}), 500 
+        return jsonify({"error": f"获取申请书列表失败: {str(e)}"}), 500
+
+
+@application_bp.route('/applications/<int:application_id>', methods=['GET'])
+def get_application(application_id: int):
+    """获取单个申请书详情（读取 FormData）"""
+    try:
+        f = FormData.query.get(application_id)
+        if not f:
+            return jsonify({"error": "申请书不存在"}), 404
+
+        data = {
+            "id": f.id,
+            "application_number": f.session_id,
+            # 移除认证类型与状态
+            "company_name": f.company_name,
+            "company_address": f.company_address,
+            "approval_no": f.approval_no,
+            "information_folder_no": f.information_folder_no,
+            "approval_date": f.approval_date.isoformat() if getattr(f, 'approval_date', None) else None,
+            "test_date": f.test_date.isoformat() if getattr(f, 'test_date', None) else None,
+            "report_date": f.report_date.isoformat() if getattr(f, 'report_date', None) else None,
+            "windscreen_thick": f.windscreen_thick,
+            "interlayer_thick": f.interlayer_thick,
+            "glass_layers": f.glass_layers,
+            "interlayer_layers": f.interlayer_layers,
+            "interlayer_type": f.interlayer_type,
+            "glass_treatment": f.glass_treatment,
+            "coating_type": f.coating_type,
+            "coating_thick": f.coating_thick,
+            "coating_color": f.coating_color,
+            "material_nature": f.material_nature,
+            "safety_class": f.safety_class,
+            "pane_desc": f.pane_desc,
+            "vehicles": f.vehicles or [],
+            "remarks": f.remarks,
+            "trade_names": f.trade_names,
+            "trade_marks": f.trade_marks or [],
+            # 系统参数 - 版本号
+            "version_1": getattr(f, 'version_1', 4),
+            "version_2": getattr(f, 'version_2', 8),
+            "version_3": getattr(f, 'version_3', 12),
+            "version_4": getattr(f, 'version_4', 1),
+            # 系统参数 - 实验室环境参数
+            "temperature": getattr(f, 'temperature', '22°C'),
+            "ambient_pressure": getattr(f, 'ambient_pressure', '1020 mbar'),
+            "relative_humidity": getattr(f, 'relative_humidity', '50 %'),
+            "created_at": f.created_at.isoformat() if f.created_at else None,
+            "updated_at": f.updated_at.isoformat() if f.updated_at else None,
+            "submitted_at": None,
+            "approved_at": None
+        }
+        return jsonify({"success": True, "data": data})
+    except Exception as e:
+        return jsonify({"error": f"获取申请书详情失败: {str(e)}"}), 500
+
+
+@application_bp.route('/applications/<int:application_id>', methods=['DELETE'])
+def delete_application(application_id: int):
+    """删除申请书（删除 FormData 记录）"""
+    try:
+        f = FormData.query.get(application_id)
+        if not f:
+            return jsonify({"error": "申请书不存在"}), 404
+        db.session.delete(f)
+        db.session.commit()
+        return jsonify({"success": True, "message": "删除成功"})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": f"删除申请书失败: {str(e)}"}), 500
 

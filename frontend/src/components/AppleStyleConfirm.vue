@@ -30,7 +30,7 @@
               <div v-if="additionalInfo" class="info-item extra-info">
                 <div class="extra-info-title">
                   <span class="info-icon">🔍</span>
-                  <span>AI提取的额外信息</span>
+                  <span>提取的额外信息</span>
                 </div>
                 <div class="extra-info-content">
                   <div v-if="keyInfo.length > 0" class="key-info-list">
@@ -88,7 +88,7 @@ interface Emits {
 
 const props = withDefaults(defineProps<Props>(), {
   title: '发现新公司',
-  subtitle: 'AI从文档中提取到新的公司信息',
+  subtitle: '从文档中提取到新的公司信息',
   description: '该公司不在现有列表中，您可以将其添加到系统中，以便后续使用。',
   confirmText: '新增公司',
   cancelText: '暂不新增'

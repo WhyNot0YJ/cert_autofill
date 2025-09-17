@@ -4,16 +4,13 @@
 提供通用的文档生成功能，包括Word和PDF格式支持
 """
 import os
-import json
-import shutil
 from datetime import datetime, date
 from docxtpl import DocxTemplate, InlineImage
 import subprocess
 import platform
 from typing import Dict, Any, List, Union
-from docx.shared import Cm, Inches
-import requests
-from io import BytesIO
+from docx.shared import Cm
+from flask import current_app
 
 
 class BaseGenerator:
@@ -71,6 +68,11 @@ class BaseGenerator:
         
         # 格式化日期字段
         context = self._format_dates(context)
+
+        # 标准化通用商标字段
+        if 'trade_names' in context or 'trade_marks' in context:
+            context['trade_names'] = self.normalize_trade_names(context.get('trade_names', ''))
+            context['trade_marks'] = self.normalize_trade_marks(context.get('trade_marks', []))
         
         return context
     
@@ -116,14 +118,17 @@ class BaseGenerator:
             str: 本地文件路径，如果不存在则返回None
         """
         try:
-            server_url = current_app.config.get('SERVER_URL', 'http://localhost')
-            if url.startswith(f'{server_url}/uploads/'):
-                # 提取相对路径
-                relative_path = url.replace(f'{server_url}/', '')
+            # 统一从 /uploads/ 截取相对路径，忽略域名和端口差异
+            if url.startswith('http'):
+                uploads_idx = url.find('/uploads/')
+                if uploads_idx != -1:
+                    relative_path = url[uploads_idx+1:]
+                else:
+                    relative_path = None
                 # 构建本地路径
                 current_dir = os.path.dirname(os.path.abspath(__file__))
                 backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(current_dir)))
-                local_path = os.path.join(backend_dir, relative_path)
+                local_path = os.path.join(backend_dir, relative_path) if relative_path else None
             elif url.startswith('/uploads/'):
                 # 处理相对路径
                 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -250,8 +255,46 @@ class BaseGenerator:
         Returns:
             Dict[str, Any]: 处理后的上下文数据
         """
-        # 基类不处理任何图片，子类需要重写此方法
-        return context
+        processed = context.copy()
+
+        # 通用处理：将 trade_marks （若存在）渲染为 InlineImage 数组
+        try:
+            if 'trade_marks' in processed and isinstance(processed['trade_marks'], list):
+                processed['trade_marks'] = self._create_inline_image_array(
+                    doc,
+                    processed['trade_marks'],
+                    'trade_marks',
+                    height=self._get_image_height_for_field('trade_marks'),
+                    width=self._get_image_width_for_field('trade_marks')
+                )
+        except Exception:
+            pass
+
+        return processed
+
+    @staticmethod
+    def normalize_trade_names(value: Any) -> str:
+        """将 trade_names 统一为分号分隔的字符串。"""
+        try:
+            if isinstance(value, list):
+                return '; '.join([str(x) for x in value if x])
+            if isinstance(value, str):
+                return value
+            return ''
+        except Exception:
+            return ''
+
+    @staticmethod
+    def normalize_trade_marks(value: Any) -> List[str]:
+        """将 trade_marks 统一为字符串数组。"""
+        try:
+            if isinstance(value, list):
+                return [x for x in value if x]
+            if isinstance(value, str):
+                return [value] if value else []
+            return []
+        except Exception:
+            return []
     
     def _create_single_inline_image(self, doc: DocxTemplate, image_path: str, field_name: str, height: Cm = None, width: Cm = None) -> Union[InlineImage, str]:
         """

@@ -28,7 +28,7 @@ class DocumentUpload(Base):
     file_size = Column(Integer)
     file_type = Column(String(50))  # pdf, docx, doc
     upload_status = Column(String(20), default='uploaded')  # uploaded, processing, completed, failed
-    ai_extraction_result = Column(JSON)  # AI提取的原始结果
+    ai_extraction_result = Column(JSON)  # 提取的原始结果
     extracted_data = Column(JSON)  # 处理后的结构化数据
     error_message = Column(Text)
     created_at = Column(DateTime, default=datetime.utcnow)

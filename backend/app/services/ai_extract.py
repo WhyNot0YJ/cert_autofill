@@ -7,7 +7,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 class AIExtractionService:
-    """AI文档信息提取服务 - 集成Dify API"""
+    """文档信息提取服务 - 集成Dify API"""
     
     def __init__(self):
         # Dify API配置
@@ -38,7 +38,7 @@ class AIExtractionService:
             }
             
         except Exception as e:
-            logger.error(f"AI提取失败: {str(e)}")
+            logger.error(f"提取失败: {str(e)}")
             return {
                 "success": False,
                 "error": str(e),

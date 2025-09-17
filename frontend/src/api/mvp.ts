@@ -108,7 +108,7 @@ class MVPAPI {
   }
 
   /**
-   * 使用AI提取文档信息
+   * 使用文档提取功能
    */
   async extractInfo(data: AIExtractionRequest): Promise<AIExtractionResponse> {
     return api.post(`${this.basePath}/extract-info`, data)
@@ -177,12 +177,6 @@ class MVPAPI {
     return api.post(`${this.basePath}/generate-tm`, data)
   }
 
-  /**
-   * 生成Project Sheet
-   */
-  async generateProjectSheet(data: DocumentGenerationRequest): Promise<DocumentGenerationResponse> {
-    return api.post(`${this.basePath}/generate-project-sheet`, data)
-  }
 
   /**
    * 下载生成的文档

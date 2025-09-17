@@ -27,18 +27,18 @@ class TrGenerator(BaseGenerator):
         context = super().prepare_context(fields)
         
         # TR测试报告特定的数据处理
-        # 添加模板所需的变量
         context.update({
             # 報告與公司資訊
             'report_no': fields.get('report_no', ''),
             'company_name': fields.get('company_name', ''),
             'approval_no': fields.get('approval_no', ''),
-            'trade_names': fields.get('trade_names', ''),
-            'trade_marks': fields.get('trade_marks', []),
+            'trade_names': context.get('trade_names', ''),
+            'trade_marks': context.get('trade_marks', []),
             'company_address': fields.get('company_address', ''),
             'information_folder_no': fields.get('information_folder_no', ''),
-            'approval_date': fields.get('approval_date', ''),
-            'report_date': fields.get('report_date', ''),
+            # 使用已在父类中格式化的日期，避免被原始值覆盖
+            'approval_date': context.get('approval_date', ''),
+            'report_date': context.get('report_date', ''),
             
             # 測試對象資訊
             'safety_class': fields.get('safety_class', ''),
@@ -50,13 +50,46 @@ class TrGenerator(BaseGenerator):
             'interlayer_type': fields.get('interlayer_type', ''),
             'coating_type': fields.get('coating_type', ''),
             'coating_thick': fields.get('coating_thick', ''),
-            'test_date': fields.get('test_date', ''),
+            'test_date': context.get('test_date', ''),
             
             # 车辆信息处理
             'vehicles': fields.get('vehicles', []),
+            
+            # 设备信息处理
+            'equipment': fields.get('equipment', []),
+            
+            # 系统参数 - 版本号
+            'version_1': fields.get('version_1', 4),
+            'version_2': fields.get('version_2', 8),
+            'version_3': fields.get('version_3', 12),
+            'version_4': fields.get('version_4', 1),
+            
+            # 系统参数 - 实验室环境参数
+            'temperature': fields.get('temperature', '22°C'),
+            'ambient_pressure': fields.get('ambient_pressure', '1020 mbar'),
+            'relative_humidity': fields.get('relative_humidity', '50 %')
         })
         
         return context
+
+    def _process_inline_images(self, context, doc):
+        """
+        直接复用基类对 trade_marks 的通用内联图片处理
+        """
+        return super()._process_inline_images(context, doc)
+
+    def _get_image_height_for_field(self, field_name: str):
+        # 与 IF/CERT 保持一致：商标图片固定高度 0.95cm
+        from docx.shared import Cm
+        if field_name == 'trade_marks':
+            return Cm(0.95)
+        return super()._get_image_height_for_field(field_name)
+
+    def _get_image_width_for_field(self, field_name: str):
+        # 宽度自动适配
+        if field_name == 'trade_marks':
+            return None
+        return super()._get_image_width_for_field(field_name)
     
     def create_sample_data(self) -> Dict[str, Any]:
         """
@@ -92,7 +125,24 @@ class TrGenerator(BaseGenerator):
             # 车辆信息
             'vehicles': [
                 {'veh_type': '轿车', 'brand': '示例品牌', 'model': '示例型号'}
-            ]
+            ],
+            
+            # 设备信息
+            'equipment': [
+                {'no': 'TST2017223', 'name': 'High and low temperature damp heat test chamber'},
+                {'no': 'Y009942800', 'name': 'Intelligent transmittance tester'}
+            ],
+            
+            # 系统参数 - 版本号
+            'version_1': 4,
+            'version_2': 8,
+            'version_3': 12,
+            'version_4': 1,
+            
+            # 系统参数 - 实验室环境参数
+            'temperature': '22°C',
+            'ambient_pressure': '1020 mbar',
+            'relative_humidity': '50 %'
         }
     
     def generate_docx(self, fields: Dict[str, Any], output_path: str) -> Dict[str, Any]:

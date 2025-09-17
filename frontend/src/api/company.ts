@@ -5,35 +5,47 @@ import type {
   PaginationInfo 
 } from '../types/api'
 
+// 设备信息类型定义
+export interface Equipment {
+  no: string
+  name: string
+}
+
 // 公司相关类型定义
 export interface Company {
   id: number
   name: string
+  company_contraction?: string
   address?: string
   signature?: string
   picture?: string
   trade_names?: string[]
   trade_marks?: string[]
+  equipment?: Equipment[]
   created_at?: string
   updated_at?: string
 }
 
 export interface CreateCompanyRequest {
   name: string
+  company_contraction?: string
   address?: string
-  signature?: File
-  picture?: File
+  signature?: File | string
+  picture?: File | string
   trade_names?: string[]
   trade_marks?: string[]
+  equipment?: Equipment[]
 }
 
 export interface UpdateCompanyRequest {
   name?: string
+  company_contraction?: string
   address?: string
-  signature?: File
-  picture?: File
+  signature?: File | string
+  picture?: File | string
   trade_names?: string[]
   trade_marks?: string[]
+  equipment?: Equipment[]
 }
 
 export interface CompanyListParams extends BaseQueryParams {
@@ -91,16 +103,17 @@ class CompanyAPI {
    * 创建公司
    */
   async createCompany(data: CreateCompanyRequest): Promise<ApiResponse<Company>> {
-    const requestData = {
+    const requestData: any = {
       name: data.name,
+      company_contraction: data.company_contraction,
       address: data.address,
       trade_names: data.trade_names || [],
-      trade_marks: data.trade_marks || []
+      trade_marks: data.trade_marks || [],
+      equipment: data.equipment || []
     }
-    
-    // TODO: 暂时不支持文件上传，仅处理基本字段
-    // if (data.signature) requestData.signature = data.signature
-    // if (data.picture) requestData.picture = data.picture
+    // 仅当为字符串URL时发送（文件上传请先走 /mvp/upload-file）
+    if (typeof data.picture === 'string' && data.picture) requestData.picture = data.picture
+    if (typeof data.signature === 'string' && data.signature) requestData.signature = data.signature
     
     return api.post(this.basePath, requestData)
   }
@@ -112,13 +125,14 @@ class CompanyAPI {
     const requestData: any = {}
     
     if (data.name !== undefined) requestData.name = data.name
+    if (data.company_contraction !== undefined) requestData.company_contraction = data.company_contraction
     if (data.address !== undefined) requestData.address = data.address
     if (data.trade_names !== undefined) requestData.trade_names = data.trade_names || []
     if (data.trade_marks !== undefined) requestData.trade_marks = data.trade_marks || []
-    
-    // TODO: 暂时不支持文件上传，仅处理基本字段
-    // if (data.signature) requestData.signature = data.signature
-    // if (data.picture) requestData.picture = data.picture
+    if (data.equipment !== undefined) requestData.equipment = data.equipment || []
+    // 仅当为字符串URL时发送（文件上传请先走 /mvp/upload-file）
+    if (typeof data.picture === 'string' && data.picture) requestData.picture = data.picture
+    if (typeof data.signature === 'string' && data.signature) requestData.signature = data.signature
     
     return api.put(`${this.basePath}/${id}`, requestData)
   }

@@ -27,11 +27,6 @@ class IfGenerator(BaseGenerator):
         context = super().prepare_context(fields)
         
         # IF文档特定的数据处理
-        # 处理商标图片 - 使用父类方法转换为本地路径数组
-        if 'trade_marks' in fields and fields['trade_marks']:
-            context['trade_marks'] = self._process_image_urls_to_paths(fields['trade_marks'])
-        
-        # 处理公司图片 - 使用父类方法从数据库获取
         context['company_picture'] = self._get_company_picture(fields)
         
         return context
@@ -47,18 +42,11 @@ class IfGenerator(BaseGenerator):
         Returns:
             Dict[str, Any]: 处理后的上下文数据
         """
-        processed_context = context.copy()
+        # 先让基类处理通用图片（trade_marks 等）
+        processed_context = super()._process_inline_images(context, doc)
         
-        # 处理商标图片数组 - 使用父类的数组处理方法
-        if 'trade_marks' in processed_context and isinstance(processed_context['trade_marks'], list):
-            processed_context['trade_marks'] = self._create_inline_image_array(
-                doc, 
-                processed_context['trade_marks'], 
-                'trade_marks',
-                height=self._get_image_height_for_field('trade_marks'),
-                width=self._get_image_width_for_field('trade_marks')
-            )
-        
+        # trade_marks 的内联图片由 BaseGenerator 统一处理
+
         # 处理公司图片 - 使用父类的单个图片处理方法
         if 'company_picture' in processed_context and isinstance(processed_context['company_picture'], str) and processed_context['company_picture'] != '[公司图片]':
             processed_context['company_picture'] = self._create_single_inline_image(

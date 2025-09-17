@@ -3,9 +3,12 @@ from werkzeug.utils import secure_filename
 import os
 import json
 import uuid
+import zipfile
+import tempfile
 from datetime import datetime, date
 from ..models import Document, DocumentUpload, FormData
 from ..services.ai_extract import ai_extraction_service
+from ..services.system_config import system_config
 
 from ..services.generators import (
     generate_if_document, generate_if_pdf_from_docx,
@@ -14,13 +17,11 @@ from ..services.generators import (
     generate_other_document, create_other_sample_data,
     generate_tr_document, create_tr_sample_data,
     generate_tm_document, create_tm_sample_data,
-    generate_pm_document, create_pm_sample_data
 )
 from ..services.generators.rcs_generator import RcsGenerator
 from ..services.generators.other_generator import OtherGenerator
 from ..services.generators.tr_generator import TrGenerator
 from ..services.generators.tm_generator import TmGenerator
-from ..services.generators.pm_generator import PmGenerator
 from ..main import db
 from sqlalchemy.orm import sessionmaker
 from ..models.base import Base
@@ -29,10 +30,16 @@ mvp_bp = Blueprint('mvp', __name__)
 
 # 允许的文件扩展名
 ALLOWED_EXTENSIONS = {'pdf', 'doc', 'docx'}
+# 允许的图片扩展名（用于公司图片/签名/商标）
+ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'bmp'}
 
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def allowed_image_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_IMAGE_EXTENSIONS
 
 
 def _make_safe_approval_no(form_data_obj, fallback: str = "TEST") -> str:
@@ -95,13 +102,6 @@ class DocumentGeneratorFactory:
                 'template': None,
                 'use_class': True
             },
-            'pm': {
-                'type': 'pm',
-                'name': 'PM',
-                'generator': PmGenerator(),
-                'template': None,
-                'use_class': True
-            }
         }
     
     def get_all_document_types(self):
@@ -155,7 +155,7 @@ class DocumentGeneratorFactory:
             return {"success": False, "error": f"IF文档处理异常: {str(e)}"}
 
 def _prepare_generation_data(form_data):
-    """准备文档生成所需的数据"""
+    """准备文档生成所需的数据（以表单数据为准，不覆盖）"""
     return {
         # 基本信息字段
         "approval_no": form_data.approval_no,
@@ -187,13 +187,24 @@ def _prepare_generation_data(form_data):
         "approval_date": form_data.approval_date,
         "test_date": form_data.test_date,
         "report_date": form_data.report_date,
-        # 公司信息（现在完全来自formData，不再查询company表）
+        # 公司信息（从Company表获取最新信息）
         "company_id": form_data.company_id,
-        "company_name": form_data.company_name,
+        "company_name": form_data.company_name or '',
         "company_address": form_data.company_address or '',
         "trade_names": form_data.trade_names or '',
         "trade_marks": form_data.trade_marks or [],
-        "vehicles": form_data.vehicles or []
+        "vehicles": form_data.vehicles or [],
+        # 设备信息（从Company表获取）
+        "equipment": form_data.equipment or [],
+        # 系统参数 - 版本号
+        "version_1": getattr(form_data, 'version_1', 4),
+        "version_2": getattr(form_data, 'version_2', 8),
+        "version_3": getattr(form_data, 'version_3', 12),
+        "version_4": getattr(form_data, 'version_4', 1),
+        # 系统参数 - 实验室环境参数
+        "temperature": getattr(form_data, 'temperature', '22°C'),
+        "ambient_pressure": getattr(form_data, 'ambient_pressure', '1020 mbar'),
+        "relative_humidity": getattr(form_data, 'relative_humidity', '50 %')
     }
 
 def _generate_single_document(doc_info, generation_data, output_dir, safe_approval_no, output_format):
@@ -301,6 +312,20 @@ def save_form_data():
                         elif not value:
                             continue  # 跳过空值，保持原有值
                     setattr(existing_form, key, value)
+            
+            # 更新系统参数
+            version_params = system_config.get_version_params()
+            lab_params = system_config.get_laboratory_params()
+            
+            existing_form.version_1 = version_params.get('version_1', 4)
+            existing_form.version_2 = version_params.get('version_2', 8)
+            existing_form.version_3 = version_params.get('version_3', 12)
+            existing_form.version_4 = version_params.get('version_4', 1)
+            
+            existing_form.temperature = lab_params.get('temperature', '22°C')
+            existing_form.ambient_pressure = lab_params.get('ambient_pressure', '1020 mbar')
+            existing_form.relative_humidity = lab_params.get('relative_humidity', '50 %')
+            
             existing_form.updated_at = datetime.utcnow()
         else:
             # 创建新记录
@@ -335,9 +360,12 @@ def save_form_data():
             else:
                 report_date = None
             
+            # 获取系统参数
+            version_params = system_config.get_version_params()
+            lab_params = system_config.get_laboratory_params()
+            
             new_form = FormData(
                 session_id=session_id,
-                title=form_data.get('title', ''),
                 # IF_Template.docx 相关字段
                 approval_no=form_data.get('approval_no', ''),
                 information_folder_no=form_data.get('information_folder_no', ''),
@@ -368,12 +396,21 @@ def save_form_data():
                 company_address=form_data.get('company_address', ''),
                 trade_names=form_data.get('trade_names', ''),
                 trade_marks=form_data.get('trade_marks', []),
+                equipment=form_data.get('equipment', []),
                 vehicles=form_data.get('vehicles', []),
                 # 新增日期字段
                 approval_date=approval_date,
                 test_date=test_date,
                 report_date=report_date,
-                status=form_data.get('status', 'draft')
+                # 系统参数 - 版本号
+                version_1=version_params.get('version_1', 4),
+                version_2=version_params.get('version_2', 8),
+                version_3=version_params.get('version_3', 12),
+                version_4=version_params.get('version_4', 1),
+                # 系统参数 - 实验室环境参数
+                temperature=lab_params.get('temperature', '22°C'),
+                ambient_pressure=lab_params.get('ambient_pressure', '1020 mbar'),
+                relative_humidity=lab_params.get('relative_humidity', '50 %')
             )
             db.session.add(new_form)
         
@@ -411,7 +448,7 @@ def get_form_data(session_id):
             "success": True,
             "data": {
                 "session_id": form_data.session_id,
-                "title": form_data.title,
+                
                 # IF_Template.docx 相关字段
                 "approval_no": form_data.approval_no,
                 "information_folder_no": form_data.information_folder_no,
@@ -503,17 +540,44 @@ def generate_all_documents():
         
         # 返回生成结果
         if generated_files:
-            return jsonify({
-                "success": True,
-                "message": f"成功生成 {len(generated_files)} 个文档",
-                "data": {
-                    "generated_files": generated_files,
-                    "failed_documents": failed_documents,
-                    "total_requested": len(all_document_types),
-                    "total_success": len(generated_files),
-                    "total_failed": len(failed_documents)
-                }
-            })
+            # 创建ZIP文件
+            zip_filename = f"documents_{safe_approval_no}_{output_format}.zip"
+            zip_path = os.path.join(output_dir, zip_filename)
+            
+            try:
+                with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                    for file_info in generated_files:
+                        if os.path.exists(file_info['file_path']):
+                            # 在ZIP中使用原始文件名
+                            zipf.write(file_info['file_path'], file_info['filename'])
+                
+                return jsonify({
+                    "success": True,
+                    "message": f"成功生成 {len(generated_files)} 个文档并打包为ZIP",
+                    "data": {
+                        "filename": zip_filename,
+                        "file_path": zip_path,
+                        "download_url": f"/api/mvp/download/{zip_filename}",
+                        "generated_files": generated_files,
+                        "failed_documents": failed_documents,
+                        "total_requested": len(all_document_types),
+                        "total_success": len(generated_files),
+                        "total_failed": len(failed_documents)
+                    }
+                })
+            except Exception as zip_error:
+                print(f"❌ 创建ZIP文件失败: {str(zip_error)}")
+                return jsonify({
+                    "success": False,
+                    "error": f"创建ZIP文件失败: {str(zip_error)}",
+                    "data": {
+                        "generated_files": generated_files,
+                        "failed_documents": failed_documents,
+                        "total_requested": len(all_document_types),
+                        "total_success": len(generated_files),
+                        "total_failed": len(failed_documents)
+                    }
+                }), 500
         else:
             return jsonify({
                 "success": False,
@@ -530,6 +594,85 @@ def generate_all_documents():
         import traceback
         print(f"错误堆栈: {traceback.format_exc()}")
         return jsonify({"error": f"生成所有文档失败: {str(e)}"}), 500
+
+# ===================== 上传文件接口（整合到 /mvp 下） =====================
+
+@mvp_bp.route('/upload-file', methods=['POST'])
+def upload_file():
+    """通用文件上传接口
+
+    前端约定：
+    - category: 文件分类，目前支持 'company'
+    - subcategory: 子分类，'marks' | 'picture' | 'signature'
+    - file: 表单文件字段名
+    返回可通过 GET /uploads/<path> 直接访问的 URL
+    """
+    try:
+        # 校验文件
+        if 'file' not in request.files:
+            return jsonify({"success": False, "error": "未找到上传的文件字段(file)"}), 400
+
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({"success": False, "error": "未选择文件"}), 400
+
+        # 读取分类参数
+        category = request.form.get('category', 'company')
+        subcategory = request.form.get('subcategory', '').lower()  # marks/picture/signature
+
+        # 仅支持公司相关图片上传
+        if category != 'company':
+            return jsonify({"success": False, "error": "不支持的分类"}), 400
+
+        if subcategory not in {'marks', 'picture', 'signature'}:
+            return jsonify({"success": False, "error": "无效的子分类"}), 400
+
+        # 校验图片类型
+        if not allowed_image_file(file.filename):
+            return jsonify({"success": False, "error": "不支持的图片类型"}), 400
+
+        # 生成安全文件名
+        original_name = file.filename
+        filename = secure_filename(original_name)
+
+        # 添加时间戳与UUID，避免重名
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        unique_id = uuid.uuid4().hex[:8]
+        filename = f"{subcategory}_{timestamp}_{unique_id}_{filename}"
+
+        # 保存路径：uploads/company/<subcategory>/
+        base_dir = current_app.config['UPLOAD_FOLDER']
+        save_dir = os.path.join(base_dir, 'company', subcategory)
+        os.makedirs(save_dir, exist_ok=True)
+        file_path = os.path.join(save_dir, filename)
+
+        # 保存文件
+        file.save(file_path)
+
+        # 生成对外可访问的 URL（由 main.py 的 /uploads/<path> 提供）
+        public_path = f"company/{subcategory}/{filename}"
+        public_url = f"/uploads/{public_path}"
+
+        # 补充文件信息
+        size = os.path.getsize(file_path)
+        mime_type = 'image/' + filename.rsplit('.', 1)[1].lower()
+
+        return jsonify({
+            "success": True,
+            "message": "文件上传成功",
+            "data": {
+                "url": public_url,
+                "filename": filename,
+                "original_name": original_name,
+                "category": category,
+                "subcategory": subcategory,
+                "size": size,
+                "mime_type": mime_type
+            }
+        })
+
+    except Exception as e:
+        return jsonify({"success": False, "error": f"上传失败: {str(e)}"}), 500
 
 @mvp_bp.route('/generate-if', methods=['POST'])
 def generate_if():
@@ -599,35 +742,20 @@ def generate_tr():
         format_type = data.get('format', 'docx')  # 支持docx和pdf格式
         form_data = FormData.query.filter_by(session_id=session_id).first() if session_id else None
         
-        # 准备TR测试报告数据
-        tr_data = {}
+        # 准备TR测试报告数据（使用通用生成数据，确保包含equipment等最新公司信息）
         if form_data:
-            # 只保留模板中实际存在的变量
-            tr_data = {
-                'report_no': form_data.report_no,
-                'company_name': form_data.company_name,
-                'approval_no': form_data.approval_no,
-                'trade_names': form_data.trade_names,
-                'trade_marks': form_data.trade_marks,
-                'company_address': form_data.company_address,
-                'information_folder_no': form_data.information_folder_no,
-                'approval_date': form_data.approval_date,
-                'report_date': form_data.report_date,
-                'safety_class': form_data.safety_class,
-                'windscreen_thick': form_data.windscreen_thick,
-                'glass_layers': form_data.glass_layers,
-                'interlayer_layers': form_data.interlayer_layers,
-                'interlayer_thick': form_data.interlayer_thick,
-                'glass_treatment': form_data.glass_treatment,
-                'interlayer_type': form_data.interlayer_type,
-                'coating_type': form_data.coating_type,
-                'coating_thick': form_data.coating_thick,
-                'test_date': form_data.test_date,
-                'vehicles': form_data.vehicles or []
-            }
+            tr_data = _prepare_generation_data(form_data)
         else:
             # 使用示例数据
             tr_data = create_tr_sample_data()
+
+        # 调试输出：TR即将使用的设备信息
+        try:
+            eq = tr_data.get('equipment', []) if isinstance(tr_data, dict) else []
+            eq_preview = eq[:3] if isinstance(eq, list) else []
+            print(f"[DEBUG] TR generate endpoint equipment count={len(eq) if isinstance(eq, list) else 0}, preview={eq_preview}")
+        except Exception:
+            pass
         
         # 生成输出路径
         output_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], 'generated_files')
@@ -723,6 +851,14 @@ def generate_tm():
         # 准备TM测试记录数据
         tm_data = {}
         if form_data:
+            # 获取公司简称
+            company_contraction = ''
+            if form_data.company_id:
+                from ..models.company import Company
+                company = Company.query.get(form_data.company_id)
+                if company:
+                    company_contraction = company.company_contraction or ''
+            
             # 只保留模板中实际存在的变量
             tm_data = {
                 'test_date': form_data.test_date,
@@ -739,7 +875,8 @@ def generate_tm():
                 'interlayer_total': form_data.interlayer_total,
                 'conductors_choice': form_data.conductors_choice,
                 'opaque_obscure_choice': form_data.opaque_obscure_choice,
-                'glass_color_choice': form_data.glass_color_choice
+                'glass_color_choice': form_data.glass_color_choice,
+                'company_contraction': company_contraction
             }
         else:
             # 使用示例数据
@@ -776,95 +913,6 @@ def generate_tm():
         return jsonify({"error": f"TM测试记录生成失败: {str(e)}"}), 500
 
 
-@mvp_bp.route('/generate-project-sheet', methods=['POST'])
-def generate_project_sheet():
-    try:
-        data = request.get_json(silent=True) or {}
-        session_id = data.get('session_id')
-        format_type = data.get('format', 'docx')  # 支持docx和pdf格式
-        form_data = FormData.query.filter_by(session_id=session_id).first() if session_id else None
-        
-        # 准备PM项目管理表数据
-        pm_data = {}
-        if form_data:
-            pm_data = {
-                'project_name': '汽车安全玻璃认证项目',
-                'project_number': form_data.approval_no or 'PM-2024-001',
-                'project_manager': '王五',
-                'project_manager_phone': '010-12345678',
-                'project_manager_email': 'pm@example.com',
-                'company_name': form_data.company_name or '示例企业名称',
-                'approval_date': form_data.approval_date,
-                'test_date': form_data.test_date,
-                'report_date': form_data.report_date,
-                'actual_end_date': '2024-06-15',
-                'project_status': '进行中',
-                'project_phase': '技术评审阶段',
-                'project_scope': '汽车安全玻璃质量管理体系认证',
-                'project_objectives': [
-                    '建立完善的质量管理体系',
-                    '通过TÜV NORD认证审核',
-                    '获得相关产品认证证书'
-                ],
-                'key_milestones': [
-                    {'name': '项目启动', 'date': '2024-01-01', 'status': '已完成'},
-                    {'name': '体系建立', 'date': '2024-03-15', 'status': '已完成'},
-                    {'name': '内部审核', 'date': '2024-04-30', 'status': '已完成'},
-                    {'name': '外部审核', 'date': '2024-06-15', 'status': '进行中'},
-                    {'name': '项目完成', 'date': '2024-06-30', 'status': '计划中'}
-                ],
-                'team_members': [
-                    {'name': '王五', 'role': '项目经理', 'phone': '010-12345678'},
-                    {'name': '李四', 'role': '技术负责人', 'phone': '010-12345679'},
-                    {'name': '张三', 'role': '质量负责人', 'phone': '010-12345680'}
-                ],
-                'budget': {
-                    'total_budget': 500000,
-                    'used_budget': 350000,
-                    'remaining_budget': 150000,
-                    'currency': 'CNY'
-                },
-                'risks': [
-                    {'risk': '技术标准变更', 'impact': '高', 'mitigation': '密切关注标准更新'},
-                    {'risk': '审核延期', 'impact': '中', 'mitigation': '提前准备审核材料'},
-                    {'risk': '人员变动', 'impact': '低', 'mitigation': '建立知识传承机制'}
-                ],
-                'next_actions': [
-                    '完成外部审核准备',
-                    '整理认证申请材料',
-                    '安排最终技术评审'
-                ],
-                'approval_status': '已批准',
-                'approver_name': '赵六',
-                'approver_title': '技术总监'
-            }
-        else:
-            # 使用示例数据
-            pm_data = create_pm_sample_data()
-        
-        # 生成输出路径
-        output_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], 'generated_files')
-        os.makedirs(output_dir, exist_ok=True)
-        file_ext = '.pdf' if format_type == 'pdf' else '.docx'
-        approval_no = form_data.approval_no if form_data else 'PM-2024-001'
-        filename = f"PM-{approval_no}{file_ext}"
-        output_path = os.path.join(output_dir, filename)
-        
-        # 生成PM项目管理表
-        result = generate_pm_document(pm_data, output_path, format_type)
-        
-        if result["success"]:
-            payload = {
-                "filename": filename,
-                "file_path": output_path,
-                "download_url": f"/api/mvp/download/{filename}"
-            }
-            return jsonify({"success": True, "message": "PM项目管理表生成成功", "data": payload})
-        else:
-            return jsonify({"error": result["message"]}), 500
-            
-    except Exception as e:
-        return jsonify({"error": f"PM项目管理表生成失败: {str(e)}"}), 500
 
 def _generate_single_document_by_type(doc_type, session_id, output_format='docx'):
     """通用的单文档生成函数"""
@@ -987,19 +1035,19 @@ def ai_extract_document():
         try:
             file.save(temp_file_path)
             
-            # 调用AI提取服务
+            # 调用提取服务
             extraction_result = ai_extraction_service.extract_from_document(temp_file_path)
             
             if extraction_result["success"]:
                 return jsonify({
                     "success": True,
-                    "message": "AI提取成功",
+                    "message": "提取成功",
                     "data": extraction_result["data"]
                 })
             else:
                 return jsonify({
                     "success": False,
-                    "error": extraction_result.get("error", "AI提取失败")
+                    "error": extraction_result.get("error", "提取失败")
                 }), 500
                 
         finally:
@@ -1008,8 +1056,8 @@ def ai_extract_document():
                 os.remove(temp_file_path)
                 
     except Exception as e:
-        current_app.logger.error(f"AI提取失败: {str(e)}")
+        current_app.logger.error(f"提取失败: {str(e)}")
         return jsonify({
             "success": False,
-            "error": f"AI提取失败: {str(e)}"
+            "error": f"提取失败: {str(e)}"
         }), 500 

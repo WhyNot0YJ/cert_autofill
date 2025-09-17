@@ -9,9 +9,7 @@ import type {
 export interface Application {
   id: number
   application_number: string
-  title: string
-  application_type: string
-  status: string
+  
   company_name?: string
   company_address?: string
   approval_no?: string
@@ -43,8 +41,7 @@ export interface ApplicationListParams extends BaseQueryParams {
 }
 
 export interface CreateApplicationRequest {
-  title: string
-  application_type: string
+  
   company_id?: number
   company_name?: string
   company_address?: string

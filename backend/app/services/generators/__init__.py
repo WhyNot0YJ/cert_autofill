@@ -11,7 +11,6 @@ from .rcs_generator import RcsGenerator, generate_rcs_document, create_rcs_sampl
 from .other_generator import OtherGenerator, generate_other_document, create_other_sample_data
 from .tr_generator import TrGenerator, generate_tr_document, create_tr_sample_data
 from .tm_generator import TmGenerator, generate_tm_document, create_tm_sample_data
-from .pm_generator import PmGenerator, generate_pm_document, create_pm_sample_data
 
 __all__ = [
     # 基础生成器
@@ -47,8 +46,4 @@ __all__ = [
     'generate_tm_document',
     'create_tm_sample_data',
     
-    # PM项目管理表生成器
-    'PmGenerator',
-    'generate_pm_document',
-    'create_pm_sample_data',
 ]

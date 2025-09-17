@@ -14,7 +14,7 @@
         <el-col :span="8">
           <el-input
             v-model="searchParams.search"
-            placeholder="搜索公司名称或地址"
+            placeholder="搜索公司名称、简称或地址"
             clearable
             @input="handleSearch"
             :prefix-icon="Search"
@@ -71,6 +71,7 @@
               />
               <div class="company-info">
                 <div class="company-title">{{ row.name }}</div>
+                <div v-if="row.company_contraction" class="company-contraction">{{ row.company_contraction }}</div>
               </div>
             </div>
           </template>
@@ -78,7 +79,7 @@
         
         <el-table-column prop="address" label="公司地址" min-width="250" show-overflow-tooltip />
         
-        <el-table-column label="商标名称/图案 (Trade Names/Marks)" width="200">
+        <el-table-column label="商标名称/图案" width="200">
           <template #default="{ row }">
             <TradeNamesMarksDisplay 
               :trade-names="row.trade_names" 
@@ -86,6 +87,17 @@
               size="small"
               :max-images="2"
             />
+          </template>
+        </el-table-column>
+        
+        <el-table-column label="设备信息" width="150">
+          <template #default="{ row }">
+            <div class="equipment-info">
+              <el-tag v-if="row.equipment && row.equipment.length > 0" type="success" size="small">
+                {{ row.equipment.length }}个设备
+              </el-tag>
+              <el-tag v-else type="info" size="small">无设备</el-tag>
+            </div>
           </template>
         </el-table-column>
         
@@ -161,6 +173,10 @@
           <el-input v-model="companyForm.name" placeholder="请输入公司名称" />
         </el-form-item>
         
+        <el-form-item label="公司简称" prop="company_contraction">
+          <el-input v-model="companyForm.company_contraction" placeholder="请输入公司简称" />
+        </el-form-item>
+        
         <el-form-item label="公司地址" prop="address">
           <el-input 
             v-model="companyForm.address" 
@@ -170,13 +186,65 @@
           />
         </el-form-item>
         
-        <el-form-item label="商标名称 (Trade Names)" prop="trade_names">
+        <el-form-item label="商标名称" prop="trade_names">
           <TradeNamesEditor v-model="companyForm.trade_names" />
         </el-form-item>
         
-        <el-form-item label="商标图案 (Trade Marks)">
+        <el-form-item label="商标图案">
           <MarksEditor v-model="companyForm.trade_marks" />
         </el-form-item>
+        
+        <!-- 设备信息 -->
+        <el-divider content-position="left">
+          设备信息
+          <el-button 
+            type="primary" 
+            size="small" 
+            @click="addEquipment"
+            style="margin-left: 10px;"
+          >
+            <el-icon><Plus /></el-icon>
+            添加设备
+          </el-button>
+        </el-divider>
+        
+        <!-- 设备信息列表 -->
+        <div v-for="(equipment, index) in companyForm.equipment" :key="index" class="equipment-info-section">
+          <div class="equipment-header">
+            <h4>设备信息 {{ index + 1 }}</h4>
+            <el-button 
+              type="danger" 
+              size="small" 
+              @click="removeEquipment(index)"
+              :disabled="companyForm.equipment.length === 1"
+            >
+              <el-icon><Delete /></el-icon>
+              删除
+            </el-button>
+          </div>
+          
+          <el-row :gutter="20">
+            <el-col :span="24">
+              <el-form-item :label="`设备编号`" :prop="`equipment.${index}.no`">
+                <el-input 
+                  v-model="equipment.no" 
+                  placeholder="请输入设备编号，如：TST2017223"
+                />
+              </el-form-item>
+            </el-col>
+          </el-row>
+          
+          <el-row :gutter="20">
+            <el-col :span="24">
+              <el-form-item :label="`设备名称`" :prop="`equipment.${index}.name`">
+                <el-input 
+                  v-model="equipment.name" 
+                  placeholder="请输入设备名称"
+                />
+              </el-form-item>
+            </el-col>
+          </el-row>
+        </div>
         
         <el-form-item label="公司图片">
           <div class="upload-container">
@@ -250,18 +318,31 @@
           <label>公司名称：</label>
           <span>{{ viewingCompany.name }}</span>
         </div>
+        <div v-if="viewingCompany.company_contraction" class="detail-item">
+          <label>公司简称：</label>
+          <span>{{ viewingCompany.company_contraction }}</span>
+        </div>
         <div class="detail-item">
           <label>公司地址：</label>
           <span>{{ viewingCompany.address || '未填写' }}</span>
         </div>
         <div class="detail-item">
-          <label>商标名称/图案 (Trade Names/Marks)：</label>
+          <label>商标名称/图案：</label>
           <TradeNamesMarksDisplay 
             :trade-names="viewingCompany.trade_names" 
             :trade-marks="viewingCompany.trade_marks || []" 
             size="large"
             :max-images="10"
           />
+        </div>
+        <div v-if="viewingCompany.equipment && viewingCompany.equipment.length > 0" class="detail-item">
+          <label>设备信息：</label>
+          <div class="equipment-list">
+            <div v-for="(equipment, index) in viewingCompany.equipment" :key="index" class="equipment-item">
+              <div class="equipment-no">{{ equipment.no }}</div>
+              <div class="equipment-name">{{ equipment.name }}</div>
+            </div>
+          </div>
         </div>
         <div class="detail-item">
           <label>创建时间：</label>
@@ -304,7 +385,8 @@
 import { ref, reactive, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Plus, Search, Refresh, View, Edit, Delete, Upload } from '@element-plus/icons-vue'
-import { companyAPI, type Company, type CompanyListParams, type CreateCompanyRequest, type UpdateCompanyRequest } from '@/api/company'
+import { companyAPI, type Company, type CompanyListParams, type CreateCompanyRequest, type UpdateCompanyRequest, type Equipment } from '@/api/company'
+import { uploadAPI } from '@/api/upload'
 import { getServerBaseURL } from '@/api'
 import TradeNamesMarksDisplay from '@/components/TradeNamesMarksDisplay.vue'
 import TradeNamesEditor from '@/components/TradeNamesEditor.vue'
@@ -341,11 +423,13 @@ const pagination = reactive({
 })
 
 // 表单数据
-const companyForm = reactive<CreateCompanyRequest & { signature?: File; picture?: File }>({
+const companyForm = reactive<CreateCompanyRequest & { signature?: File | string; picture?: File | string }>({
   name: '',
+  company_contraction: '',
   address: '',
   trade_names: [],  // 改为数组
   trade_marks: [],
+  equipment: [{ no: '', name: '' }],  // 设备信息数组，默认有一个空项
   signature: undefined,
   picture: undefined
 })
@@ -444,9 +528,11 @@ const handleEdit = (company: Company) => {
   editingCompany.value = company
   Object.assign(companyForm, {
     name: company.name,
+    company_contraction: company.company_contraction || '',
     address: company.address || '',
     trade_names: company.trade_names || [],  // 改为数组
     trade_marks: company.trade_marks || [],
+    equipment: company.equipment || [],  // 设备信息
     signature: company.signature,
     picture: company.picture
   })
@@ -465,22 +551,34 @@ const handleDelete = async (id: number) => {
   }
 }
 
-const handlePictureChange = (file: any) => {
-  companyForm.picture = file.raw
-  const reader = new FileReader()
-  reader.onload = (e) => {
-    previewPicture.value = e.target?.result as string
+const handlePictureChange = async (file: any) => {
+  try {
+    const res = await uploadAPI.uploadCompanyPicture(file.raw)
+    if (res.success) {
+      companyForm.picture = res.data.url
+      previewPicture.value = res.data.url
+      ElMessage.success('公司图片上传成功')
+    } else {
+      ElMessage.error(res.message || '公司图片上传失败')
+    }
+  } catch (e: any) {
+    ElMessage.error(e?.message || '公司图片上传失败')
   }
-  reader.readAsDataURL(file.raw)
 }
 
-const handleSignatureChange = (file: any) => {
-  companyForm.signature = file.raw
-  const reader = new FileReader()
-  reader.onload = (e) => {
-    previewSignature.value = e.target?.result as string
+const handleSignatureChange = async (file: any) => {
+  try {
+    const res = await uploadAPI.uploadCompanySignature(file.raw)
+    if (res.success) {
+      companyForm.signature = res.data.url
+      previewSignature.value = res.data.url
+      ElMessage.success('签名图片上传成功')
+    } else {
+      ElMessage.error(res.message || '签名图片上传失败')
+    }
+  } catch (e: any) {
+    ElMessage.error(e?.message || '签名图片上传失败')
   }
-  reader.readAsDataURL(file.raw)
 }
 
 const clearPicture = () => {
@@ -491,6 +589,22 @@ const clearPicture = () => {
 const clearSignature = () => {
   companyForm.signature = undefined
   previewSignature.value = ''
+}
+
+// 设备管理方法
+const addEquipment = () => {
+  if (companyForm.equipment) {
+    companyForm.equipment.push({
+      no: '',
+      name: ''
+    })
+  }
+}
+
+const removeEquipment = (index: number) => {
+  if (companyForm.equipment && companyForm.equipment.length > 1) {
+    companyForm.equipment.splice(index, 1)
+  }
 }
 
 const handleSubmit = async () => {
@@ -504,16 +618,15 @@ const handleSubmit = async () => {
       // 更新公司
       const updateData: UpdateCompanyRequest = {
         name: companyForm.name,
+        company_contraction: companyForm.company_contraction,
         address: companyForm.address,
         trade_names: companyForm.trade_names,
-        trade_marks: companyForm.trade_marks
+        trade_marks: companyForm.trade_marks,
+        equipment: companyForm.equipment
       }
-      if (companyForm.picture instanceof File) {
-        updateData.picture = companyForm.picture
-      }
-      if (companyForm.signature instanceof File) {
-        updateData.signature = companyForm.signature
-      }
+      // 直接传递 URL（或字符串）到后端
+      if (companyForm.picture) updateData.picture = companyForm.picture as any
+      if (companyForm.signature) updateData.signature = companyForm.signature as any
       
       const response = await companyAPI.updateCompany(editingCompany.value.id, updateData)
       if (response.success) {
@@ -541,9 +654,11 @@ const resetForm = () => {
   editingCompany.value = null
   Object.assign(companyForm, {
     name: '',
+    company_contraction: '',
     address: '',
     trade_names: [],  // 改为数组
     trade_marks: [],
+    equipment: [{ no: '', name: '' }],  // 设备信息，默认有一个空项
     signature: undefined,
     picture: undefined
   })
@@ -561,11 +676,11 @@ const formatDate = (dateString: string | undefined) => {
 
 const getImageUrl = (path: string | undefined) => {
   if (!path) return ''
-  // 如果是完整URL，直接返回
+  // 完整URL直接返回
   if (path.startsWith('http')) return path
-  // 否则拼接基础URL
+  // 其它一律拼接后端基础URL，确保端口（如 :81）正确
   const baseUrl = getServerBaseURL()
-  return `${baseUrl}${path}`
+  return path.startsWith('/') ? `${baseUrl}${path}` : `${baseUrl}/${path}`
 }
 
 const handleImageError = (error: any) => {
@@ -635,6 +750,12 @@ onMounted(() => {
 
 .company-title {
   font-weight: 600;
+}
+
+.company-contraction {
+  font-size: 12px;
+  color: #666;
+  font-style: italic;
 }
 
 .company-trade-name {
@@ -745,5 +866,64 @@ onMounted(() => {
 
 .detail-item:has(.detail-image) label {
   margin-bottom: 12px;
+}
+
+/* 设备信息样式 */
+.equipment-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.equipment-info-section {
+  border: 1px solid #e4e7ed;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  background: #fafafa;
+}
+
+.equipment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e4e7ed;
+}
+
+.equipment-header h4 {
+  margin: 0;
+  color: #333;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.equipment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.equipment-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+  background: #f5f7fa;
+  border-radius: 4px;
+  border: 1px solid #e4e7ed;
+}
+
+.equipment-no {
+  font-weight: 600;
+  color: #409eff;
+  font-size: 12px;
+}
+
+.equipment-name {
+  color: #666;
+  font-size: 12px;
+  line-height: 1.4;
 }
 </style>

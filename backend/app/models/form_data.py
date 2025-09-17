@@ -9,7 +9,6 @@ class FormData(db.Model):
     
     id = Column(Integer, primary_key=True, index=True)
     session_id = Column(String(100), unique=True, index=True, nullable=False)  # 会话ID
-    title = Column(String(200))  # 项目标题
     
     # IF_Template.docx 相关字段
     approval_no = Column(String(100))                    # 批准号
@@ -47,6 +46,9 @@ class FormData(db.Model):
     trade_names = Column(String(500))                    # 商标名称（分号分隔的字符串）
     trade_marks = Column(JSON, default=lambda: [])      # 商标图片URL数组
     
+    # 设备信息 (JSON数组)
+    equipment = Column(JSON, default=lambda: [])                # 设备信息数组
+    
     # 新增日期字段
     approval_date = Column(Date, nullable=False, default=lambda: date.today() - timedelta(days=14))   # 批准日期，默认今天-14天
     test_date = Column(Date, nullable=False, default=lambda: date.today() - timedelta(days=7))        # 测试日期，默认今天-7天  
@@ -55,8 +57,18 @@ class FormData(db.Model):
     # 车辆信息 (JSON数组)
     vehicles = Column(JSON, default=lambda: [])                # 车辆信息数组
     
-    # 状态管理
-    status = Column(String(20), default='draft')  # draft, completed, submitted
+    # 系统参数 - 版本号
+    version_1 = Column(Integer, default=4)                     # 版本号第1部分
+    version_2 = Column(Integer, default=8)                     # 版本号第2部分
+    version_3 = Column(Integer, default=12)                    # 版本号第3部分
+    version_4 = Column(Integer, default=1)                     # 版本号第4部分
+    
+    # 系统参数 - 实验室环境参数
+    temperature = Column(String(20), default='22°C')           # 温度（包含单位）
+    ambient_pressure = Column(String(20), default='1020 mbar') # 环境压力（包含单位）
+    relative_humidity = Column(String(20), default='50 %')     # 相对湿度（包含单位）
+    
+    # 状态管理（移除status列，仅保留is_active）
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -65,4 +77,4 @@ class FormData(db.Model):
     company = relationship("Company", back_populates="form_data")
     
     def __repr__(self):
-        return f"<FormData(id={self.id}, session_id='{self.session_id}', title='{self.title}')>" 
+        return f"<FormData(id={self.id}, session_id='{self.session_id}')>"

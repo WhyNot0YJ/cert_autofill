@@ -42,6 +42,7 @@ def get_companies():
             search_filter = f"%{search}%"
             query = query.filter(
                 Company.name.like(search_filter) | 
+                Company.company_contraction.like(search_filter) |
                 Company.address.like(search_filter)
             )
         
@@ -156,6 +157,12 @@ def create_company():
                 file.save(file_path)
                 signature_path = f"/uploads/companies/{filename}"
         
+        # 兼容：当前端已通过 /api/mvp/upload-file 得到 URL，直接写入
+        if not picture_path and data.get('picture'):
+            picture_path = data.get('picture')
+        if not signature_path and data.get('signature'):
+            signature_path = data.get('signature')
+        
         # 处理trade_names字段
         trade_names_json = None
         if 'trade_names' in data:
@@ -200,12 +207,44 @@ def create_company():
             except json.JSONDecodeError:
                 return jsonify({"error": "trade_marks字段格式错误，必须是有效的JSON数组"}), 400
         
+        # 处理equipment字段
+        equipment_json = None
+        if 'equipment' in data:
+            import json
+            try:
+                # 如果传入的是数组，转换为JSON字符串
+                if isinstance(data['equipment'], list):
+                    # 验证设备数据格式
+                    for item in data['equipment']:
+                        if not isinstance(item, dict) or 'no' not in item or 'name' not in item:
+                            return jsonify({"error": "设备信息格式错误，每个设备必须包含no(编号)和name(名称)字段"}), 400
+                    equipment_json = json.dumps(data['equipment'])
+                elif isinstance(data['equipment'], str):
+                    # 验证是否为有效的JSON数组
+                    equipment_list = json.loads(data['equipment'])
+                    if isinstance(equipment_list, list):
+                        # 验证设备数据格式
+                        for item in equipment_list:
+                            if not isinstance(item, dict) or 'no' not in item or 'name' not in item:
+                                return jsonify({"error": "设备信息格式错误，每个设备必须包含no(编号)和name(名称)字段"}), 400
+                        equipment_json = data['equipment']
+                    else:
+                        return jsonify({"error": "equipment字段必须是设备对象数组"}), 400
+                elif data['equipment'] is None:
+                    equipment_json = None
+                else:
+                    return jsonify({"error": "equipment字段必须是设备对象数组"}), 400
+            except json.JSONDecodeError:
+                return jsonify({"error": "equipment字段格式错误，必须是有效的JSON数组"}), 400
+        
         # 创建公司记录
         company = Company(
             name=data['name'],
+            company_contraction=data.get('company_contraction', ''),
             address=data.get('address', ''),
             trade_names=trade_names_json,
             trade_marks=trade_marks_json,
+            equipment=equipment_json,
             signature=signature_path,
             picture=picture_path
         )
@@ -241,6 +280,9 @@ def update_company(company_id):
             if existing_company and existing_company.id != company_id:
                 return jsonify({"error": "公司名称已存在"}), 400
             company.name = data['name']
+        
+        if 'company_contraction' in data:
+            company.company_contraction = data['company_contraction']
         
         if 'address' in data:
             company.address = data['address']
@@ -281,8 +323,36 @@ def update_company(company_id):
             except json.JSONDecodeError:
                 return jsonify({"error": "trade_marks字段格式错误，必须是有效的JSON数组"}), 400
         
+        if 'equipment' in data:
+            import json
+            try:
+                # 处理equipment字段
+                if data['equipment'] is None or data['equipment'] == '':
+                    company.equipment = None
+                elif isinstance(data['equipment'], list):
+                    # 验证设备数据格式
+                    for item in data['equipment']:
+                        if not isinstance(item, dict) or 'no' not in item or 'name' not in item:
+                            return jsonify({"error": "设备信息格式错误，每个设备必须包含no(编号)和name(名称)字段"}), 400
+                    company.equipment = json.dumps(data['equipment'])
+                elif isinstance(data['equipment'], str):
+                    # 验证是否为有效的JSON数组
+                    equipment_list = json.loads(data['equipment'])
+                    if isinstance(equipment_list, list):
+                        # 验证设备数据格式
+                        for item in equipment_list:
+                            if not isinstance(item, dict) or 'no' not in item or 'name' not in item:
+                                return jsonify({"error": "设备信息格式错误，每个设备必须包含no(编号)和name(名称)字段"}), 400
+                        company.equipment = data['equipment']
+                    else:
+                        return jsonify({"error": "equipment字段必须是设备对象数组"}), 400
+            except json.JSONDecodeError:
+                return jsonify({"error": "equipment字段格式错误，必须是有效的JSON数组"}), 400
+        
         if 'signature' in data:
             company.signature = data['signature']
+        if 'picture' in data:
+            company.picture = data['picture']
         
         # 处理图片更新
         if 'picture' in request.files:

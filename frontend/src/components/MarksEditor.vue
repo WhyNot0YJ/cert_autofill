@@ -104,6 +104,8 @@ const getImageUrl = (path: string): string => {
   if (!path) return ''
   // 如果是完整URL，直接返回
   if (path.startsWith('http')) return path
+  // 如果是以 / 开头的相对路径，直接返回，避免拼接成 //uploads
+  if (path.startsWith('/')) return path
   // 否则拼接基础URL
   const baseUrl = getServerBaseURL()
   return `${baseUrl}${path}`

@@ -22,7 +22,7 @@ export interface UploadErrorCallback {
 
 // 文件上传API类
 class UploadAPI {
-  private readonly basePath = '/upload-file'
+  private readonly basePath = '/mvp/upload-file'
 
   /**
    * 通用文件上传

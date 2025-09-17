@@ -30,7 +30,7 @@ class TmGenerator(BaseGenerator):
         # 添加模板所需的变量
         context.update({
             # 一般資訊與特性
-            'test_date': fields.get('test_date', ''),
+            'test_date': context.get('test_date', ''),
             'windscreen_thick': fields.get('windscreen_thick', ''),
             'glass_layers': fields.get('glass_layers', ''),
             'interlayer_layers': fields.get('interlayer_layers', ''),
@@ -44,7 +44,18 @@ class TmGenerator(BaseGenerator):
             'interlayer_total': fields.get('interlayer_total', False),
             'conductors_choice': fields.get('conductors_choice', ''),
             'opaque_obscure_choice': fields.get('opaque_obscure_choice', ''),
-            'glass_color_choice': fields.get('glass_color_choice', '')
+            'glass_color_choice': fields.get('glass_color_choice', ''),
+            # 公司信息
+            'company_contraction': fields.get('company_contraction', ''),
+            # 系统参数 - 版本号
+            'version_1': fields.get('version_1', 4),
+            'version_2': fields.get('version_2', 8),
+            'version_3': fields.get('version_3', 12),
+            'version_4': fields.get('version_4', 1),
+            # 系统参数 - 实验室环境参数
+            'temperature': fields.get('temperature', '22°C'),
+            'ambient_pressure': fields.get('ambient_pressure', '1020 mbar'),
+            'relative_humidity': fields.get('relative_humidity', '50 %')
         })
         
         return context
@@ -72,7 +83,18 @@ class TmGenerator(BaseGenerator):
             'interlayer_total': False,
             'conductors_choice': 'yes_struck',
             'opaque_obscure_choice': 'yes_struck',
-            'glass_color_choice': 'tinted_struck'
+            'glass_color_choice': 'tinted_struck',
+            # 公司信息
+            'company_contraction': '示例公司简称',
+            # 系统参数 - 版本号
+            'version_1': 4,
+            'version_2': 8,
+            'version_3': 12,
+            'version_4': 1,
+            # 系统参数 - 实验室环境参数
+            'temperature': '22°C',
+            'ambient_pressure': '1020 mbar',
+            'relative_humidity': '50 %'
         }
     
     def generate_docx(self, fields: Dict[str, Any], output_path: str) -> Dict[str, Any]:

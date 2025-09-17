@@ -16,6 +16,34 @@ export default defineConfig(({ command, mode }) => {
     ? parseInt(env.BACKEND_PORT_PROD || '5001')
     : parseInt(env.BACKEND_PORT_DEV || '5000')
   
+  // 优先使用前端 .env 中的 VITE_ 变量作为后端地址与端口
+  // 建议在 frontend 目录配置：
+  // .env.development / .env.production
+  //   VITE_SERVER_URL=http://127.0.0.1
+  //   VITE_BACKEND_PORT=5000
+  const viteServerUrl = env.VITE_SERVER_URL || ''
+  const viteBackendPort = env.VITE_BACKEND_PORT ? parseInt(env.VITE_BACKEND_PORT) : undefined
+
+  // 计算代理目标（优先 VITE_SERVER_URL；若未显式端口则补 VITE_BACKEND_PORT 或默认后端端口；
+  // 否则回退到 127.0.0.1，避免 localhost 解析到 ::1）
+  const computeBackendBase = (): string => {
+    if (viteServerUrl) {
+      try {
+        const url = new URL(viteServerUrl)
+        if (!url.port) {
+          url.port = String(viteBackendPort ?? backendPort)
+        }
+        return `${url.protocol}//${url.hostname}:${url.port}`
+      } catch {
+        const host = viteServerUrl.replace(/\/$/, '')
+        const port = viteBackendPort ?? backendPort
+        return host.includes(':') ? host : `${host}:${port}`
+      }
+    }
+    return `http://127.0.0.1:${viteBackendPort ?? backendPort}`
+  }
+  const backendBase = computeBackendBase()
+  
   return {
     plugins: [vue()],
     resolve: {
@@ -25,16 +53,19 @@ export default defineConfig(({ command, mode }) => {
     },
     server: {
       port: frontendPort,
+      // 在部分 Windows/Node 环境，localhost 可能解析为 ::1（IPv6），
+      // 而后端监听在 IPv4，导致连接被拒绝。强制 IPv4 优先。
+      dnsResultOrder: 'ipv4first',
       proxy: {
         // 代理uploads请求到后端
         '/uploads': {
-          target: `http://localhost:${backendPort}`,
+          target: backendBase,
           changeOrigin: true,
           secure: false
         },
         // 代理API请求到后端
         '/api': {
-          target: `http://localhost:${backendPort}`,
+          target: backendBase,
           changeOrigin: true,
           secure: false
         }

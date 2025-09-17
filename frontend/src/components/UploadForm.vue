@@ -1,10 +1,10 @@
 <template>
   <div class="upload-container">
-    <!-- AI提取说明 -->
+    <!-- 提取说明 -->
     <div class="ai-info">
       <el-alert
-        title="AI智能提取"
-        description="上传申请书文档，AI将自动提取关键信息并填充到表单中。目前仅支持申请书文件上传，测试报告功能暂未开放。"
+        title="智能提取"
+        description="上传申请书文档，系统将自动提取关键信息并填充到表单中。目前仅支持申请书文件上传，测试报告功能暂未开放。"
         type="info"
         :closable="false"
         show-icon
@@ -65,7 +65,7 @@
           :loading="loading"
           class="extract-btn"
         >
-          {{ loading ? 'AI提取中...' : 'AI提取信息' }}
+          {{ loading ? '提取中...' : '提取信息' }}
         </el-button>
       </div>
     </div>
@@ -92,12 +92,12 @@
       </div>
     </div>
 
-    <!-- AI提取结果预览 -->
+    <!-- 提取结果预览 -->
     <div v-if="extractionResult" class="extraction-result">
       <el-divider content-position="left">
         <span class="result-title">
           <el-icon><Check /></el-icon>
-          AI提取结果
+          提取结果
         </span>
       </el-divider>
       
@@ -269,16 +269,16 @@ async function onAIExtract() {
     const response = await applicationAPI.extractDocument(file.value);
     
     if (response.data.success) {
-      ElMessage.success('AI提取成功！');
+      ElMessage.success('提取成功！');
       extractionResult.value = response.data.data;
       emit('extraction-complete', response.data.data);
     } else {
-      ElMessage.error(response.data.error || 'AI提取失败');
+      ElMessage.error(response.data.error || '提取失败');
       emit('error', response.data.error);
     }
   } catch (error: any) {
-    console.error('AI提取失败:', error);
-    const errorMessage = error.response?.data?.error || error.message || 'AI提取失败';
+    console.error('提取失败:', error);
+    const errorMessage = error.response?.data?.error || error.message || '提取失败';
     ElMessage.error(errorMessage);
     emit('error', errorMessage);
   } finally {
@@ -487,7 +487,7 @@ function clearResult() {
   margin: 0;
 }
 
-/* AI提取结果 */
+/* 提取结果 */
 .extraction-result {
   margin-top: 2rem;
   padding: 1.5rem;

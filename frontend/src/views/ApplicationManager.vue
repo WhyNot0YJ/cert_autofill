@@ -57,46 +57,28 @@
             style="width: 100%"
             @row-click="handleRowClick"
           >
-            <el-table-column prop="application_number" label="申请书编号" width="180">
+            <el-table-column prop="application_number" label="申请书编号" width="200">
               <template #default="{ row }">
-                <el-link type="primary" @click="viewApplication(row.id)">
+                <el-link type="primary" @click.stop="viewApplication(row.id)">
                   {{ row.application_number }}
                 </el-link>
               </template>
             </el-table-column>
-            
-            <el-table-column prop="title" label="标题" width="250">
+            <el-table-column prop="approval_no" label="批准号" width="260">
               <template #default="{ row }">
-                <div class="application-title">
-                  <span>{{ row.title }}</span>
-                </div>
+                <span>{{ row.approval_no || '未填写' }}</span>
               </template>
             </el-table-column>
             
-            <el-table-column prop="company_name" label="公司名称" width="200">
+            <el-table-column prop="company_name" label="公司名称" width="220">
               <template #default="{ row }">
                 <span>{{ row.company_name || '未填写' }}</span>
               </template>
             </el-table-column>
             
-            <el-table-column label="商标名称/图案 (Trade Names/Marks)" width="300">
-              <template #default="{ row }">
-                <TradeNamesMarksDisplay 
-                  :trade-names="row.trade_names ? row.trade_names.split(';').filter(n => n.trim()) : []"
-                  :trade-marks="row.trade_marks || []"
-                  size="small"
-                  :max-images="3"
-                />
-              </template>
-            </el-table-column>
             
-            <el-table-column prop="status" label="状态" width="100">
-              <template #default="{ row }">
-                <el-tag :type="getStatusType(row.status)">
-                  {{ getStatusText(row.status) }}
-                </el-tag>
-              </template>
-            </el-table-column>
+            
+            
             
             <el-table-column prop="created_at" label="创建时间" width="180">
               <template #default="{ row }">
@@ -112,15 +94,15 @@
             
             <el-table-column label="操作" width="200" fixed="right">
               <template #default="{ row }">
-                <el-button size="small" @click="viewApplication(row.id)">
+                <el-button size="small" @click.stop="viewApplication(row.id)">
                   <el-icon><View /></el-icon>
                   查看
                 </el-button>
-                <el-button size="small" type="primary" @click="editApplication(row.id)">
+                <el-button size="small" type="primary" @click.stop="openEditor(row)">
                   <el-icon><Edit /></el-icon>
                   编辑
                 </el-button>
-                <el-button size="small" type="danger" @click="deleteApplication(row.id)">
+                <el-button size="small" type="danger" @click.stop="deleteApplication(row.id)">
                   <el-icon><Delete /></el-icon>
                   删除
                 </el-button>
@@ -154,17 +136,8 @@
               <el-descriptions-item label="申请书编号">
                 {{ selectedApplication.application_number }}
               </el-descriptions-item>
-              <el-descriptions-item label="标题">
-                {{ selectedApplication.title }}
-              </el-descriptions-item>
-              <el-descriptions-item label="状态">
-                <el-tag :type="getStatusType(selectedApplication.status)">
-                  {{ getStatusText(selectedApplication.status) }}
-                </el-tag>
-              </el-descriptions-item>
-              <el-descriptions-item label="认证类型">
-                {{ selectedApplication.application_type }}
-              </el-descriptions-item>
+              
+              
               <el-descriptions-item label="批准号">
                 {{ selectedApplication.approval_no || '未填写' }}
               </el-descriptions-item>
@@ -266,11 +239,23 @@
           <template #footer>
             <span class="dialog-footer">
               <el-button @click="showDetailDialog = false">关闭</el-button>
-              <el-button type="primary" @click="editApplication(selectedApplication?.id)">
-                编辑申请书
-              </el-button>
             </span>
           </template>
+        </el-dialog>
+
+        <!-- 编辑对话框（复用 ApplicationEditor） -->
+        <el-dialog 
+          v-model="showEditor" 
+          title="编辑申请书" 
+          width="820px"
+          :close-on-click-modal="false"
+        >
+          <ApplicationEditor 
+            :session-id="selectedApplication?.application_number || undefined"
+            :value="selectedApplication || undefined"
+            @saved="onEditorSaved"
+            @cancel="showEditor=false"
+          />
         </el-dialog>
       </div>
     </main>
@@ -280,7 +265,7 @@
 <script setup lang="ts">
 import { Delete, Edit, Refresh, Search, View } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import TradeNamesMarksDisplay from '../components/TradeNamesMarksDisplay.vue'
+import ApplicationEditor from '../components/ApplicationEditor.vue'
 import { onMounted, ref } from 'vue'
 import { applicationAPI } from '../api/application'
 
@@ -304,14 +289,16 @@ const loadApplications = async () => {
     const params = {
       page: currentPage.value,
       per_page: pageSize.value,
-      status: statusFilter.value || undefined,
       search: searchQuery.value || undefined
     }
     
     const response = await applicationAPI.getApplications(params)
-    if (response.data.success) {
-      applications.value = response.data.data.applications
-      total.value = response.data.data.total
+    if (response.success) {
+      applications.value = response.data.applications
+      total.value = response.data.pagination?.total || 0
+    } else {
+      applications.value = []
+      total.value = 0
     }
   } catch (error) {
     ElMessage.error('获取申请书列表失败')
@@ -346,18 +333,29 @@ const handleCurrentChange = (page: number) => {
 const viewApplication = async (id: number) => {
   try {
     const response = await applicationAPI.getApplication(id)
-    if (response.data.success) {
-      selectedApplication.value = response.data.data
+    if (response.success) {
+      selectedApplication.value = response.data
       showDetailDialog.value = true
+    } else {
+      ElMessage.error('获取申请书详情失败')
     }
   } catch (error) {
     ElMessage.error('获取申请书详情失败')
   }
 }
 
-const editApplication = (id: number) => {
-  // 跳转到编辑页面或打开编辑对话框
-  ElMessage.info('编辑功能开发中...')
+const openEditor = async (row: any) => {
+  try {
+    const res = await applicationAPI.getApplication(row.id)
+    if (res.success) {
+      selectedApplication.value = res.data
+      showEditor.value = true
+    } else {
+      ElMessage.error(res.message || '获取申请书详情失败')
+    }
+  } catch (e) {
+    ElMessage.error('获取申请书详情失败')
+  }
 }
 
 const deleteApplication = async (id: number) => {
@@ -365,11 +363,12 @@ const deleteApplication = async (id: number) => {
     await ElMessageBox.confirm('确定要删除这个申请书吗？此操作不可恢复。', '确认删除', {
       type: 'warning'
     })
-    
     const response = await applicationAPI.deleteApplication(id)
-    if (response.data.success) {
+    if (response.success) {
       ElMessage.success('申请书删除成功')
       loadApplications()
+    } else {
+      ElMessage.error(response.message || '删除申请书失败')
     }
   } catch (error) {
     if (error !== 'cancel') {
@@ -412,6 +411,15 @@ const formatDate = (dateString: string) => {
 onMounted(() => {
   loadApplications()
 })
+
+const onEditorSaved = (payload: { session_id: string }) => {
+  showEditor.value = false
+  ElMessage.success('保存成功')
+  loadApplications()
+}
+
+// 编辑对话框
+const showEditor = ref(false)
 </script>
 
 <style scoped>

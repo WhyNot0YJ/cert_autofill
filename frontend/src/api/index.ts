@@ -135,16 +135,28 @@ api.interceptors.response.use(
 export const getServerBaseURL = (): string => {
   const port = getBackendPort();
   
+  // 优先使用 VITE_ 环境变量（与vite.config.ts保持一致）
   if (import.meta.env.VITE_SERVER_URL) {
     const baseUrl = import.meta.env.VITE_SERVER_URL;
-    return baseUrl.includes(':') ? baseUrl : `${baseUrl}:${port}`;
+    try {
+      const url = new URL(baseUrl);
+      if (!url.port) {
+        url.port = String(port);
+      }
+      return `${url.protocol}//${url.hostname}:${url.port}`;
+    } catch {
+      // 如果URL解析失败，使用简单拼接
+      return baseUrl.includes(':') ? baseUrl : `${baseUrl}:${port}`;
+    }
   }
-  // 不再依赖 __SERVER_URL__，统一使用 VITE_ 或回退
   
+  // 生产环境使用页面域名
   if (import.meta.env.PROD && typeof window !== 'undefined' && window.location?.origin) {
     return window.location.origin;
   }
-  return '/';
+  
+  // 开发环境回退到 127.0.0.1（与vite.config.ts保持一致）
+  return `http://127.0.0.1:${port}`;
 };
 
 export default api;

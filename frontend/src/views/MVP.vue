@@ -78,7 +78,7 @@
                   </div>
                   <template #tip>
                     <div class="el-upload__tip">
-                      功能未开发：当前仅支持申请书文件用于AI提取
+                      功能未开发：当前仅支持申请书文件用于提取
                     </div>
                   </template>
                 </el-upload>
@@ -86,7 +86,7 @@
             </div>
             <div class="step-actions" v-if="!applicationFiles.length || !aiExtractionResult">
               <el-button 
-                class="manual-input-btn"
+                type="primary"
                 size="large"
                 @click="skipToManualEdit"
               >
@@ -239,7 +239,7 @@
                 <el-row :gutter="20">
                   <el-col :span="24">
                     <el-form-item label="批准号 (Approval No.)" prop="approval_no">
-                      <el-input v-model="formData.approval_no" />
+                      <el-input v-model="formData.approval_no" placeholder="请输入批准号" />
                     </el-form-item>
                   </el-col>
                 </el-row>
@@ -248,7 +248,7 @@
                 <el-row :gutter="20">
                   <el-col :span="24">
                     <el-form-item label="信息文件夹号 (Information Folder No.)" prop="information_folder_no">
-                      <el-input v-model="formData.information_folder_no" />
+                      <el-input v-model="formData.information_folder_no" placeholder="请输入信息文件夹号" />
                     </el-form-item>
                   </el-col>
                 </el-row>
@@ -257,7 +257,7 @@
                 <el-row :gutter="20">
                   <el-col :span="24">
                     <el-form-item label="安全等级 (Safety Class)" prop="safety_class">
-                      <el-input v-model="formData.safety_class" />
+                      <el-input v-model="formData.safety_class" placeholder="请输入安全等级" />
                     </el-form-item>
                   </el-col>
                 </el-row>
@@ -266,7 +266,7 @@
                 <el-row :gutter="20">
                   <el-col :span="24">
                     <el-form-item label="玻璃板描述 (Pane Description)" prop="pane_desc">
-                      <el-input v-model="formData.pane_desc" />
+                      <el-input v-model="formData.pane_desc" placeholder="请输入玻璃板描述" />
                     </el-form-item>
                   </el-col>
                 </el-row>
@@ -275,7 +275,7 @@
                 <el-row :gutter="20">
                   <el-col :span="24">
                     <el-form-item label="玻璃层数 (Glass Layers)" prop="glass_layers">
-                      <el-input v-model="formData.glass_layers" />
+                      <el-input v-model="formData.glass_layers" placeholder="请输入玻璃层数" />
                     </el-form-item>
                   </el-col>
                 </el-row>
@@ -284,7 +284,7 @@
                 <el-row :gutter="20">
                   <el-col :span="24">
                     <el-form-item label="夹层数 (Interlayer Layers)" prop="interlayer_layers">
-                      <el-input v-model="formData.interlayer_layers" />
+                      <el-input v-model="formData.interlayer_layers" placeholder="请输入夹层数" />
                     </el-form-item>
                   </el-col>
                 </el-row>
@@ -293,7 +293,7 @@
                 <el-row :gutter="20">
                   <el-col :span="24">
                     <el-form-item label="风窗厚度 (Windscreen Thickness)" prop="windscreen_thick">
-                      <el-input v-model="formData.windscreen_thick" />
+                      <el-input v-model="formData.windscreen_thick" placeholder="请输入风窗厚度" />
                     </el-form-item>
                   </el-col>
                 </el-row>
@@ -302,7 +302,7 @@
                 <el-row :gutter="20">
                   <el-col :span="24">
                     <el-form-item label="夹层厚度 (Interlayer Thickness)" prop="interlayer_thick">
-                      <el-input v-model="formData.interlayer_thick" />
+                      <el-input v-model="formData.interlayer_thick" placeholder="请输入夹层厚度" />
                     </el-form-item>
                   </el-col>
                 </el-row>
@@ -311,7 +311,7 @@
                 <el-row :gutter="20">
                   <el-col :span="24">
                     <el-form-item label="玻璃处理 (Glass Treatment)" prop="glass_treatment">
-                      <el-input v-model="formData.glass_treatment" />
+                      <el-input v-model="formData.glass_treatment" placeholder="请输入玻璃处理" />
                     </el-form-item>
                   </el-col>
                 </el-row>
@@ -320,7 +320,7 @@
                 <el-row :gutter="20">
                   <el-col :span="24">
                     <el-form-item label="夹层类型 (Interlayer Type)" prop="interlayer_type">
-                      <el-input v-model="formData.interlayer_type" />
+                      <el-input v-model="formData.interlayer_type" placeholder="请输入夹层类型" />
                     </el-form-item>
                   </el-col>
                 </el-row>
@@ -329,7 +329,7 @@
                 <el-row :gutter="20">
                   <el-col :span="24">
                     <el-form-item label="涂层类型 (Coating Type)" prop="coating_type">
-                      <el-input v-model="formData.coating_type" />
+                      <el-input v-model="formData.coating_type" placeholder="请输入涂层类型" />
                     </el-form-item>
                   </el-col>
                 </el-row>
@@ -338,7 +338,7 @@
                 <el-row :gutter="20">
                   <el-col :span="24">
                     <el-form-item label="涂层厚度 (Coating Thickness)" prop="coating_thick">
-                      <el-input v-model="formData.coating_thick" />
+                      <el-input v-model="formData.coating_thick" placeholder="请输入涂层厚度" />
                     </el-form-item>
                   </el-col>
                 </el-row>
@@ -347,7 +347,7 @@
                 <el-row :gutter="20">
                   <el-col :span="24">
                     <el-form-item label="材料性质 (Material Nature)" prop="material_nature">
-                      <el-input v-model="formData.material_nature" />
+                      <el-input v-model="formData.material_nature" placeholder="请输入材料性质" />
                     </el-form-item>
                   </el-col>
                 </el-row>
@@ -356,7 +356,7 @@
                 <el-row :gutter="20">
                   <el-col :span="24">
                     <el-form-item label="涂层颜色 (Coating Color)" prop="coating_color">
-                      <el-input v-model="formData.coating_color" />
+                      <el-input v-model="formData.coating_color" placeholder="请输入涂层颜色" />
                     </el-form-item>
                   </el-col>
                 </el-row>
@@ -416,6 +416,7 @@
                         v-model="formData.remarks" 
                         type="textarea" 
                         :rows="2"
+                        placeholder="请输入备注"
                       />
                     </el-form-item>
                   </el-col>
@@ -479,40 +480,49 @@
                   </el-row>
 
                   <el-row :gutter="20">
-                    <el-col :span="12">
+                    <el-col :span="24">
                       <el-form-item :label="`车辆类别 (Vehicle Category)`" :prop="`vehicles.${index}.veh_cat`">
                         <el-input v-model="vehicle.veh_cat" placeholder="请输入车辆类别" />
                       </el-form-item>
                     </el-col>
-                    <el-col :span="12">
+                  </el-row>
+
+                  <el-row :gutter="20">
+                    <el-col :span="24">
                       <el-form-item :label="`开发区域 (Development Area)`" :prop="`vehicles.${index}.dev_area`">
-                        <el-input v-model="vehicle.dev_area" />
+                        <el-input v-model="vehicle.dev_area" placeholder="请输入开发区域" />
                       </el-form-item>
                     </el-col>
                   </el-row>
 
                   <el-row :gutter="20">
-                    <el-col :span="12">
+                    <el-col :span="24">
                       <el-form-item :label="`段高度 (Segment Height)`" :prop="`vehicles.${index}.seg_height`">
-                        <el-input v-model="vehicle.seg_height" />
-                      </el-form-item>
-                    </el-col>
-                    <el-col :span="12">
-                      <el-form-item :label="`曲率半径 (Curvature Radius)`" :prop="`vehicles.${index}.curv_radius`">
-                        <el-input v-model="vehicle.curv_radius" />
+                        <el-input v-model="vehicle.seg_height" placeholder="请输入段高度" />
                       </el-form-item>
                     </el-col>
                   </el-row>
 
                   <el-row :gutter="20">
-                    <el-col :span="12">
-                      <el-form-item :label="`安装角度 (Installation Angle)`" :prop="`vehicles.${index}.inst_angle`">
-                        <el-input v-model="vehicle.inst_angle" />
+                    <el-col :span="24">
+                      <el-form-item :label="`曲率半径 (Curvature Radius)`" :prop="`vehicles.${index}.curv_radius`">
+                        <el-input v-model="vehicle.curv_radius" placeholder="请输入曲率半径" />
                       </el-form-item>
                     </el-col>
-                    <el-col :span="12">
+                  </el-row>
+
+                  <el-row :gutter="20">
+                    <el-col :span="24">
+                      <el-form-item :label="`安装角度 (Installation Angle)`" :prop="`vehicles.${index}.inst_angle`">
+                        <el-input v-model="vehicle.inst_angle" placeholder="请输入安装角度" />
+                      </el-form-item>
+                    </el-col>
+                  </el-row>
+
+                  <el-row :gutter="20">
+                    <el-col :span="24">
                       <el-form-item :label="`座椅角度 (Seat Angle)`" :prop="`vehicles.${index}.seat_angle`">
-                        <el-input v-model="vehicle.seat_angle" />
+                        <el-input v-model="vehicle.seat_angle" placeholder="请输入座椅角度" />
                       </el-form-item>
                     </el-col>
                   </el-row>
@@ -520,7 +530,7 @@
                   <el-row :gutter="20">
                     <el-col :span="24">
                       <el-form-item :label="`参考点坐标 (Reference Point Coordinates)`" :prop="`vehicles.${index}.rpoint_coords`">
-                        <el-input v-model="vehicle.rpoint_coords" />
+                        <el-input v-model="vehicle.rpoint_coords" placeholder="请输入参考点坐标" />
                       </el-form-item>
                     </el-col>
                   </el-row>
@@ -542,13 +552,24 @@
 
             <div class="step-actions">
               <el-button @click="currentStep = 0">上一步</el-button>
-              <el-button 
-                type="primary" 
-                @click="saveFormData"
-                :loading="saving"
-              >
-                保存并继续
-              </el-button>
+              <div style="flex:1"></div>
+              <div class="draft-actions">
+                <span v-if="lastDraftSavedAt" class="draft-time">上次保存：{{ new Date(lastDraftSavedAt).toLocaleTimeString() }}</span>
+                <el-button 
+                  :loading="draftSaving"
+                  @click="manualSaveDraft"
+                >
+                  保存草稿
+                </el-button>
+                <el-button 
+                  type="primary" 
+                  @click="saveFormData"
+                  :loading="saving"
+                  style="margin-left: 12px;"
+                >
+                  保存并继续
+                </el-button>
+              </div>
             </div>
           </div>
           <!-- 步骤3: 文档生成 -->
@@ -561,81 +582,103 @@
             <div class="generation-section">
               <div class="generate-grid" v-if="!generating && !generatingAll">
                 <div class="left-pane">
-                  <!-- 文档类型选择（并列） -->
-                  <div class="doc-type-selection">
-                    <h3>选择文档类型</h3>
-                    <el-radio-group v-model="selectedDocType" class="doc-type-group">
-                      <el-radio-button label="IF">IF 文档</el-radio-button>
-                      <el-radio-button label="CERT">CERT 证书</el-radio-button>
-                      <el-radio-button label="OTHER">OTHER 文档</el-radio-button>
-                      <el-radio-button label="TR">TR 测试报告</el-radio-button>
-                      <el-radio-button label="RCS">RCS 审查控制表</el-radio-button>
-                      <el-radio-button label="TM">TM 测试记录</el-radio-button>
-                      <!-- <el-radio-button label="PM">PM 项目管理表</el-radio-button> -->
+                  <!-- 生成模式切换 -->
+                  <div class="generation-mode-switch">
+                    <el-radio-group v-model="generationMode" class="mode-switch">
+                      <el-radio-button label="single">
+                        <el-icon><Download /></el-icon>
+                        单个生成
+                      </el-radio-button>
+                      <el-radio-button label="batch">
+                        <el-icon><Collection /></el-icon>
+                        批量生成
+                      </el-radio-button>
                     </el-radio-group>
                   </div>
 
-                  <!-- 格式选择 -->
-                  <div class="format-selection">
-                    <h3>选择输出格式</h3>
-                    <div v-if="generationResult && generationResult.filename && !generationResult.generated_files" class="format-tip">
-                      <el-alert
-                        title="提示"
-                        type="info"
-                        :closable="false"
-                        show-icon
-                      >
-                        <template #default>
-                          您已经生成了{{ generationResult.filename.endsWith('.pdf') ? 'PDF' : 'Word' }}文档，可以继续选择其他格式生成。
-                        </template>
-                      </el-alert>
-                    </div>
-                    <el-radio-group v-model="selectedFormat" class="format-options">
-                      <el-radio label="docx">
-                        <el-icon><Document /></el-icon>
-                        Word文档 (.docx)
-                      </el-radio>
-                      <el-radio label="pdf">
-                        <el-icon><Document /></el-icon>
-                        PDF文档 (.pdf)
-                      </el-radio>
-                    </el-radio-group>
-                    
-                    <div class="format-description">
-                      <p v-if="selectedFormat === 'docx'">
-                        <strong>Word文档格式:</strong> 可编辑的Word文档，便于后续修改和编辑。
-                      </p>
-                      <p v-else-if="selectedFormat === 'pdf'">
-                        <strong>PDF格式:</strong> 不可编辑的PDF文档，适合正式交付和打印。
-                      </p>
-                    </div>
-                  </div>
-
-                  <!-- 生成按钮区域 -->
-                  <div class="generate-actions">
-                    <div class="button-group">
+                  <!-- 生成区域 -->
+                  <div class="generation-area">
+                    <!-- 单个生成模式 -->
+                    <div v-if="generationMode === 'single'" class="generation-section single-generation">
+                      <div class="section-header">
+                        <h4>单个文档生成</h4>
+                        <p>选择特定文档类型和格式进行生成</p>
+                      </div>
+                      
+                      <!-- 文档类型选择 -->
+                      <div class="doc-type-selection">
+                        <h3>选择文档类型</h3>
+                        <el-radio-group v-model="selectedDocType" class="doc-type-group">
+                          <el-radio-button label="IF">IF 文档</el-radio-button>
+                          <el-radio-button label="CERT">CERT 证书</el-radio-button>
+                          <el-radio-button label="OTHER">OTHER 文档</el-radio-button>
+                          <el-radio-button label="TR">TR 测试报告</el-radio-button>
+                          <el-radio-button label="RCS">RCS 审查控制表</el-radio-button>
+                          <el-radio-button label="TM">TM 测试记录</el-radio-button>
+                        </el-radio-group>
+                      </div>
+                      
+                      <div class="format-selection">
+                        <el-radio-group v-model="selectedFormat" class="format-options">
+                          <el-radio label="docx">
+                            <el-icon><Document /></el-icon>
+                            Word文档 (.docx)
+                          </el-radio>
+                          <el-radio label="pdf">
+                            <el-icon><Document /></el-icon>
+                            PDF文档 (.pdf)
+                          </el-radio>
+                        </el-radio-group>
+                      </div>
+                      
                       <el-button 
                         type="primary" 
                         size="large"
                         @click="generateSelected"
                         :loading="generating"
-                        class="generate-single-btn"
+                        class="generate-btn"
                       >
                         <el-icon><Download /></el-icon>
                         生成 {{ docTypeDisplayName }}
                       </el-button>
+                    </div>
+
+                    <!-- 批量生成模式 -->
+                    <div v-else class="generation-section batch-generation">
+                      <div class="section-header">
+                        <h4>批量文档生成</h4>
+                        <p>一次性生成所有6种文档类型，提高效率</p>
+                      </div>
+                      
+                      <div class="format-selection">
+                        <el-radio-group v-model="batchFormat" class="format-options">
+                          <el-radio label="docx">
+                            <el-icon><Document /></el-icon>
+                            生成所有Word文档
+                          </el-radio>
+                          <el-radio label="pdf">
+                            <el-icon><Document /></el-icon>
+                            生成所有PDF文档
+                          </el-radio>
+                          <el-radio label="both">
+                            <el-icon><Collection /></el-icon>
+                            生成所有文档（Word + PDF）
+                          </el-radio>
+                        </el-radio-group>
+                      </div>
                       
                       <el-button 
                         type="success" 
                         size="large"
                         @click="generateAllDocuments"
                         :loading="generatingAll"
-                        class="generate-all-btn"
+                        class="generate-btn"
                       >
-                        <el-icon><Plus /></el-icon>
-                        生成所有文档
+                        <el-icon><Collection /></el-icon>
+                        生成所有{{ batchFormat === 'both' ? '文档（Word + PDF）' : (batchFormat === 'pdf' ? 'PDF' : 'Word') + '文档' }}
                       </el-button>
                     </div>
+                  </div>
                     
                   <div class="generate-tips">
                     <el-alert
@@ -646,19 +689,22 @@
                       class="generate-info"
                     >
                       <template #default>
-                        <p><strong>单文档生成:</strong> 只生成当前选择的文档类型</p>
-                        <p><strong>批量生成:</strong> 一次性生成所有7种文档类型，提高效率</p>
+                        <p><strong>单个生成模式:</strong> 选择特定文档类型和格式进行生成，适合精确控制</p>
+                        <p><strong>批量生成模式:</strong> 一次性生成所有6种文档类型，提高工作效率</p>
                         <p><strong>支持格式:</strong> Word (.docx) 和 PDF (.pdf)</p>
+                        <p><strong>文档类型:</strong> IF、CERT、OTHER、TR、RCS、TM</p>
                       </template>
                     </el-alert>
                   </div>
-                </div>
                 </div>
 
                 <!-- 右侧预览面板 -->
                 <div class="right-pane">
                   <div class="preview-card">
-                    <div class="preview-header">生成信息预览</div>
+                    <div class="preview-header">
+                      <el-icon><View /></el-icon>
+                      生成信息预览
+                    </div>
                     <ul class="meta-list">
                       <li>
                         <span>文档类型</span>
@@ -673,8 +719,32 @@
                         <strong>{{ sessionId || '未生成' }}</strong>
                       </li>
                     </ul>
-                    <div class="tips" v-if="selectedFormat === 'pdf'">
-                      说明：PDF转换需要安装 LibreOffice。
+                    
+                    <!-- 模式预览 -->
+                    <div class="mode-preview" v-if="generationMode">
+                      <div class="preview-divider"></div>
+                      <div class="mode-preview-header">
+                        <el-icon><View /></el-icon>
+                        {{ generationMode === 'single' ? '单个生成预览' : '批量生成预览' }}
+                      </div>
+                      <div class="mode-info">
+                        <p v-if="generationMode === 'single'">
+                          <strong>模式:</strong> 单个文档生成
+                        </p>
+                        <p v-else>
+                          <strong>模式:</strong> 批量文档生成
+                        </p>
+                        <p><strong>格式:</strong> {{ generationMode === 'single' ? (selectedFormat === 'pdf' ? 'PDF' : 'Word') : (batchFormat === 'pdf' ? 'PDF' : 'Word') }}</p>
+                        <p v-if="generationMode === 'single'">
+                          <strong>文档类型:</strong> {{ docTypeDisplayName }}
+                        </p>
+                        <p v-else>
+                          <strong>文档数量:</strong> 6个文档
+                        </p>
+                        <p v-if="generationMode === 'batch'">
+                          <strong>包含类型:</strong> IF、CERT、OTHER、TR、RCS、TM
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -686,135 +756,7 @@
                 <p v-else>正在生成{{ docTypeDisplayName }}，请稍候...</p>
               </div>
               
-              <div v-if="generationResult && !generating && !generatingAll" class="generation-result">
-                <h3 v-if="generationResult.generated_files">
-                  <span v-if="generationResult.total_success > 0 && generationResult.total_failed > 0">
-                    批量文档部分生成成功
-                  </span>
-                  <span v-else-if="generationResult.total_success > 0">
-                    批量文档生成成功
-                  </span>
-                  <span v-else>
-                    批量文档生成失败
-                  </span>
-                </h3>
-                <h3 v-else>文档生成成功</h3>
-                
-                <!-- 批量生成结果 -->
-                <div v-if="generationResult.generated_files && Array.isArray(generationResult.generated_files)" class="batch-result">
-                  <div class="result-summary">
-                    <p><strong>成功生成:</strong> {{ generationResult.total_success || 0 }} 个文档</p>
-                    <p v-if="(generationResult.total_failed || 0) > 0"><strong>失败:</strong> {{ generationResult.total_failed || 0 }} 个文档</p>
-                  </div>
-                  
-                  <div class="generated-files-list" v-if="generationResult.generated_files && generationResult.generated_files.length > 0">
-                    <div class="files-header">
-                      <h4>生成的文件:</h4>
-                      <el-button 
-                        type="success" 
-                        size="large"
-                        @click="downloadAllFiles"
-                        class="download-all-btn"
-                        :disabled="!generationResult.generated_files || generationResult.generated_files.length === 0"
-                      >
-                        <el-icon><Download /></el-icon>
-                        批量下载 ({{ (generationResult.generated_files && generationResult.generated_files.length) || 0 }}个文档)
-                      </el-button>
-                    </div>
-                    <div class="files-grid">
-                      <div 
-                        v-for="(file, index) in generationResult.generated_files" 
-                        :key="index"
-                        class="file-item"
-                      >
-                        <div class="file-info">
-                          <span class="file-name">{{ file.filename }}</span>
-                          <span class="file-type">{{ file.type }}</span>
-                        </div>
-                        <el-button 
-                          type="primary" 
-                          size="small"
-                          @click="downloadSpecificFile(file)"
-                        >
-                          <el-icon><download /></el-icon>
-                          下载
-                        </el-button>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <!-- 失败文档信息 -->
-                  <div v-if="generationResult.failed_documents && generationResult.failed_documents.length > 0" class="failed-documents">
-                    <h4>生成失败的文档 ({{ generationResult.failed_documents.length }} 个):</h4>
-                    <div class="failed-list">
-                      <div 
-                        v-for="(failed, index) in generationResult.failed_documents" 
-                        :key="index"
-                        class="failed-item"
-                      >
-                        <div class="failed-info">
-                          <span class="failed-type">{{ failed.type }}</span>
-                          <span class="failed-error">{{ failed.error }}</span>
-                        </div>
-                        <el-button 
-                          type="warning" 
-                          size="small"
-                          @click="retryGenerateDocument(failed.type)"
-                          class="retry-btn"
-                        >
-                          <el-icon><Refresh /></el-icon>
-                          重试
-                        </el-button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                <!-- 单个文档结果 -->
-                <div v-else class="single-result">
-                  <div class="result-info">
-                    <p><strong>文件名:</strong> {{ generationResult.filename || '未知' }}</p>
-                    <p><strong>格式:</strong> {{ (generationResult.filename && generationResult.filename.endsWith('.pdf')) ? 'PDF' : 'Word' }}</p>
-                    <p><strong>生成时间:</strong> {{ new Date().toLocaleString() }}</p>
-                  </div>
-                  <div class="download-section">
-                    <el-button 
-                      type="primary" 
-                      size="large"
-                      @click="downloadDocument"
-                    >
-                      <el-icon><download /></el-icon>
-                      下载文档
-                    </el-button>
-                  </div>
-                </div>
-              </div>
               
-              <!-- 已生成文档列表 -->
-              <div v-if="generatedDocuments.length > 1 && !generating && !generatingAll" class="generated-documents">
-                <h3>已生成的文档</h3>
-                <div class="documents-list">
-                  <div 
-                    v-for="(doc, index) in generatedDocuments" 
-                    :key="index"
-                    class="document-item"
-                  >
-                    <div class="document-info">
-                      <span class="document-name">{{ doc.filename }}</span>
-                      <span class="document-format">{{ doc.format }}</span>
-                      <span class="document-time">{{ doc.generatedTime }}</span>
-                    </div>
-                    <el-button 
-                      type="primary" 
-                      size="small"
-                      @click="downloadSpecificDocument(doc)"
-                    >
-                      <el-icon><download /></el-icon>
-                      下载
-                    </el-button>
-                  </div>
-                </div>
-              </div>
             </div>
 
             <div class="step-actions">
@@ -841,18 +783,38 @@
       @confirm="handleCompanyConfirm"
       @cancel="handleCompanyCancel"
     />
+    <!-- 自动保存浮动提示 -->
+    <div v-if="showAutosaveToast" class="autosave-toast">
+      <span class="dot"></span>
+      已自动保存草稿
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { Delete, Document, Download, Plus, UploadFilled, Refresh,  EditPen } from '@element-plus/icons-vue'
+import { Delete, Document, Download, Plus, UploadFilled, Refresh, EditPen, View, Collection } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox, ElLoading } from 'element-plus'
-import { computed, reactive, ref, onMounted, nextTick } from 'vue'
+import { computed, reactive, ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { mvpAPI } from '../api/mvp'
 import { companyAPI, type Company } from '../api/company'
 import { getServerBaseURL } from '../api'
 import TradeInfoEditor from '../components/TradeInfoEditor.vue'
 import AppleStyleConfirm from '../components/AppleStyleConfirm.vue'
+
+// 自动保存提示（右下角浮动徽标）
+const showAutosaveToast = ref(false)
+let autosaveToastTimer: number | undefined
+
+const triggerAutosaveToast = () => {
+  showAutosaveToast.value = true
+  if (autosaveToastTimer) {
+    clearTimeout(autosaveToastTimer)
+  }
+  autosaveToastTimer = window.setTimeout(() => {
+    showAutosaveToast.value = false
+    autosaveToastTimer = undefined
+  }, 2000)
+}
 
 // 步骤定义
 const steps = [
@@ -870,16 +832,19 @@ const sessionId = ref('')
 const applicationFiles = ref<any[]>([])
 const reportFiles = ref<any[]>([])
 
-// 信息提取相关（已废弃，现在使用AI提取）
+// 信息提取相关（已废弃）
 const extractionResult = ref<any>(null)
 
-// AI提取相关变量
+// 文档提取相关变量
 const aiExtracting = ref(false)
 const aiExtractionResult = ref<any>(null)
 
 // 表单相关
 const formRef = ref()
 const saving = ref(false)
+const draftSaving = ref(false)
+const lastDraftSavedAt = ref<number | null>(null)
+let autosaveTimer: number | undefined
 
 // 公司相关
 const companies = ref<Company[]>([])
@@ -895,7 +860,6 @@ const pendingCompanyAdditionalInfo = ref<any>(null)
 const companyConfirmPromise = ref<{ resolve: (value: boolean) => void } | null>(null)
 const formData = reactive<{[key: string]: any}>({
   // 基础信息
-  title: '',
   company_address: '',              // 公司地址
   trade_names: '',                  // 商标名称（分号分隔的字符串）
   trade_marks: [] as string[],      // 商标图片URL数组
@@ -905,7 +869,7 @@ const formData = reactive<{[key: string]: any}>({
   test_date: '',                    // 测试日期
   report_date: '',                  // 报告日期
   
-  // 核心字段 - 与后端AI提取格式保持一致
+  // 核心字段 - 与后端提取格式保持一致
   approval_no: '',                    // 批准号
   information_folder_no: '',          // 信息文件夹号 (与后端字段名一致)
   safety_class: '',                   // 安全等级
@@ -952,7 +916,110 @@ const formData = reactive<{[key: string]: any}>({
       rpoint_coords: '',                // 参考点坐标
       dev_desc: ''                      // 开发描述
     }
-  ]
+  ],
+  // 设备信息（随公司选择同步）
+  equipment: [] as Array<{ no: string; name: string }>
+})
+
+// =============== 本地草稿存储（纯前端） ===============
+const DRAFT_KEY = 'mvp_local_draft'
+
+const saveLocalDraft = () => {
+  try {
+    const payload = {
+      form: JSON.parse(JSON.stringify(formData)),
+      savedAt: Date.now()
+    }
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(payload))
+    lastDraftSavedAt.value = payload.savedAt
+  } catch (_) {}
+}
+
+const clearLocalDraft = () => {
+  localStorage.removeItem(DRAFT_KEY)
+}
+
+const loadLocalDraft = (): { form: any, savedAt: number } | null => {
+  const raw = localStorage.getItem(DRAFT_KEY)
+  if (!raw) return null
+  try {
+    const parsed = JSON.parse(raw)
+    if (parsed?.savedAt) lastDraftSavedAt.value = parsed.savedAt
+    return parsed
+  } catch {
+    return null
+  }
+}
+
+const applyDraftForm = (form: any) => {
+  Object.assign(formData, form || {})
+}
+
+const tryRestoreDraft = async () => {
+  const draft = loadLocalDraft()
+  if (!draft) return
+  try {
+    await ElMessageBox.confirm('检测到本地草稿，是否恢复继续编辑？', '提示', {
+      confirmButtonText: '恢复',
+      cancelButtonText: '忽略',
+      type: 'info'
+    })
+    applyDraftForm(draft.form)
+    ElMessage.success('已恢复本地草稿')
+  } catch (_) {
+    // 用户取消
+  }
+}
+
+const autoSaveDraft = () => {
+  if (saving.value || draftSaving.value) return
+  saveLocalDraft()
+  triggerAutosaveToast()
+}
+
+const manualSaveDraft = async () => {
+  if (saving.value || draftSaving.value) return
+  try {
+    draftSaving.value = true
+    saveLocalDraft()
+    ElMessage.success('草稿已保存到本地')
+  } finally {
+    draftSaving.value = false
+  }
+}
+
+const startAutosave = () => {
+  stopAutosave()
+  autosaveTimer = window.setInterval(() => {
+    autoSaveDraft()
+  }, 30000)
+}
+
+const stopAutosave = () => {
+  if (autosaveTimer) {
+    clearInterval(autosaveTimer)
+    autosaveTimer = undefined
+  }
+}
+
+watch(currentStep, (step) => {
+  if (step === 1) {
+    tryRestoreDraft()
+    startAutosave()
+  } else {
+    stopAutosave()
+  }
+})
+
+onMounted(() => {
+  if (currentStep.value === 1) {
+    tryRestoreDraft()
+    startAutosave()
+  }
+})
+
+onBeforeUnmount(() => {
+  stopAutosave()
 })
 
 
@@ -1111,10 +1178,17 @@ const formRules = {
 const generating = ref(false)
 const generatingAll = ref(false)
 const generationProgress = ref(0)
-const generationResult = ref<any>(null)
+const generationResult = ref<any>({
+  generated_files: [],
+  failed_documents: [],
+  total_success: 0,
+  total_failed: 0
+})
 const generatedDocuments = ref<any[]>([])
 const selectedFormat = ref('docx')
-// const selectedDocType = ref<'IF'|'CERT'|'OTHER'|'TR'|'RCS'|'TM'|'PM'>('IF')
+const batchFormat = ref('docx') // 批量生成格式选择
+const generationMode = ref('single') // 生成模式：single 或 batch
+// const selectedDocType = ref<'IF'|'CERT'|'OTHER'|'TR'|'RCS'|'TM'>('IF')
 const selectedDocType = ref<'IF'|'CERT'|'OTHER'|'TR'|'RCS'|'TM'>('IF')
 const docTypeDisplayName = computed(() => {
   const map: Record<string, string> = {
@@ -1124,7 +1198,6 @@ const docTypeDisplayName = computed(() => {
     TR: 'TR 测试报告',
     RCS: 'Review Control Sheet 审查控制表',
     TM: 'TM 测试记录',
-    // PM: '项目管理表'
   }
   const baseName = map[selectedDocType.value] || selectedDocType.value
   return `${baseName} ${selectedFormat.value === 'pdf' ? 'PDF' : 'Word'}`
@@ -1132,7 +1205,7 @@ const docTypeDisplayName = computed(() => {
 
 const filenamePreview = computed(() => {
   const prefixMap: Record<string, string> = {
-    // IF: 'IF-', CERT: 'CERT-', OTHER: 'OTHER-', TR: 'TR-', RCS: 'Review Control Sheet V7 ', TM: 'TM-', PM: 'PM-'
+    // IF: 'IF-', CERT: 'CERT-', OTHER: 'OTHER-', TR: 'TR-', RCS: 'Review Control Sheet V7 ', TM: 'TM-'
     IF: 'IF-', CERT: 'CERT-', OTHER: 'OTHER-', TR: 'TR-', RCS: 'Review Control Sheet V7 ', TM: 'TM-'
   }
   const prefix = prefixMap[selectedDocType.value]
@@ -1159,7 +1232,7 @@ const handleApplicationChange = (file: any) => {
   applicationFiles.value = [file]
   aiExtractionResult.value = null
   
-  // 恢复自动AI提取，但使用正确的API
+  // 自动提取，使用正确的API
   if (file.raw) {
     uploadAndExtract(file)
   }
@@ -1169,45 +1242,45 @@ const handleReportChange = (_file: any) => {
   ElMessage.info('测试报告上传功能未开发，已禁用')
 }
 
-// 直接进行AI解析（包含文件上传）
+// 直接进行解析（包含文件上传）
 const uploadAndExtract = async (file: any) => {
   if (!file?.raw) {
     ElMessage.warning('文件无效')
     return
   }
 
-  // 设置AI提取状态
+  // 设置提取状态
   aiExtracting.value = true
   
   // 显示全局loading
   const loadingInstance = ElLoading.service({
     lock: true,
-    text: 'AI正在分析申请书，请耐心等待...（通常需要10-60秒）',
+    text: '正在分析申请书，请耐心等待...（通常需要10-60秒）',
     background: 'rgba(0, 0, 0, 0.7)',
     spinner: 'el-icon-loading'
   })
   
   try {
-    // 直接调用AI提取API，后端会自动处理文件上传和AI解析
+    // 直接调用提取API，后端会自动处理文件上传和解析
     const response = await mvpAPI.aiExtract(file.raw)
     
     if (response.success) {
-      // 直接获取AI提取结果
+      // 直接获取提取结果
       aiExtractionResult.value = response.data
       
       
-      // 自动应用AI结果到表单
+      // 自动应用结果到表单
       await applyAIResult()
       
       // 自动跳转到信息编辑步骤
       currentStep.value = 1
-      ElMessage.success('AI解析完成，已自动应用结果并跳转到信息编辑步骤')
+      ElMessage.success('解析完成，已自动应用结果并跳转到信息编辑步骤')
     } else {
-      ElMessage.error(response.message || 'AI解析失败')
+      ElMessage.error(response.message || '解析失败')
     }
   } catch (error: any) {
-    console.error('AI解析失败:', error)
-    const errorMessage = error.message || 'AI解析失败'
+    console.error('解析失败:', error)
+    const errorMessage = error.message || '解析失败'
     ElMessage.error(errorMessage)
   } finally {
     // 关闭全局loading
@@ -1218,46 +1291,6 @@ const uploadAndExtract = async (file: any) => {
 
 // 注意：aiExtract 函数已被移除，现在只使用自动触发的 uploadAndExtract 函数
 
-
-const fillFormData = (data: any) => {
-  // 填充基础字段包括日期
-  if (data.approval_date) formData.approval_date = data.approval_date
-  if (data.test_date) formData.test_date = data.test_date
-  if (data.report_date) formData.report_date = data.report_date
-  
-  // 填充核心字段
-  if (data.template_fields) {
-    Object.assign(formData, {
-      approval_no: data.template_fields.approval_no || '',
-      information_folder_no: data.template_fields.information_folder_no || '',
-      safety_class: data.template_fields.safety_class || '',
-      pane_desc: data.template_fields.pane_desc || '',
-      glass_layers: data.template_fields.glass_layers || '',
-      interlayer_layers: data.template_fields.interlayer_layers || '',
-      windscreen_thick: data.template_fields.windscreen_thick || '',
-      interlayer_thick: data.template_fields.interlayer_thick || '',
-      glass_treatment: data.template_fields.glass_treatment || '',
-      interlayer_type: data.template_fields.interlayer_type || '',
-      coating_type: data.template_fields.coating_type || '',
-      coating_thick: data.template_fields.coating_thick || '',
-      material_nature: data.template_fields.material_nature || '',
-      coating_color: data.template_fields.coating_color || '',
-      remarks: data.template_fields.remarks || '',
-      vehicles: data.template_fields.vehicles || [{  // 默认至少有一个车辆信息
-        veh_mfr: '',
-        veh_type: '',
-        veh_cat: '',
-        dev_area: '',
-        seg_height: '',
-        curv_radius: '',
-        inst_angle: '',
-        seat_angle: '',
-        rpoint_coords: '',
-        dev_desc: ''
-      }]
-    })
-  }
-}
 
 const addVehicleInfo = () => {
   formData.vehicles.push({
@@ -1302,13 +1335,22 @@ const saveFormData = async () => {
       // 处理玻璃颜色选择：如果选择了两个，转换为"both_visible"；如果只选择一个，保持原值
       glass_color_choice: formData.glass_color_choice.length === 2 
         ? 'both_visible' 
-        : formData.glass_color_choice[0]
+        : formData.glass_color_choice[0],
+      // 确保设备信息总是上传
+      equipment: Array.isArray(formData.equipment) ? formData.equipment : []
     }
     
-    // 保存表单数据 - 后端会自动生成session_id
-    const response = await mvpAPI.saveFormData({
+    // 保存前清理本地草稿
+    clearLocalDraft()
+
+    // 保存表单数据 - 附带 save_type 与现有 session_id（若有）
+    const payload: any = {
       form_data: processedFormData
-    })
+    }
+    if (sessionId.value) {
+      payload.session_id = sessionId.value
+    }
+    const response = await mvpAPI.saveFormData(payload)
     
     // 拦截器已经返回了业务数据，直接使用
     if (response.success) {
@@ -1332,7 +1374,7 @@ const saveFormData = async () => {
   }
 }
 
-const generateSingleDocument = async (type: 'if'|'cert'|'other'|'tr'|'rcs'|'tm'|'pm') => {
+const generateSingleDocument = async (type: 'if'|'cert'|'other'|'tr'|'rcs'|'tm') => {
   // 检查是否有session_id（应该由后端在save_form_data时生成）
   if (!sessionId.value) {
     ElMessage.warning('请先保存表单数据以获取session_id')
@@ -1381,8 +1423,6 @@ const generateSingleDocument = async (type: 'if'|'cert'|'other'|'tr'|'rcs'|'tm'|
       response = await mvpAPI.generateReviewControlSheet(requestData)
     } else if (type === 'tm') {
       response = await mvpAPI.generateTM(requestData)
-    } else if (type === 'pm') {
-      response = await mvpAPI.generateProjectSheet(requestData)
     }
     
     // 拦截器已经返回了业务数据，直接使用
@@ -1397,6 +1437,10 @@ const generateSingleDocument = async (type: 'if'|'cert'|'other'|'tr'|'rcs'|'tm'|
       })
       generationProgress.value = 100
       ElMessage.success(`${docTypeDisplayName.value}生成成功`)
+      // 生成完成后自动下载
+      try {
+        await downloadDocument()
+      } catch {}
     } else {
       ElMessage.error(response?.message || '文档生成失败')
     }
@@ -1411,37 +1455,55 @@ const generateSingleDocument = async (type: 'if'|'cert'|'other'|'tr'|'rcs'|'tm'|
 
 const downloadDocument = async () => {
   if (generationResult.value?.download_url) {
-    window.open(`${getServerBaseURL()}${generationResult.value.download_url}`, '_blank')
-  }
-}
-
-const downloadSpecificFile = async (file: any) => {
-  if (file.download_url) {
-    window.open(`${getServerBaseURL()}${file.download_url}`, '_blank')
-  }
-}
-
-const downloadAllFiles = async () => {
-  if (generationResult.value?.generated_files && Array.isArray(generationResult.value.generated_files)) {
-    // 依次下载所有文件，添加延迟以避免浏览器阻止多个下载
-    for (let i = 0; i < generationResult.value.generated_files.length; i++) {
-      const file = generationResult.value.generated_files[i]
-      if (file.download_url) {
-        setTimeout(() => {
-          window.open(`${getServerBaseURL()}${file.download_url}`, '_blank')
-        }, i * 500) // 每个文件间隔500ms
+    const downloadUrl = `${getServerBaseURL()}${generationResult.value.download_url}`
+    console.log('下载URL:', downloadUrl)
+    console.log('getServerBaseURL():', getServerBaseURL())
+    console.log('download_url:', generationResult.value.download_url)
+    
+    // 尝试直接访问URL
+    try {
+      const response = await fetch(downloadUrl)
+      console.log('URL访问状态:', response.status)
+      if (response.ok) {
+        window.open(downloadUrl, '_blank')
+      } else {
+        ElMessage.error(`下载失败: ${response.status} ${response.statusText}`)
       }
+    } catch (error) {
+      console.error('下载错误:', error)
+      ElMessage.error('下载失败，请检查网络连接')
     }
-    ElMessage.success(`开始下载 ${generationResult.value.generated_files.length} 个文档`)
   }
 }
 
-const retryGenerateDocument = async (docType: string) => {
-  ElMessage.info(`正在重试生成 ${docType} 文档...`)
-  // 这里可以实现单个文档的重新生成逻辑
-  // 暂时提示用户可以重新点击"生成所有文档"
-  ElMessage.warning('请重新点击"生成所有文档"按钮进行重试')
+// 已移除：downloadSpecificFile - 现在使用ZIP打包，不需要下载单个文件
+
+const downloadZipFile = async (filename, downloadUrl) => {
+  try {
+    const fullUrl = `${getServerBaseURL()}${downloadUrl}`
+    const response = await fetch(fullUrl)
+    if (response.ok) {
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      window.URL.revokeObjectURL(url)
+      console.log(`✅ ZIP文件下载成功: ${filename}`)
+    } else {
+      console.error(`❌ ZIP文件下载失败: ${filename}`, response.status)
+    }
+  } catch (error) {
+    console.error(`❌ ZIP文件下载错误: ${filename}`, error)
+  }
 }
+
+// 已移除：downloadAllFiles - 现在使用ZIP打包，只需要下载1-2个ZIP文件
+
+// 已移除：retryGenerateDocument - 现在使用批量生成ZIP，不需要重试单个文档
 
 const generateAllDocuments = async () => {
   // 检查是否有session_id（应该由后端在save_form_data时生成）
@@ -1475,19 +1537,85 @@ const generateAllDocuments = async () => {
 
   try {
     let response
-    response = await mvpAPI.generateDocuments({ 
-      session_id: sessionId.value,
-      output_format: selectedFormat.value
-    })
+    
+    if (batchFormat.value === 'both') {
+      // 双格式生成：同时调用Word和PDF接口
+      const [wordResponse, pdfResponse] = await Promise.all([
+        mvpAPI.generateDocuments({ 
+          session_id: sessionId.value,
+          output_format: 'docx'
+        }),
+        mvpAPI.generateDocuments({ 
+          session_id: sessionId.value,
+          output_format: 'pdf'
+        })
+      ])
+      
+      // 合并两个响应结果
+      if (wordResponse.success && pdfResponse.success) {
+        response = {
+          success: true,
+          message: `成功生成Word和PDF文档，共 ${(wordResponse.data?.total_success || 0) + (pdfResponse.data?.total_success || 0)} 个文档`,
+          data: {
+            word_zip: {
+              filename: wordResponse.data?.filename,
+              download_url: wordResponse.data?.download_url
+            },
+            pdf_zip: {
+              filename: pdfResponse.data?.filename,
+              download_url: pdfResponse.data?.download_url
+            },
+            generated_files: [
+              ...(wordResponse.data?.generated_files || []),
+              ...(pdfResponse.data?.generated_files || [])
+            ],
+            failed_documents: [
+              ...(wordResponse.data?.failed_documents || []),
+              ...(pdfResponse.data?.failed_documents || [])
+            ],
+            total_success: (wordResponse.data?.total_success || 0) + (pdfResponse.data?.total_success || 0),
+            total_failed: (wordResponse.data?.total_failed || 0) + (pdfResponse.data?.total_failed || 0)
+          }
+        }
+      } else {
+        // 如果其中一个失败，返回失败信息
+        response = {
+          success: false,
+          message: '部分文档生成失败',
+          data: {
+            word_zip: wordResponse.success ? {
+              filename: wordResponse.data?.filename,
+              download_url: wordResponse.data?.download_url
+            } : null,
+            pdf_zip: pdfResponse.success ? {
+              filename: pdfResponse.data?.filename,
+              download_url: pdfResponse.data?.download_url
+            } : null,
+            generated_files: [
+              ...(wordResponse.data?.generated_files || []),
+              ...(pdfResponse.data?.generated_files || [])
+            ],
+            failed_documents: [
+              ...(wordResponse.data?.failed_documents || []),
+              ...(pdfResponse.data?.failed_documents || [])
+            ],
+            total_success: (wordResponse.data?.total_success || 0) + (pdfResponse.data?.total_success || 0),
+            total_failed: (wordResponse.data?.total_failed || 0) + (pdfResponse.data?.total_failed || 0)
+          }
+        }
+      }
+    } else {
+      // 单格式生成
+      response = await mvpAPI.generateDocuments({ 
+        session_id: sessionId.value,
+        output_format: batchFormat.value
+      })
+    }
     
     // 拦截器已经返回了业务数据，直接使用
     const result = response.data
     
-    console.log('批量生成响应数据:', response)
-    console.log('解析的结果:', result)
-    
     if (response.success || (result && result.generated_files && result.generated_files.length > 0)) {
-      console.log('设置生成结果:', result)
       // 确保结果对象有必要的属性
       const safeResult = {
         ...result,
@@ -1517,9 +1645,6 @@ const generateAllDocuments = async () => {
         // 如果有失败的文档，显示警告
         if (result.failed_documents && result.failed_documents.length > 0) {
           ElMessage.warning(`${result.failed_documents.length} 个文档生成失败`)
-          
-          // 在控制台显示详细的失败信息
-          console.log('失败的文档详情:', result.failed_documents)
         }
         
         // 如果所有文档都失败了
@@ -1537,6 +1662,23 @@ const generateAllDocuments = async () => {
       }
       
       generationProgress.value = 100
+      // 批量生成完成后自动下载已成功的文件
+      try {
+        if (batchFormat.value === 'both') {
+          // 双格式：下载两个ZIP文件
+          if (result.word_zip?.download_url) {
+            await downloadZipFile(result.word_zip.filename, result.word_zip.download_url)
+          }
+          if (result.pdf_zip?.download_url) {
+            await downloadZipFile(result.pdf_zip.filename, result.pdf_zip.download_url)
+          }
+        } else {
+          // 单格式：下载单个ZIP文件
+          if (result.filename && result.download_url) {
+            await downloadZipFile(result.filename, result.download_url)
+          }
+        }
+      } catch {}
     } else {
       // 完全失败的情况
       generationResult.value = result
@@ -1559,8 +1701,8 @@ const generateAllDocuments = async () => {
 
 
 const generateSelected = async () => {
-  const typeMap: Record<string, 'if'|'cert'|'other'|'tr'|'rcs'|'tm'|'pm'> = {
-    // IF: 'if', CERT: 'cert', OTHER: 'other', TR: 'tr', RCS: 'rcs', TM: 'tm', PM: 'pm'
+  const typeMap: Record<string, 'if'|'cert'|'other'|'tr'|'rcs'|'tm'> = {
+    // IF: 'if', CERT: 'cert', OTHER: 'other', TR: 'tr', RCS: 'rcs', TM: 'tm'
      IF: 'if', CERT: 'cert', OTHER: 'other', TR: 'tr', RCS: 'rcs', TM: 'tm'
   }
   await generateSingleDocument(typeMap[selectedDocType.value])
@@ -1568,7 +1710,9 @@ const generateSelected = async () => {
 
 const downloadSpecificDocument = (doc: any) => {
   if (doc.download_url) {
-    window.open(`${getServerBaseURL()}${doc.download_url}`, '_blank')
+    const downloadUrl = `${getServerBaseURL()}${doc.download_url}`
+    console.log('下载特定文档URL:', downloadUrl)
+    window.open(downloadUrl, '_blank')
   }
 }
 
@@ -1590,9 +1734,6 @@ const generateTestData = async () => {
   
       // 生成示例数据
   Object.assign(formData, {
-    // 基础信息
-    title: '示例申请书',
-    
     // 报告号和公司信息
     report_no: "CSR043",
     company_id: defaultCompany?.id || null,
@@ -1602,6 +1743,13 @@ const generateTestData = async () => {
       ? defaultCompany.trade_names.join(';') 
       : "示例商标1;示例商标2",
     trade_marks: defaultCompany?.trade_marks || [],
+    // 设备信息（优先使用公司设备，否则给示例）
+    equipment: (Array.isArray(defaultCompany?.equipment) && defaultCompany!.equipment.length > 0)
+      ? defaultCompany!.equipment
+      : [
+          { no: 'TST2017223', name: 'High and low temperature damp heat test chamber' },
+          { no: 'Y009942800', name: 'Intelligent transmittance tester' }
+        ],
     
     // 核心字段
     approval_no: "E4*43R01/12*2812*00",
@@ -1752,11 +1900,16 @@ const handleCompanyChange = (companyId: number) => {
       trade_names: selectedCompany.trade_names || [],
       trade_marks: selectedCompany.trade_marks || []
     }
+
+    // 同步设备信息到表单，确保保存时上传
+    // companyAPI 已将 equipment 解析为对象数组
+    formData.equipment = Array.isArray(selectedCompany.equipment) ? selectedCompany.equipment : []
   } else {
     formData.company_name = ''
     formData.company_address = ''
     formData.trade_names = ''
     formData.trade_marks = []
+    formData.equipment = []
     selectedCompanyAddress.value = ''
     readonlyCompanyData.value = null
   }
@@ -1772,69 +1925,7 @@ onMounted(() => {
 
 
 
-// 确保表单字段具有安全的默认值，防止渲染异常
-const ensureFormDefaults = () => {
-  const ensure = (k: keyof typeof formData, v: any) => {
-    if (formData[k] === undefined || formData[k] === null) {
-      // @ts-ignore
-      formData[k] = v
-    }
-  }
-
-  // 基础与日期
-  ensure('approval_date', formData.approval_date ?? '')
-  ensure('test_date', formData.test_date ?? '')
-  ensure('report_date', formData.report_date ?? '')
-  ensure('report_no', formData.report_no ?? '')
-  ensure('company_id', formData.company_id ?? '')
-  ensure('company_address', formData.company_address ?? '')
-
-  // 兼容 trade_names 既可能是数组也可能是字符串
-  if (Array.isArray(formData.trade_names)) {
-    // @ts-ignore 将数组转换为分号分隔字符串
-    formData.trade_names = formData.trade_names.join(';')
-  }
-  ensure('trade_names', formData.trade_names ?? '')
-  ensure('trade_marks', Array.isArray(formData.trade_marks) ? formData.trade_marks : [])
-
-  // 核心字段
-  ensure('approval_no', formData.approval_no ?? '')
-  ensure('information_folder_no', formData.information_folder_no ?? '')
-  ensure('safety_class', formData.safety_class ?? '')
-  ensure('pane_desc', formData.pane_desc ?? '')
-  ensure('glass_layers', String(formData.glass_layers ?? ''))
-  ensure('interlayer_layers', String(formData.interlayer_layers ?? ''))
-  ensure('windscreen_thick', formData.windscreen_thick ?? '')
-  ensure('interlayer_thick', formData.interlayer_thick ?? '')
-  ensure('glass_treatment', formData.glass_treatment ?? '')
-  ensure('interlayer_type', formData.interlayer_type ?? '')
-  ensure('coating_type', formData.coating_type ?? '')
-  ensure('coating_thick', formData.coating_thick ?? '')
-  ensure('material_nature', formData.material_nature ?? '')
-  ensure('coating_color', formData.coating_color ?? '')
-
-  // 选择项与布尔值
-  ensure('glass_color_choice', Array.isArray(formData.glass_color_choice) ? formData.glass_color_choice : [])
-  ensure('conductors_choice', Array.isArray(formData.conductors_choice) ? formData.conductors_choice : [])
-  ensure('opaque_obscure_choice', Array.isArray(formData.opaque_obscure_choice) ? formData.opaque_obscure_choice : [])
-  ensure('interlayer_total', !!formData.interlayer_total)
-  ensure('interlayer_partial', !!formData.interlayer_partial)
-  ensure('interlayer_colourless', !!formData.interlayer_colourless)
-  ensure('remarks', formData.remarks ?? '')
-
-  // 车辆列表
-  ensure('vehicles', (Array.isArray(formData.vehicles) && formData.vehicles.length > 0) ? formData.vehicles : [{
-    veh_mfr: '', veh_type: '', veh_cat: '', dev_area: '', seg_height: '', curv_radius: '', inst_angle: '', seat_angle: '', rpoint_coords: '', dev_desc: ''
-  }])
-
-  // 确保需要的公司列表可用，避免下拉异常（静默处理）
-  try {
-    if (!companies.value || companies.value.length === 0) {
-      // 异步加载但不阻塞
-      loadCompanies()
-    }
-  } catch {}
-}
+// 删除未使用的 ensureFormDefaults
 
 // 处理公司确认事件
 const handleCompanyConfirm = () => {
@@ -1870,7 +1961,7 @@ const showAppleStyleCompanyConfirm = (companyName: string, companyAddress: strin
   })
 }
 
-// 智能处理AI提取的公司信息
+// 智能处理提取的公司信息
 const handleCompanyInfoFromAI = async (aiCompanyName: string, aiCompanyAddress: string) => {
   if (!aiCompanyName) return
   
@@ -1908,7 +1999,7 @@ const handleCompanyInfoFromAI = async (aiCompanyName: string, aiCompanyAddress: 
     ElMessage.success(`已自动匹配公司: ${matchedCompany.name}`)
   } else {
     // 未找到匹配的公司，显示苹果风格的确认面板
-    // 传递AI提取的完整数据作为额外信息
+    // 传递提取的完整数据作为额外信息
     const shouldAddCompany = await showAppleStyleCompanyConfirm(aiCompanyName, aiCompanyAddress, aiExtractionResult.value)
     
     if (shouldAddCompany) {
@@ -2001,8 +2092,8 @@ const applyAIResult = async () => {
   
   const r = aiExtractionResult.value
 
-  // 调试信息：显示AI提取的原始数据
-  console.log('🔍 AI提取原始数据:', r)
+  // 调试信息：显示提取的原始数据
+  console.log('🔍 提取原始数据:', r)
 
   // 获取实际的数据内容（可能嵌套在result字段中）
   const data = r.result || r
@@ -2058,14 +2149,11 @@ const applyAIResult = async () => {
   // 调试信息：显示映射后的表单数据
   console.log('📝 映射后的表单数据:', formData)
 
-  ElMessage.success('AI提取结果已应用到表单')
+  ElMessage.success('提取结果已应用到表单')
   currentStep.value = 1
 }
 
-const clearAIResult = () => {
-  aiExtractionResult.value = null
-  ElMessage.info('已清除AI提取结果')
-}
+// 删除未使用的 clearAIResult
 
 const skipToManualEdit = async () => {
   // 停止AI状态并清理结果
@@ -2126,6 +2214,47 @@ const skipToManualEdit = async () => {
 </script>
 
 <style scoped>
+/* 自动保存浮动提示 */
+.autosave-toast {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 2000;
+  background: rgba(32, 128, 240, 0.95);
+  color: #fff;
+  padding: 10px 14px;
+  border-radius: 10px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.18);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transform: translateY(20px);
+  opacity: 0;
+  animation: autosave-fade-in 240ms ease forwards;
+}
+
+.autosave-toast .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 0 0 rgba(255,255,255,0.8);
+  animation: pulse 1200ms infinite;
+}
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(255,255,255,0.9); }
+  70% { box-shadow: 0 0 0 12px rgba(255,255,255,0); }
+  100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); }
+}
+
+@keyframes autosave-fade-in {
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
 .mvp-container {
   min-height: 100vh;
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
@@ -2378,6 +2507,14 @@ const skipToManualEdit = async () => {
   font-weight: 600;
   color: #1f2937;
   margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.preview-header .el-icon {
+  color: #2A3B8F;
+  font-size: 1.1rem;
 }
 
 .meta-list {
@@ -2410,6 +2547,49 @@ const skipToManualEdit = async () => {
   margin-top: 0.75rem;
   color: #6b7280;
   font-size: 12px;
+}
+
+/* 模式预览样式 */
+.mode-preview {
+  margin-top: 1rem;
+}
+
+.preview-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #e5e7eb, transparent);
+  margin: 1rem 0;
+}
+
+.mode-preview-header {
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.mode-preview-header .el-icon {
+  color: #2A3B8F;
+  font-size: 1rem;
+}
+
+.mode-info {
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 8px;
+  padding: 0.75rem;
+}
+
+.mode-info p {
+  margin: 0.25rem 0;
+  font-size: 0.85rem;
+  color: #374151;
+}
+
+.mode-info strong {
+  color: #0369a1;
 }
 
 .extraction-loading,
@@ -2490,17 +2670,194 @@ const skipToManualEdit = async () => {
   margin-bottom: 1.5rem;
 }
 
-.generate-actions {
+/* 生成模式切换 */
+.generation-mode-switch {
   text-align: center;
   margin: 2rem 0;
 }
 
-.button-group {
+.mode-switch {
+  display: inline-flex;
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 4px;
+  border: 2px solid #e9ecef;
+}
+
+.mode-switch .el-radio-button {
+  margin: 0;
+}
+
+.mode-switch .el-radio-button__inner {
+  border: none;
+  background: transparent;
+  color: #6c757d;
+  padding: 12px 24px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
   display: flex;
-  gap: 1rem;
-  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+}
+
+.mode-switch .el-radio-button__inner:hover {
+  background: #e9ecef;
+  color: #2A3B8F;
+}
+
+.mode-switch .el-radio-button.is-active .el-radio-button__inner {
+  background: #2A3B8F;
+  color: white;
+  box-shadow: 0 2px 8px rgba(42, 59, 143, 0.3);
+}
+
+.mode-switch .el-radio-button .el-icon {
+  font-size: 1.1rem;
+}
+
+/* 生成区域 */
+.generation-area {
+  margin: 2rem 0;
+}
+
+.generation-section {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 16px;
+  padding: 2rem;
+  border: 2px solid #e9ecef;
+  transition: all 0.3s ease;
+  text-align: center;
+}
+
+.generation-section:hover {
+  border-color: #2A3B8F;
+  box-shadow: 0 8px 25px rgba(42, 59, 143, 0.1);
+}
+
+.single-generation {
+  border-left: 4px solid #409eff;
+}
+
+.batch-generation {
+  border-left: 4px solid #67c23a;
+}
+
+.section-header {
   margin-bottom: 1.5rem;
+}
+
+.section-header h4 {
+  margin: 0 0 0.5rem 0;
+  color: #2A3B8F;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.section-header p {
+  margin: 0;
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+.format-selection {
+  margin-bottom: 1.5rem;
+}
+
+.format-options {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
   flex-wrap: wrap;
+}
+
+.format-options .el-radio {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: white;
+  border-radius: 12px;
+  border: 2px solid #e9ecef;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.format-options .el-radio:hover {
+  border-color: #2A3B8F;
+  background: #f0f2ff;
+}
+
+.format-options .el-radio.is-checked {
+  border-color: #2A3B8F;
+  background: #2A3B8F;
+  color: white;
+}
+
+.format-options .el-radio .el-icon {
+  font-size: 1.1rem;
+}
+
+.generate-btn {
+  min-width: 200px;
+  height: 48px;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.generate-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* 文档类型选择样式 */
+.doc-type-selection {
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.doc-type-selection h3 {
+  margin: 0 0 1rem 0;
+  color: #2A3B8F;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.doc-type-group {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.doc-type-group .el-radio-button {
+  margin: 0;
+}
+
+.doc-type-group .el-radio-button__inner {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 2px solid #e9ecef;
+  background: white;
+  color: #6c757d;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.doc-type-group .el-radio-button__inner:hover {
+  border-color: #2A3B8F;
+  background: #f0f2ff;
+  color: #2A3B8F;
+}
+
+.doc-type-group .el-radio-button.is-active .el-radio-button__inner {
+  background: #2A3B8F;
+  border-color: #2A3B8F;
+  color: white;
+  box-shadow: 0 2px 8px rgba(42, 59, 143, 0.3);
 }
 
 .generate-single-btn {
@@ -2776,49 +3133,6 @@ const skipToManualEdit = async () => {
   border-top: 1px solid rgba(0, 0, 0, 0.1);
 }
 
-/* 手动输入按钮样式 - 苹果风格 */
-.manual-input-btn {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-  border: none !important;
-  color: white !important;
-  font-weight: 600 !important;
-  border-radius: 12px !important;
-  padding: 12px 24px !important;
-  transition: all 0.3s ease !important;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3) !important;
-  position: relative !important;
-  overflow: hidden !important;
-}
-
-.manual-input-btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transition: left 0.5s ease;
-}
-
-.manual-input-btn:hover {
-  transform: translateY(-2px) !important;
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4) !important;
-}
-
-.manual-input-btn:hover::before {
-  left: 100%;
-}
-
-.manual-input-btn:active {
-  transform: translateY(0) !important;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3) !important;
-}
-
-/* 确保按钮图标和文字颜色一致 */
-.manual-input-btn .el-icon {
-  color: white !important;
-}
 
 /* Element Plus 样式覆盖 */
 :deep(.el-upload-dragger) {

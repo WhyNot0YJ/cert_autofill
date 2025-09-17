@@ -1,0 +1,22 @@
+{
+  "version": {
+    "version_1": 4,
+    "version_2": 8,
+    "version_3": 12,
+    "version_4": 1
+  },
+  "laboratory": {
+    "temperature": {
+      "value": 22,
+      "unit": "°C"
+    },
+    "ambient_pressure": {
+      "value": 1020,
+      "unit": "mbar"
+    },
+    "relative_humidity": {
+      "value": 50,
+      "unit": "%"
+    }
+  }
+}
