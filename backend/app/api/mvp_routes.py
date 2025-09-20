@@ -301,6 +301,9 @@ def save_form_data():
             # 更新现有记录
             print("📝 更新现有记录")
             for key, value in form_data.items():
+                # 禁止客户端覆盖创建/更新时间等受控字段
+                if key in ['created_at', 'updated_at']:
+                    continue
                 if hasattr(existing_form, key):
                     # 特殊处理日期字段
                     if key in ['approval_date', 'test_date', 'report_date']:

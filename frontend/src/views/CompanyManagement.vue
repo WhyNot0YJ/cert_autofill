@@ -67,7 +67,6 @@
                 :alt="row.name"
                 class="company-logo"
                 fit="cover"
-                :preview-src-list="[getImageUrl(row.picture)]"
               />
               <div class="company-info">
                 <div class="company-title">{{ row.name }}</div>
@@ -359,7 +358,6 @@
               :src="getImageUrl(viewingCompany.picture)" 
               class="detail-image"
               fit="cover"
-              :preview-src-list="[getImageUrl(viewingCompany.picture)]"
               @error="handleImageError"
             />
           </div>
@@ -371,7 +369,6 @@
               :src="getImageUrl(viewingCompany.signature)" 
               class="detail-image"
               fit="cover"
-              :preview-src-list="[getImageUrl(viewingCompany.signature)]"
               @error="handleImageError"
             />
           </div>
@@ -829,15 +826,6 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 8px;
-}
-
-/* 修复Element Plus图片预览组件的z-index层级问题 */
-:deep(.el-image-viewer__wrapper) {
-  z-index: 3000 !important;
-}
-
-:deep(.el-image-viewer__mask) {
-  z-index: 2999 !important;
 }
 
 /* 确保对话框层级正确 */

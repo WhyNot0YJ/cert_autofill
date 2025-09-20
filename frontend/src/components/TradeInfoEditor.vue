@@ -24,8 +24,6 @@
                 :alt="`商标 ${index + 1}`"
                 class="mark-image"
                 fit="cover"
-                :preview-src-list="readonlyCompanyData.trade_marks"
-                :initial-index="index"
               >
                 <template #error>
                   <div class="image-error">
@@ -266,13 +264,6 @@ const emitUpdate = () => {
   height: 40px;
   border-radius: 4px;
   border: 1px solid #dcdfe6;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.mark-image:hover {
-  border-color: #409eff;
-  transform: scale(1.1);
 }
 
 .image-error {

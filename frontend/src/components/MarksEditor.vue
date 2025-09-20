@@ -35,7 +35,6 @@
             :src="getImageUrl(mark)"
             class="preview-image"
             fit="cover"
-            :preview-src-list="[getImageUrl(mark)]"
           >
             <template #error>
               <div class="image-error">
