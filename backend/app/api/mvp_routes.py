@@ -25,7 +25,6 @@ from ..services.generators.tm_generator import TmGenerator
 from ..main import db
 from sqlalchemy.orm import sessionmaker
 from ..models.base import Base
-from ..services.ai_extract import ai_extraction_service
 mvp_bp = Blueprint('mvp', __name__)
 
 # 允许的文件扩展名

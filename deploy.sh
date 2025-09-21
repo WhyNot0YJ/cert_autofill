@@ -191,6 +191,96 @@ cleanup() {
     log_success "清理完成"
 }
 
+# 安全清理资源（保留数据卷）
+safe_cleanup() {
+    log_info "开始安全清理 Docker 资源（保留数据）..."
+    
+    # 停止容器但不删除卷
+    log_info "停止容器..."
+    if [ -f docker-compose.dev.yml ]; then
+        docker-compose -f docker-compose.dev.yml down 2>/dev/null || true
+    fi
+    docker-compose down 2>/dev/null || true
+    
+    # 删除镜像
+    log_info "删除镜像..."
+    docker rmi cert-autofill-backend:latest cert-autofill-frontend:latest 2>/dev/null || true
+    
+    # 清理未使用的资源（但保留卷）
+    log_info "清理未使用的资源..."
+    docker system prune -f
+    
+    log_success "安全清理完成 - 数据卷已保留"
+    log_info "数据卷状态："
+    docker volume ls | grep cert_autofill || log_warning "未找到数据卷"
+}
+
+# 备份数据
+backup_data() {
+    local backup_dir="./backups/$(date +%Y%m%d_%H%M%S)"
+    
+    log_info "备份数据到 $backup_dir..."
+    
+    mkdir -p "$backup_dir"
+    
+    # 备份上传文件
+    if docker volume inspect cert_autofill_backend_data >/dev/null 2>&1; then
+        log_info "备份上传文件..."
+        docker run --rm -v cert_autofill_backend_data:/data -v "$(pwd)/$backup_dir":/backup alpine tar czf /backup/uploads_backup.tar.gz -C /data .
+        log_success "上传文件备份完成"
+    else
+        log_warning "未找到上传文件卷"
+    fi
+    
+    # 备份数据库
+    if docker volume inspect cert_autofill_backend_db >/dev/null 2>&1; then
+        log_info "备份数据库..."
+        docker run --rm -v cert_autofill_backend_db:/data -v "$(pwd)/$backup_dir":/backup alpine tar czf /backup/db_backup.tar.gz -C /data .
+        log_success "数据库备份完成"
+    else
+        log_warning "未找到数据库卷"
+    fi
+    
+    log_success "数据备份完成: $backup_dir"
+}
+
+# 恢复数据
+restore_data() {
+    local backup_dir=$1
+    
+    if [ -z "$backup_dir" ]; then
+        log_error "请指定备份目录"
+        exit 1
+    fi
+    
+    if [ ! -d "$backup_dir" ]; then
+        log_error "备份目录不存在: $backup_dir"
+        exit 1
+    fi
+    
+    log_info "从 $backup_dir 恢复数据..."
+    
+    # 恢复上传文件
+    if [ -f "$backup_dir/uploads_backup.tar.gz" ]; then
+        log_info "恢复上传文件..."
+        docker run --rm -v cert_autofill_backend_data:/data -v "$(pwd)/$backup_dir":/backup alpine tar xzf /backup/uploads_backup.tar.gz -C /data
+        log_success "上传文件恢复完成"
+    else
+        log_warning "未找到上传文件备份"
+    fi
+    
+    # 恢复数据库
+    if [ -f "$backup_dir/db_backup.tar.gz" ]; then
+        log_info "恢复数据库..."
+        docker run --rm -v cert_autofill_backend_db:/data -v "$(pwd)/$backup_dir":/backup alpine tar xzf /backup/db_backup.tar.gz -C /data
+        log_success "数据库恢复完成"
+    else
+        log_warning "未找到数据库备份"
+    fi
+    
+    log_success "数据恢复完成"
+}
+
 # 查看日志
 show_logs() {
     local service=$1
@@ -278,8 +368,14 @@ main() {
         "backup")
             backup_data
             ;;
+        "restore")
+            restore_data $2
+            ;;
         "cleanup")
             cleanup
+            ;;
+        "safe-cleanup")
+            safe_cleanup
             ;;
         "help"|"-h"|"--help")
             echo "使用方法: $0 [命令] [--build]"
@@ -291,11 +387,19 @@ main() {
             echo "  restart           重启服务"
             echo "  logs              查看日志 (可选: 服务名)"
             echo "  backup            备份数据"
-            echo "  cleanup           清理资源"
+            echo "  restore <dir>     恢复数据"
+            echo "  cleanup           清理资源 (删除所有数据)"
+            echo "  safe-cleanup      安全清理 (保留数据卷)"
             echo "  help              显示帮助信息"
             echo ""
             echo "选项:"
             echo "  --build           强制重新构建镜像 (解决依赖更新问题)"
+            echo ""
+            echo "数据管理:"
+            echo "  backup            备份所有数据到 ./backups/ 目录"
+            echo "  restore <dir>     从指定目录恢复数据"
+            echo "  safe-cleanup      清除缓存但保留数据 (推荐用于解决代码问题)"
+            echo "  cleanup           完全清理所有资源 (谨慎使用)"
             ;;
         *)
             log_error "未知命令: $action"
