@@ -190,6 +190,51 @@ class TrGenerator(BaseGenerator):
             
             # 保存文档
             doc.save(output_path)
+
+            # 额外：在 Windows 上用 Word COM 主动刷新域（相当于按一次 F9），确保正文/页眉页脚域更新
+            try:
+                import platform
+                if platform.system().lower() == 'windows':
+                    try:
+                        import win32com.client as win32
+                        import pythoncom
+                        pythoncom.CoInitialize()
+                        word = None
+                        try:
+                            word = win32.DispatchEx('Word.Application')
+                            word.Visible = False
+                            wdoc = word.Documents.Open(os.path.abspath(output_path))
+                            try:
+                                wdoc.Fields.Update()
+                                for section in wdoc.Sections:
+                                    for i in (1, 2, 3):
+                                        try:
+                                            section.Headers(i).Range.Fields.Update()
+                                        except Exception:
+                                            pass
+                                        try:
+                                            section.Footers(i).Range.Fields.Update()
+                                        except Exception:
+                                            pass
+                            except Exception:
+                                pass
+                            wdoc.Save()
+                            wdoc.Close(False)
+                        finally:
+                            try:
+                                if word is not None:
+                                    word.Quit()
+                            except Exception:
+                                pass
+                            try:
+                                pythoncom.CoUninitialize()
+                            except Exception:
+                                pass
+                    except Exception:
+                        # 若未安装 pywin32 或 Word，不影响生成
+                        pass
+            except Exception:
+                pass
             
             return {
                 "success": True,

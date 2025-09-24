@@ -8,6 +8,8 @@ from datetime import datetime, date
 from docxtpl import DocxTemplate, InlineImage
 import subprocess
 import platform
+import threading
+import time
 from typing import Dict, Any, List, Union
 from docx.shared import Cm
 from flask import current_app
@@ -501,7 +503,7 @@ class BaseGenerator:
         # 子类可以重写此方法来自定义不同字段的图片尺寸
         return None
     
-    def _convert_docx_to_pdf(self, docx_path: str, pdf_path: str) -> bool:
+    def _convert_docx_to_pdf(self, docx_path: str, pdf_path: str, update_fields: bool = False) -> bool:
         """
         将DOCX文件转换为PDF
         
@@ -522,60 +524,78 @@ class BaseGenerator:
             system = platform.system().lower()
             
             if system == "windows":
-                # Windows系统使用LibreOffice
-                libreoffice_path = self._find_libreoffice_windows()
-                if libreoffice_path:
-                    cmd = [
-                        libreoffice_path,
-                        "--headless",
-                        "--convert-to", "pdf",
-                        "--outdir", os.path.dirname(pdf_path),
-                        docx_path
-                    ]
-                    result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
-                    if result.returncode == 0:
-                        print(f"✅ PDF转换成功: {pdf_path}")
+                # Windows: 使用 Microsoft Word COM 自动化刷新域并导出 PDF
+                try:
+                    import win32com.client as win32
+                    import pythoncom
+                except Exception as e:
+                    print(f"❌ 未安装 pywin32 或无法导入：{e}")
+                    return False
+
+                # 序列化 Word 导出，避免并发导致 COM 断开/RPC 错误
+                if not hasattr(self.__class__, "_word_export_lock"):
+                    self.__class__._word_export_lock = threading.Lock()
+
+                def _export_once() -> bool:
+                    word = None
+                    try:
+                        pythoncom.CoInitialize()
+                        # DispatchEx 更适合多线程场景
+                        word = win32.DispatchEx('Word.Application')
+                        word.Visible = False
+                        doc = word.Documents.Open(os.path.abspath(docx_path))
+                        # 可选：更新全部域（正文与页眉/页脚）
+                        if update_fields:
+                            try:
+                                doc.Fields.Update()
+                                for section in doc.Sections:
+                                    for i in (1, 2, 3):
+                                        try:
+                                            section.Headers(i).Range.Fields.Update()
+                                        except Exception:
+                                            pass
+                                        try:
+                                            section.Footers(i).Range.Fields.Update()
+                                        except Exception:
+                                            pass
+                            except Exception:
+                                pass
+
+                        os.makedirs(os.path.dirname(pdf_path), exist_ok=True)
+                        wdExportFormatPDF = 17
+                        doc.ExportAsFixedFormat(os.path.abspath(pdf_path), wdExportFormatPDF)
+                        doc.Close(False)
+                        print(f"✅ Word 导出 PDF 成功: {pdf_path}")
                         return True
-                    else:
-                        print(f"❌ PDF转换失败: {result.stderr}")
-                        return False
-                else:
-                    print("❌ 未找到LibreOffice，无法转换PDF")
-                    return False
+                    finally:
+                        try:
+                            if word is not None:
+                                word.Quit()
+                        except Exception:
+                            pass
+                        try:
+                            pythoncom.CoUninitialize()
+                        except Exception:
+                            pass
+
+                with self.__class__._word_export_lock:
+                    # 首次尝试
+                    try:
+                        return _export_once()
+                    except Exception as e:
+                        # 典型错误：-2147417848 对象已断开、-2147023174 RPC 不可用 → 重试一次
+                        print(f"⚠️ Word 导出异常，准备重试：{e}")
+                        time.sleep(0.5)
+                        try:
+                            return _export_once()
+                        except Exception as e2:
+                            print(f"❌ 使用 Word 导出 PDF 失败（重试后）：{e2}")
+                            return False
             
-            elif system == "darwin":
-                # macOS系统使用LibreOffice
-                cmd = [
-                    "/Applications/LibreOffice.app/Contents/MacOS/soffice",
-                    "--headless",
-                    "--convert-to", "pdf",
-                    "--outdir", os.path.dirname(pdf_path),
-                    docx_path
-                ]
-                result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
-                if result.returncode == 0:
-                    print(f"✅ PDF转换成功: {pdf_path}")
-                    return True
-                else:
-                    print(f"❌ PDF转换失败: {result.stderr}")
-                    return False
-            
-            else:
-                # Linux系统使用LibreOffice
-                cmd = [
-                    "libreoffice",
-                    "--headless",
-                    "--convert-to", "pdf",
-                    "--outdir", os.path.dirname(pdf_path),
-                    docx_path
-                ]
-                result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
-                if result.returncode == 0:
-                    print(f"✅ PDF转换成功: {pdf_path}")
-                    return True
-                else:
-                    print(f"❌ PDF转换失败: {result.stderr}")
-                    return False
+            elif system in ("darwin", "linux"):
+                # 仅支持 Microsoft Word（Windows）
+                print("❌ 当前配置仅支持在 Windows 上使用 Microsoft Word 导出 PDF。请在 Windows 环境运行后端服务。")
+                return False
                     
         except subprocess.TimeoutExpired:
             print("❌ PDF转换超时")
