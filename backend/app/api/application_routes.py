@@ -84,6 +84,7 @@ def get_application(application_id: int):
             "approval_date": f.approval_date.isoformat() if getattr(f, 'approval_date', None) else None,
             "test_date": f.test_date.isoformat() if getattr(f, 'test_date', None) else None,
             "report_date": f.report_date.isoformat() if getattr(f, 'report_date', None) else None,
+            "regulation_update_date": f.regulation_update_date.isoformat() if getattr(f, 'regulation_update_date', None) else None,
             "windscreen_thick": f.windscreen_thick,
             "interlayer_thick": f.interlayer_thick,
             "glass_layers": f.glass_layers,
@@ -100,11 +101,12 @@ def get_application(application_id: int):
             "remarks": f.remarks,
             "trade_names": f.trade_names,
             "trade_marks": f.trade_marks or [],
-            # 系统参数 - 版本号
-            "version_1": getattr(f, 'version_1', 4),
-            "version_2": getattr(f, 'version_2', 8),
-            "version_3": getattr(f, 'version_3', 12),
-            "version_4": getattr(f, 'version_4', 1),
+            "glass_type": getattr(f, 'glass_type', ''),
+            # 系统参数 - 版本号（字符串）
+            "version_1": getattr(f, 'version_1', '4'),
+            "version_2": getattr(f, 'version_2', '8'),
+            "version_3": getattr(f, 'version_3', '12'),
+            "version_4": getattr(f, 'version_4', '01'),
             # 系统参数 - 实验室环境参数
             "temperature": getattr(f, 'temperature', '22°C'),
             "ambient_pressure": getattr(f, 'ambient_pressure', '1020 mbar'),

@@ -6,7 +6,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-class AIExtractionService:
+class DocumentExtractionService:
     """文档信息提取服务 - 集成Dify API"""
     
     def __init__(self):
@@ -169,6 +169,8 @@ class AIExtractionService:
             "remarks": "",
             "vehicles": []
         }
+        
 
 # 创建全局实例
-ai_extraction_service = AIExtractionService() 
+document_extraction_service = DocumentExtractionService()
+

@@ -1,10 +1,18 @@
 {
   "version": {
-    "version_1": 4,
-    "version_2": 8,
-    "version_3": 12,
-    "version_4": 1
+    "version_1": "4",
+    "version_2": "8",
+    "version_3": "12",
+    "version_4": "01"
   },
+  "regulation_update_date": "2025-6-12",
+  "glass_type_options": [
+    "float",
+    "tempered",
+    "laminated",
+    "coated",
+    "other"
+  ],
   "laboratory": {
     "temperature": {
       "value": 22,

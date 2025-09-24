@@ -5,6 +5,7 @@ TR测试报告生成器
 """
 from typing import Dict, Any
 from .base_generator import BaseGenerator
+from ..system_config import system_config
 
 
 class TrGenerator(BaseGenerator):
@@ -58,16 +59,18 @@ class TrGenerator(BaseGenerator):
             # 设备信息处理
             'equipment': fields.get('equipment', []),
             
-            # 系统参数 - 版本号
-            'version_1': fields.get('version_1', 4),
-            'version_2': fields.get('version_2', 8),
-            'version_3': fields.get('version_3', 12),
-            'version_4': fields.get('version_4', 1),
+            # 系统参数 - 版本号（字符串）
+            'version_1': fields.get('version_1', '4'),
+            'version_2': fields.get('version_2', '8'),
+            'version_3': fields.get('version_3', '12'),
+            'version_4': fields.get('version_4', '01'),
             
             # 系统参数 - 实验室环境参数
             'temperature': fields.get('temperature', '22°C'),
             'ambient_pressure': fields.get('ambient_pressure', '1020 mbar'),
-            'relative_humidity': fields.get('relative_humidity', '50 %')
+            'relative_humidity': fields.get('relative_humidity', '50 %'),
+            # 系统参数 - 法规更新日期
+            'regulation_update_date': fields.get('regulation_update_date', '')
         })
         
         return context
@@ -133,16 +136,18 @@ class TrGenerator(BaseGenerator):
                 {'no': 'Y009942800', 'name': 'Intelligent transmittance tester'}
             ],
             
-            # 系统参数 - 版本号
-            'version_1': 4,
-            'version_2': 8,
-            'version_3': 12,
-            'version_4': 1,
+            # 系统参数 - 版本号（字符串）
+            'version_1': '4',
+            'version_2': '8',
+            'version_3': '12',
+            'version_4': '01',
             
             # 系统参数 - 实验室环境参数
             'temperature': '22°C',
             'ambient_pressure': '1020 mbar',
-            'relative_humidity': '50 %'
+            'relative_humidity': '50 %',
+            # 系统参数 - 法规更新日期（示例值）
+            'regulation_update_date': '2024-01-01'
         }
     
     def generate_docx(self, fields: Dict[str, Any], output_path: str) -> Dict[str, Any]:

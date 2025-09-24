@@ -7,17 +7,17 @@ import zipfile
 import tempfile
 from datetime import datetime, date
 from ..models import Document, DocumentUpload, FormData
-from ..services.ai_extract import ai_extraction_service
+from ..services.document_extract import document_extraction_service
 from ..services.system_config import system_config
 
 from ..services.generators import (
-    generate_if_document, generate_if_pdf_from_docx,
     generate_cert_document, create_cert_sample_data,
     generate_rcs_document, create_rcs_sample_data,
     generate_other_document, create_other_sample_data,
     generate_tr_document, create_tr_sample_data,
     generate_tm_document, create_tm_sample_data,
 )
+from ..services.generators.if_generator import IfGenerator
 from ..services.generators.rcs_generator import RcsGenerator
 from ..services.generators.other_generator import OtherGenerator
 from ..services.generators.tr_generator import TrGenerator
@@ -41,6 +41,57 @@ def allowed_image_file(filename):
            filename.rsplit('.', 1)[1].lower() in ALLOWED_IMAGE_EXTENSIONS
 
 
+# 统一的文件命名构建器：根据文档类型走不同分支
+def _build_filename(doc_type: str,
+                    doc_name: str,
+                    safe_approval_no: str,
+                    generation_data: dict,
+                    output_format: str) -> str:
+    """根据 doc_type 构建文件名。默认回落到 {doc_name}-{safe_approval_no}.{ext}
+    后续可按需在各 case 中使用 generation_data 的字段自定义命名。
+    """
+    ext = '.pdf' if output_format == 'pdf' else '.docx'
+    # 默认基础名
+    base = f"{doc_name}_{safe_approval_no}"
+
+    # 使用 Python 3.10+ 的结构化匹配模拟 switch/case
+    match (doc_type or '').lower():
+        case 'if':
+            if output_format == 'docx':
+                wt = (generation_data.get('windscreen_thick') or '').strip()
+                ilt = (generation_data.get('interlayer_type') or '').strip()
+                suffix = safe_approval_no[-2:] if safe_approval_no else ''
+                parts = [p for p in [wt, ilt, f"ext.{suffix}"] if p]
+                filename_stem = ' '.join(parts) if parts else base
+            else:
+                filename_stem = base
+        case 'cert':
+            filename_stem = base
+        case 'rcs':
+            filename_stem = f"Review Control Sheet V7 {safe_approval_no}"
+        case 'other':
+            if output_format == 'docx':
+                filename_stem = f"Statement for application for EC and UNECE Type-approval v2.00 {safe_approval_no}"
+            else:
+                filename_stem = base
+        case 'tr':
+            if output_format == 'docx':
+                filename_stem = generation_data.get('report_no') or base
+            else:
+                filename_stem = base
+        case 'tm':
+            rep = (generation_data.get('report_no') or '').strip()
+            parts = [p for p in rep.split('-') if p]
+            if len(parts) >= 2:
+                tail = '-'.join(parts[-2:])
+                filename_stem = f"TM-{tail}"
+            else:
+                filename_stem = base
+        case _:
+            filename_stem = base
+
+    return f"{filename_stem}{ext}"
+
 def _make_safe_approval_no(form_data_obj, fallback: str = "TEST") -> str:
     """Return a filesystem-safe approval_no string for filenames."""
     import re
@@ -61,10 +112,9 @@ class DocumentGeneratorFactory:
             'if': {
                 'type': 'if',
                 'name': 'IF',
-                'generator': generate_if_document,
-                'template': "IF_Template",
-                'use_class': False,
-                'special_handler': self._handle_if_document
+                'generator': IfGenerator(),
+                'template': None,
+                'use_class': True
             },
             'cert': {
                 'type': 'cert',
@@ -111,47 +161,7 @@ class DocumentGeneratorFactory:
         """获取指定类型的生成器配置"""
         return self.generators.get(doc_type)
     
-    def _handle_if_document(self, generator, generation_data, docx_path, template_name, output_format):
-        """处理IF文档的特殊逻辑"""
-        try:
-            # 调用IF生成器函数
-            result = generator(generation_data, docx_path, template_name)
-            
-            # IF生成器返回字典，检查success字段
-            if isinstance(result, dict):
-                if result.get('success', False):
-                    if output_format == 'pdf':
-                        # 转换为PDF
-                        pdf_filename = os.path.basename(docx_path).replace('.docx', '.pdf')
-                        pdf_path = docx_path.replace('.docx', '.pdf')
-                        
-                        pdf_success = generate_if_pdf_from_docx(docx_path, pdf_path)
-                        
-                        if pdf_success:
-                            return {
-                                "success": True,
-                                "filename": pdf_filename,
-                                "file_path": pdf_path,
-                                "download_url": f"/api/mvp/download/{pdf_filename}"
-                            }
-                        else:
-                            return {"success": False, "error": "PDF转换失败"}
-                    else:
-                        return {
-                            "success": True,
-                            "filename": os.path.basename(docx_path),
-                            "file_path": docx_path,
-                            "download_url": f"/api/mvp/download/{os.path.basename(docx_path)}"
-                        }
-                else:
-                    error_msg = result.get('message', result.get('error', 'Word文档生成失败'))
-                    return {"success": False, "error": error_msg}
-            else:
-                return {"success": False, "error": f"IF生成器返回了无效的结果类型: {type(result)}"}
-                
-        except Exception as e:
-            print(f"IF文档处理异常: {str(e)}")
-            return {"success": False, "error": f"IF文档处理异常: {str(e)}"}
+    # 移除 IF 特殊处理器，统一走类式生成器通道
 
 def _prepare_generation_data(form_data):
     """准备文档生成所需的数据（以表单数据为准，不覆盖）"""
@@ -186,6 +196,8 @@ def _prepare_generation_data(form_data):
         "approval_date": form_data.approval_date,
         "test_date": form_data.test_date,
         "report_date": form_data.report_date,
+        # 法规更新日期（直接从系统配置读取为已格式化字符串）
+        "regulation_update_date": system_config.get_regulation_update_date(),
         # 公司信息（从Company表获取最新信息）
         "company_id": form_data.company_id,
         "company_name": form_data.company_name or '',
@@ -193,13 +205,15 @@ def _prepare_generation_data(form_data):
         "trade_names": form_data.trade_names or '',
         "trade_marks": form_data.trade_marks or [],
         "vehicles": form_data.vehicles or [],
+        # 新增：玻璃类型
+        "glass_type": getattr(form_data, 'glass_type', ''),
         # 设备信息（从Company表获取）
         "equipment": form_data.equipment or [],
-        # 系统参数 - 版本号
-        "version_1": getattr(form_data, 'version_1', 4),
-        "version_2": getattr(form_data, 'version_2', 8),
-        "version_3": getattr(form_data, 'version_3', 12),
-        "version_4": getattr(form_data, 'version_4', 1),
+        # 系统参数 - 版本号（字符串）
+        "version_1": getattr(form_data, 'version_1', '4'),
+        "version_2": getattr(form_data, 'version_2', '8'),
+        "version_3": getattr(form_data, 'version_3', '12'),
+        "version_4": getattr(form_data, 'version_4', '01'),
         # 系统参数 - 实验室环境参数
         "temperature": getattr(form_data, 'temperature', '22°C'),
         "ambient_pressure": getattr(form_data, 'ambient_pressure', '1020 mbar'),
@@ -213,56 +227,37 @@ def _generate_single_document(doc_info, generation_data, output_dir, safe_approv
     generator = doc_info['generator']
     template_name = doc_info['template']
     use_class = doc_info['use_class']
-    special_handler = doc_info.get('special_handler')
+    # 统一逻辑：不再使用 special_handler
     
     try:
-        if special_handler:
-            # 使用特殊处理器（如IF文档）
-            docx_filename = f"{doc_name}-{safe_approval_no}.docx"
-            docx_path = os.path.join(output_dir, docx_filename)
-            
-            # 确保输出目录存在
-            os.makedirs(output_dir, exist_ok=True)
-            
-            result = special_handler(generator, generation_data, docx_path, template_name, output_format)
-            return result
-        
+        # 统一处理所有文档类型 - 使用命名策略函数
+        filename = _build_filename(doc_type, doc_name, safe_approval_no, generation_data, output_format)
+        file_path = os.path.join(output_dir, filename)
+
+        if use_class:
+            # 使用生成器类（IF/TR/TM等均支持）
+            result = generator.generate_document(generation_data, file_path, output_format)
+            if result.get('success'):
+                return {
+                    "success": True,
+                    "filename": filename,
+                    "file_path": file_path,
+                    "download_url": f"/api/mvp/download/{filename}"
+                }
+            else:
+                return result
         else:
-            # 其他文档类型
-            # 根据输出格式确定文件名和路径
-            if output_format == 'pdf':
-                filename = f"{doc_name}-{safe_approval_no}.pdf"
-                file_path = os.path.join(output_dir, filename)
+            # 使用生成器函数（CERT/OTHER/RCS等函数式保持兼容）
+            result = generator(generation_data, file_path, output_format)
+            if result.get('success'):
+                return {
+                    "success": True,
+                    "filename": filename,
+                    "file_path": file_path,
+                    "download_url": f"/api/mvp/download/{filename}"
+                }
             else:
-                filename = f"{doc_name}-{safe_approval_no}.docx"
-                file_path = os.path.join(output_dir, filename)
-            
-            if use_class:
-                # 使用生成器类
-                result = generator.generate_document(generation_data, file_path, output_format)
-                
-                if result.get('success'):
-                    return {
-                        "success": True,
-                        "filename": filename,
-                        "file_path": file_path,
-                        "download_url": f"/api/mvp/download/{filename}"
-                    }
-                else:
-                    return result
-            else:
-                # 使用生成器函数
-                result = generator(generation_data, file_path, output_format)
-                
-                if result.get('success'):
-                    return {
-                        "success": True,
-                        "filename": filename,
-                        "file_path": file_path,
-                        "download_url": f"/api/mvp/download/{filename}"
-                    }
-                else:
-                    return result
+                return result
             
             # 处理生成器返回的结果已经在上面处理了，这里不需要额外处理
                 
@@ -318,15 +313,22 @@ def save_form_data():
             # 更新系统参数
             version_params = system_config.get_version_params()
             lab_params = system_config.get_laboratory_params()
+            regulation_date = system_config.get_regulation_update_date()
             
-            existing_form.version_1 = version_params.get('version_1', 4)
-            existing_form.version_2 = version_params.get('version_2', 8)
-            existing_form.version_3 = version_params.get('version_3', 12)
-            existing_form.version_4 = version_params.get('version_4', 1)
+            existing_form.version_1 = version_params.get('version_1', '4')
+            existing_form.version_2 = version_params.get('version_2', '8')
+            existing_form.version_3 = version_params.get('version_3', '12')
+            existing_form.version_4 = version_params.get('version_4', '01')
             
             existing_form.temperature = lab_params.get('temperature', '22°C')
             existing_form.ambient_pressure = lab_params.get('ambient_pressure', '1020 mbar')
             existing_form.relative_humidity = lab_params.get('relative_humidity', '50 %')
+            # 写入法规更新日期（不从前端收集）
+            try:
+                if regulation_date:
+                    existing_form.regulation_update_date = datetime.strptime(regulation_date, '%Y-%m-%d').date()
+            except Exception:
+                pass
             
             existing_form.updated_at = datetime.utcnow()
         else:
@@ -365,6 +367,7 @@ def save_form_data():
             # 获取系统参数
             version_params = system_config.get_version_params()
             lab_params = system_config.get_laboratory_params()
+            regulation_date = system_config.get_regulation_update_date()
             
             new_form = FormData(
                 session_id=session_id,
@@ -404,15 +407,19 @@ def save_form_data():
                 approval_date=approval_date,
                 test_date=test_date,
                 report_date=report_date,
-                # 系统参数 - 版本号
-                version_1=version_params.get('version_1', 4),
-                version_2=version_params.get('version_2', 8),
-                version_3=version_params.get('version_3', 12),
-                version_4=version_params.get('version_4', 1),
+                # 系统参数 - 版本号（字符串）
+                version_1=version_params.get('version_1', '4'),
+                version_2=version_params.get('version_2', '8'),
+                version_3=version_params.get('version_3', '12'),
+                version_4=version_params.get('version_4', '01'),
                 # 系统参数 - 实验室环境参数
                 temperature=lab_params.get('temperature', '22°C'),
                 ambient_pressure=lab_params.get('ambient_pressure', '1020 mbar'),
-                relative_humidity=lab_params.get('relative_humidity', '50 %')
+                relative_humidity=lab_params.get('relative_humidity', '50 %'),
+                # 法规更新日期（从系统参数写入）
+                regulation_update_date=  regulation_date or "12 June 2025",
+                # 玻璃类型（来自前端，若没填则为空字符串）
+                glass_type=form_data.get('glass_type', '')
             )
             db.session.add(new_form)
         
@@ -478,6 +485,7 @@ def get_form_data(session_id):
                 "approval_date": form_data.approval_date.isoformat() if form_data.approval_date else None,
                 "test_date": form_data.test_date.isoformat() if form_data.test_date else None,
                 "report_date": form_data.report_date.isoformat() if form_data.report_date else None,
+                "regulation_update_date": getattr(form_data, 'regulation_update_date', None),
                 "status": form_data.status,
                 "created_at": form_data.created_at.isoformat(),
                 "updated_at": form_data.updated_at.isoformat()
@@ -1038,7 +1046,7 @@ def ai_extract_document():
             file.save(temp_file_path)
             
             # 调用提取服务
-            extraction_result = ai_extraction_service.extract_from_document(temp_file_path)
+            extraction_result = document_extraction_service.extract_from_document(temp_file_path)
             
             if extraction_result["success"]:
                 return jsonify({

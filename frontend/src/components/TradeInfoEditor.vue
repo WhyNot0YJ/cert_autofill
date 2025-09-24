@@ -130,7 +130,7 @@ watch(() => props.tradeMarks, (newValue) => {
 // 计算公司商标名称文本
 const companyTradeNamesText = computed(() => {
   if (props.readonlyCompanyData?.trade_names && props.readonlyCompanyData.trade_names.length > 0) {
-    return props.readonlyCompanyData.trade_names.join(';')
+    return props.readonlyCompanyData.trade_names.join('; ') + '; '
   }
   return ''
 })
@@ -138,8 +138,8 @@ const companyTradeNamesText = computed(() => {
 // 计算最终的trade_names（优先使用手动编辑的）
 const finalTradeNames = computed(() => {
   if (tradeNamesText.value.trim()) {
-    // 手动编辑的数据
-    return tradeNamesText.value.split(';').map(name => name.trim()).filter(name => name)
+    // 手动编辑的数据（按 "; " 分割）
+    return tradeNamesText.value.split('; ').map(name => name.trim()).filter(name => name)
   } else if (props.readonlyCompanyData?.trade_names && props.readonlyCompanyData.trade_names.length > 0) {
     // 公司关联的数据
     return props.readonlyCompanyData.trade_names

@@ -53,15 +53,19 @@ class FormData(db.Model):
     approval_date = Column(Date, nullable=False, default=lambda: date.today() - timedelta(days=14))   # 批准日期，默认今天-14天
     test_date = Column(Date, nullable=False, default=lambda: date.today() - timedelta(days=7))        # 测试日期，默认今天-7天  
     report_date = Column(Date, nullable=False, default=date.today)                                    # 报告日期，默认今天
+    # 法规更新日期（系统自动写入）
+    regulation_update_date = Column(String(20), nullable=True)
     
     # 车辆信息 (JSON数组)
     vehicles = Column(JSON, default=lambda: [])                # 车辆信息数组
     
-    # 系统参数 - 版本号
-    version_1 = Column(Integer, default=4)                     # 版本号第1部分
-    version_2 = Column(Integer, default=8)                     # 版本号第2部分
-    version_3 = Column(Integer, default=12)                    # 版本号第3部分
-    version_4 = Column(Integer, default=1)                     # 版本号第4部分
+    # 系统参数 - 版本号（统一为字符串类型，避免前导零丢失）
+    version_1 = Column(String(10), default='4')                # 版本号第1部分
+    version_2 = Column(String(10), default='8')                # 版本号第2部分
+    version_3 = Column(String(10), default='12')               # 版本号第3部分
+    version_4 = Column(String(10), default='01')               # 版本号第4部分
+    # 新增：玻璃类型（可配置的下拉选项值）
+    glass_type = Column(String(50))
     
     # 系统参数 - 实验室环境参数
     temperature = Column(String(20), default='22°C')           # 温度（包含单位）

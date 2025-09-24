@@ -49,6 +49,7 @@ def main():
         "approval_date": "DATE",
         "test_date": "DATE",
         "report_date": "DATE",
+        "regulation_update_date": "TEXT",
         # 业务布尔/文本与系统参数
         "glass_color_choice": "TEXT",
         "interlayer_total": "INTEGER",      # 布尔 0/1
@@ -56,13 +57,15 @@ def main():
         "interlayer_colourless": "INTEGER",
         "conductors_choice": "TEXT",
         "opaque_obscure_choice": "TEXT",
-        "version_1": "INTEGER",
-        "version_2": "INTEGER",
-        "version_3": "INTEGER",
-        "version_4": "INTEGER",
+        "version_1": "TEXT",
+        "version_2": "TEXT",
+        "version_3": "TEXT",
+        "version_4": "TEXT",
         "temperature": "TEXT",
         "ambient_pressure": "TEXT",
         "relative_humidity": "TEXT",
+        # 新增：玻璃类型
+        "glass_type": "TEXT",
     }
 
     db_path = find_db_file()

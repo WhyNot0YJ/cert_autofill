@@ -123,6 +123,18 @@
                 label-width="280px"
                 class="certification-form"
               >
+              <!-- 玻璃类型信息 -->
+                <el-divider content-position="left">玻璃类型信息</el-divider>
+              <!-- 玻璃类型 (Glass Type) -->
+                <el-row :gutter="20">
+                  <el-col :span="24">
+                    <el-form-item label="玻璃类型 (Glass Type)" prop="glass_type">
+                      <el-select v-model="formData.glass_type" placeholder="请选择玻璃类型" style="width: 100%">
+                        <el-option v-for="opt in glassTypeOptions" :key="opt" :label="opt" :value="opt" />
+                      </el-select>
+                    </el-form-item>
+                  </el-col>
+                </el-row>
                 <!-- 重要日期信息 -->
                 <el-divider content-position="left">重要日期</el-divider>
                 
@@ -262,11 +274,11 @@
                   </el-col>
                 </el-row>
                 
-                <!-- 玻璃板描述 (Pane Description) -->
+                <!-- 玻璃板描述 (Pane Description) - 锁定不可编辑 -->
                 <el-row :gutter="20">
                   <el-col :span="24">
                     <el-form-item label="玻璃板描述 (Pane Description)" prop="pane_desc">
-                      <el-input v-model="formData.pane_desc" placeholder="请输入玻璃板描述" />
+                      <el-input v-model="formData.pane_desc" placeholder="玻璃板描述（不可编辑）" :disabled="true" />
                     </el-form-item>
                   </el-col>
                 </el-row>
@@ -920,6 +932,11 @@ const formData = reactive<{[key: string]: any}>({
   // 设备信息（随公司选择同步）
   equipment: [] as Array<{ no: string; name: string }>
 })
+
+// 玻璃类型可选项（可从后端获取；先内置，与 system_params 同步）
+const glassTypeOptions = ref<string[]>([
+  'float', 'tempered', 'laminated', 'coated', 'other'
+])
 
 // =============== 本地草稿存储（纯前端） ===============
 const DRAFT_KEY = 'mvp_local_draft'
@@ -1732,16 +1749,16 @@ const generateTestData = async () => {
     return
   }
   
-      // 生成示例数据
+  // 生成示例数据
   Object.assign(formData, {
     // 报告号和公司信息
-    report_no: "CSR043",
+    report_no: "CSR043-A0-2025-07542",
     company_id: defaultCompany?.id || null,
     company_name: defaultCompany?.name || "示例企业",
     company_address: defaultCompany?.address || "示例公司地址",
-    trade_names: defaultCompany?.trade_names && defaultCompany.trade_names.length > 0 
-      ? defaultCompany.trade_names.join(';') 
-      : "示例商标1;示例商标2",
+    trade_names: (defaultCompany?.trade_names && defaultCompany.trade_names.length > 0 
+      ? defaultCompany.trade_names.join('; ')
+      : "示例商标1; 示例商标2") + '; ',
     trade_marks: defaultCompany?.trade_marks || [],
     // 设备信息（优先使用公司设备，否则给示例）
     equipment: (Array.isArray(defaultCompany?.equipment) && defaultCompany!.equipment.length > 0)
@@ -1884,9 +1901,9 @@ const handleCompanyChange = (companyId: number) => {
     formData.company_name = selectedCompany.name
     formData.company_address = selectedCompany.address || ''
     
-    // 将trade_names数组转换为分号分隔的字符串
+    // 将trade_names数组转换为分号+空格分隔的字符串，并追加结尾分隔符
     formData.trade_names = selectedCompany.trade_names && selectedCompany.trade_names.length > 0 
-      ? selectedCompany.trade_names.join(';') 
+      ? selectedCompany.trade_names.join('; ') + '; '
       : ''
     
     // 直接设置trade_marks数组
@@ -1984,7 +2001,7 @@ const handleCompanyInfoFromAI = async (aiCompanyName: string, aiCompanyAddress: 
     
     // 同步其他相关字段
     if (matchedCompany.trade_names && matchedCompany.trade_names.length > 0) {
-      formData.trade_names = matchedCompany.trade_names.join(';')
+      formData.trade_names = matchedCompany.trade_names.join('; ') + '; '
     }
     if (matchedCompany.trade_marks) {
       formData.trade_marks = matchedCompany.trade_marks

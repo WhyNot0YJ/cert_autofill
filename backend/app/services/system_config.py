@@ -49,11 +49,19 @@ class SystemConfigService:
         """获取默认配置"""
         return {
             "version": {
-                "version_1": 4,
-                "version_2": 8,
-                "version_3": 12,
-                "version_4": 1
+                "version_1": "4",
+                "version_2": "8",
+                "version_3": "12",
+                "version_4": "01"
             },
+            "regulation_update_date": "2024-01-01",
+            "glass_type_options": [
+				"float",
+				"tempered",
+				"laminated",
+				"coated",
+				"other"
+			],
             "laboratory": {
                 "temperature": {
                     "value": 22,
@@ -70,7 +78,7 @@ class SystemConfigService:
             }
         }
     
-    def get_version_params(self) -> Dict[str, int]:
+    def get_version_params(self) -> Dict[str, str]:
         """获取版本号参数"""
         config = self._load_config()
         return config.get('version', {})
@@ -94,6 +102,26 @@ class SystemConfigService:
     def get_all_params(self) -> Dict[str, Any]:
         """获取所有系统参数"""
         return self._load_config()
+
+    def get_regulation_update_date(self) -> str:
+        """获取法规更新日期，返回格式如 17 May 2025"""
+        from datetime import date
+        config = self._load_config()
+        raw = str(config.get('regulation_update_date', '2024-01-01')).strip()
+        # 兼容 YYYY-M-D / YYYY-MM-DD 等
+        try:
+            y, m, d = [int(x) for x in raw.split('-')]
+            dt = date(y, m, d)
+            # 不使用 %d 以避免前导零，手动组合：日(不补零) + 全月名 + 年
+            return f"{dt.day} {dt.strftime('%B')} {dt.year}"
+        except Exception:
+            # 失败则原样返回，避免中断
+            return raw
+
+    def get_glass_type_options(self) -> Any:
+        """获取玻璃类型可选项数组"""
+        config = self._load_config()
+        return config.get('glass_type_options', [])
     
     def reload_config(self):
         """重新加载配置文件（清除缓存）"""

@@ -151,7 +151,7 @@ cert_autofill/
 ├── backend/                 # 后端Flask应用
 │   ├── app/
 │   │   ├── services/       # 业务逻辑服务
-│   │   │   └── ai_extract.py  # 文档提取服务
+│   │   │   └── document_extract.py  # 文档提取服务
 │   │   ├── api/            # API路由
 │   │   └── models/         # 数据模型
 │   └── run.py              # 启动文件

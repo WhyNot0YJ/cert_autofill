@@ -33,21 +33,43 @@ class CertGenerator(BaseGenerator):
         context = super().prepare_context(fields)
         
         # CERT文档特定的数据处理
-        # 计算simple_no：approval_no中去掉最后一部分（以*分隔的部分）
-        approval_no = fields.get('approval_no', '')
+        # 计算 simple_no：例如将 "E4*43R01/12*2876*00" 转为 "43R-012876"
+        approval_no = (fields.get('approval_no') or '').strip()
         simple_no = ''
         if approval_no:
-            # 按*分割，去掉最后一部分
-            parts = approval_no.split('*')
-            if len(parts) > 1:
-                # 去掉最后一部分，重新组合
-                simple_no = '*'.join(parts[:-1])
-            else:
-                # 如果没有*分隔符，使用完整的approval_no
+            parts = [p for p in approval_no.split('*') if p]
+            try:
+                # 解析法规段，例如 "43R01/12" → reg_code="43R"，version="01"
+                reg_seg = parts[1] if len(parts) > 1 else ''
+                reg_left = reg_seg.split('/') [0] if reg_seg else ''
+                import re
+                m = re.search(r'(\d+R)(\d{2})', reg_left)
+                if not m:
+                    # 尝试宽松匹配：允许前缀非数字，例如 "E43R01" 也能匹配出 43R/01
+                    m = re.search(r'(?:(?:[A-Z])*)(\d+R)(\d{2})', reg_left)
+                if m:
+                    reg_code = m.group(1)  # e.g. 43R
+                    ver2 = m.group(2)      # e.g. 01
+                else:
+                    reg_code, ver2 = '', ''
+
+                # 解析编号段，例如 parts[2] = "2876" → 编号左侧补齐至少4位
+                num_seg = parts[2] if len(parts) > 2 else ''
+                num_clean = re.sub(r'\D', '', num_seg)
+                if num_clean:
+                    num_padded = num_clean.zfill(4)
+                else:
+                    num_padded = ''
+
+                if reg_code and (ver2 or num_padded):
+                    simple_no = f"{reg_code}-{ver2}{num_padded}"
+                else:
+                    # 兜底回退：保持原 approval_no
+                    simple_no = approval_no
+            except Exception:
                 simple_no = approval_no
         else:
             simple_no = approval_no
-        print("simple_no", simple_no)
 
         
         # 处理公司图片 - 使用父类方法从数据库获取
@@ -55,7 +77,7 @@ class CertGenerator(BaseGenerator):
         
         # 添加CERT特有的字段
         context.update({
-            'simple_no': simple_no,
+                'simple_no': simple_no,
                 'generated_date': datetime.now().strftime('%Y-%m-%d'),
                 'generated_time': datetime.now().strftime('%H:%M:%S')
         })
