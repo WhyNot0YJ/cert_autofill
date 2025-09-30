@@ -176,7 +176,7 @@ class DefaultPreprocessor(BasePreprocessor):
                 import win32com.client  # type: ignore
                 import pythoncom  # type: ignore
             except Exception as ie:
-                print(f"[Preprocess] win32com not available: {ie}", flush=True)
+                print(f"[Preprocess] win32com not available (Linux/Docker environment): {ie}", flush=True)
                 return ''
 
             pythoncom.CoInitialize()

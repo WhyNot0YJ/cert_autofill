@@ -529,7 +529,7 @@ class BaseGenerator:
                     import win32com.client as win32
                     import pythoncom
                 except Exception as e:
-                    print(f"❌ 未安装 pywin32 或无法导入：{e}")
+                    print(f"❌ 未安装 pywin32 或无法导入（Linux/Docker环境）：{e}")
                     return False
 
                 # 序列化 Word 导出，避免并发导致 COM 断开/RPC 错误

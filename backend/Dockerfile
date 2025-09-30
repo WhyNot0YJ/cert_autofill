@@ -31,6 +31,7 @@ RUN apt-get update \
         libfribidi-dev \
         libxcb1-dev \
         pkg-config \
+        curl \
     && rm -rf /var/lib/apt/lists/*
 
 # 安装 LibreOffice（headless）与常用字体（含中文），以及 JRE（部分转换路径需要）
@@ -68,5 +69,5 @@ EXPOSE 5000
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:5000/api/health || exit 1
 
-# 启动命令
-CMD ["python", "-m", "flask", "run", "--host=0.0.0.0", "--port=5000"]
+# 启动命令 - 使用Gunicorn作为生产服务器
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--timeout", "120", "--keep-alive", "2", "--max-requests", "1000", "--max-requests-jitter", "100", "app.main:app"]
