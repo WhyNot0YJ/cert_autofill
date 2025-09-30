@@ -934,12 +934,23 @@ def document_extract():
             }), 400
         
         # 使用文件上传服务保存到临时目录
+        temp_file_path = None
         try:
             upload_result = FileUploadService.upload_document_file(file, temp_dir=True)
             temp_file_path = upload_result['file_path']
             
             # 调用提取服务
+            processed_path = temp_file_path
             extraction_result = document_extraction_service.extract_from_document(temp_file_path)
+            # 如果预处理生成了 .clean.docx，提取结束后尝试清理
+            try:
+                if processed_path and processed_path.endswith('.docx'):
+                    base = os.path.splitext(processed_path)[0]
+                    cleaned = f"{base}.clean.docx"
+                    if os.path.exists(cleaned):
+                        os.remove(cleaned)
+            except Exception:
+                pass
             
             if extraction_result["success"]:
                 return jsonify({
@@ -954,8 +965,9 @@ def document_extract():
                 }), 500
                 
         finally:
-            # 清理临时文件
-            FileUploadService.cleanup_temp_file(temp_file_path)
+            # 清理临时文件（仅当已成功创建时）
+            if temp_file_path:
+                FileUploadService.cleanup_temp_file(temp_file_path)
                 
     except Exception as e:
         current_app.logger.error(f"提取失败: {str(e)}")

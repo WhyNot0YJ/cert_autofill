@@ -186,7 +186,13 @@
             </div>
           </div>
           <!-- 批量添加设备对话框 -->
-          <el-dialog v-model="showBatchAddDialog" title="批量添加设备" width="600px">
+          <el-dialog 
+            v-model="showBatchAddDialog" 
+            title="批量添加设备" 
+            width="600px"
+            append-to-body
+            :z-index="10001"
+          >
             <div class="batch-add-container">
               <el-alert
                 title="使用说明"
