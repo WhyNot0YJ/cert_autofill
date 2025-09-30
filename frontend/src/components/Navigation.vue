@@ -2,13 +2,7 @@
   <nav class="navigation">
     <div class="nav-container">
       <div class="nav-brand">
-        <div class="logo">
-          <div class="logo-graphic"></div>
-          <div class="logo-text">
-            <span class="logo-main">TÜV NORD</span>
-            <span class="logo-sub">证书管理系统</span>
-          </div>
-        </div>
+        <h1 class="nav-title">证书管理系统</h1>
       </div>
       
       <div class="nav-links">
@@ -66,46 +60,11 @@ import { Document, OfficeBuilding } from '@element-plus/icons-vue';
   align-items: center;
 }
 
-.logo {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.logo-graphic {
-  width: 40px;
-  height: 40px;
-  background: linear-gradient(135deg, #2A3B8F 0%, #1e2a5e 100%);
-  border-radius: 8px;
-  position: relative;
-}
-
-.logo-graphic::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 20px;
-  height: 20px;
-  background: white;
-  border-radius: 4px;
-}
-
-.logo-text {
-  display: flex;
-  flex-direction: column;
-}
-
-.logo-main {
-  font-weight: 700;
-  font-size: 1.2rem;
+.nav-title {
+  font-size: 1.5rem;
+  font-weight: 600;
   color: #2A3B8F;
-}
-
-.logo-sub {
-  font-size: 0.8rem;
-  color: #666;
+  margin: 0;
 }
 
 .nav-links {

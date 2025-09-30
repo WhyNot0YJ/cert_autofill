@@ -46,6 +46,32 @@
                 重置
               </el-button>
             </el-col>
+            <el-col :span="4">
+              <el-dropdown @command="handleColumnFilter" trigger="click">
+                <el-button>
+                  <el-icon><Setting /></el-icon>
+                  列筛选
+                  <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+                </el-button>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item 
+                      v-for="column in availableColumns" 
+                      :key="column.key"
+                      :command="column.key"
+                    >
+                      <el-checkbox 
+                        v-model="column.visible" 
+                        @change="updateColumnVisibility"
+                        @click.stop
+                      >
+                        {{ column.label }}
+                      </el-checkbox>
+                    </el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+            </el-col>
           </el-row>
         </div>
 
@@ -56,21 +82,40 @@
             v-loading="loading" 
             style="width: 100%"
             @row-click="handleRowClick"
+            :border="true"
+            :resizable="true"
+            :show-overflow-tooltip="true"
+            stripe
           >
-            <el-table-column prop="application_number" label="申请书编号" width="200">
+            <el-table-column 
+              v-if="getColumnVisibility('application_number')"
+              prop="application_number" 
+              label="申请书编号" 
+              min-width="200"
+            >
               <template #default="{ row }">
                 <el-link type="primary" @click.stop="viewApplication(row.id)">
                   {{ row.application_number }}
                 </el-link>
               </template>
             </el-table-column>
-            <el-table-column prop="approval_no" label="批准号" width="260">
+            <el-table-column 
+              v-if="getColumnVisibility('approval_no')"
+              prop="approval_no" 
+              label="批准号" 
+              min-width="260"
+            >
               <template #default="{ row }">
                 <span>{{ row.approval_no || '未填写' }}</span>
               </template>
             </el-table-column>
             
-            <el-table-column prop="company_name" label="公司名称" width="220">
+            <el-table-column 
+              v-if="getColumnVisibility('company_name')"
+              prop="company_name" 
+              label="公司名称" 
+              min-width="220"
+            >
               <template #default="{ row }">
                 <span>{{ row.company_name || '未填写' }}</span>
               </template>
@@ -80,19 +125,29 @@
             
             
             
-            <el-table-column prop="created_at" label="创建时间" width="180">
+            <el-table-column 
+              v-if="getColumnVisibility('created_at')"
+              prop="created_at" 
+              label="创建时间" 
+              min-width="180"
+            >
               <template #default="{ row }">
                 <span>{{ formatDate(row.created_at) }}</span>
               </template>
             </el-table-column>
             
-            <el-table-column prop="updated_at" label="更新时间" width="180">
+            <el-table-column 
+              v-if="getColumnVisibility('updated_at')"
+              prop="updated_at" 
+              label="更新时间" 
+              min-width="180"
+            >
               <template #default="{ row }">
                 <span>{{ formatDate(row.updated_at) }}</span>
               </template>
             </el-table-column>
             
-            <el-table-column label="操作" width="200" fixed="right">
+            <el-table-column label="操作" width="250" fixed="right">
               <template #default="{ row }">
                 <el-button size="small" @click.stop="viewApplication(row.id)">
                   <el-icon><View /></el-icon>
@@ -133,80 +188,80 @@
         >
           <div v-if="selectedApplication" class="application-detail">
             <el-descriptions :column="2" border>
-              <el-descriptions-item label="申请书编号">
+              <el-descriptions-item label="Application Number">
                 {{ selectedApplication.application_number }}
               </el-descriptions-item>
               
               
-              <el-descriptions-item label="批准号">
+              <el-descriptions-item label="Approval No.">
                 {{ selectedApplication.approval_no || '未填写' }}
               </el-descriptions-item>
-              <el-descriptions-item label="信息文件夹号">
+              <el-descriptions-item label="Information Folder No.">
                 {{ selectedApplication.information_folder_no || '未填写' }}
               </el-descriptions-item>
-              <el-descriptions-item label="公司名称">
+              <el-descriptions-item label="Company">
                 {{ selectedApplication.company_name || '未填写' }}
               </el-descriptions-item>
-              <el-descriptions-item label="公司地址">
+              <el-descriptions-item label="Company Address">
                 {{ selectedApplication.company_address || '未填写' }}
               </el-descriptions-item>
             </el-descriptions>
             
-            <el-divider content-position="left">技术参数</el-divider>
+            <el-divider content-position="left">Technical parameters</el-divider>
             <el-descriptions :column="3" border>
-              <el-descriptions-item label="风窗厚度">
+              <el-descriptions-item label="Nominal thickness of the windscreen">
                 {{ selectedApplication.windscreen_thick || '未填写' }}
               </el-descriptions-item>
-              <el-descriptions-item label="夹层厚度">
+              <el-descriptions-item label="Nominal thickness of interlayer(s)">
                 {{ selectedApplication.interlayer_thick || '未填写' }}
               </el-descriptions-item>
-              <el-descriptions-item label="玻璃层数">
+              <el-descriptions-item label="Number of layers of glass">
                 {{ selectedApplication.glass_layers || '未填写' }}
               </el-descriptions-item>
-              <el-descriptions-item label="夹层数">
+              <el-descriptions-item label="Number of layers of interlayer">
                 {{ selectedApplication.interlayer_layers || '未填写' }}
               </el-descriptions-item>
-              <el-descriptions-item label="夹层类型">
+              <el-descriptions-item label="Nature and type of interlayer(s)">
                 {{ selectedApplication.interlayer_type || '未填写' }}
               </el-descriptions-item>
-              <el-descriptions-item label="玻璃处理">
+              <el-descriptions-item label="Special treatment of glass">
                 {{ selectedApplication.glass_treatment || '未填写' }}
               </el-descriptions-item>
-              <el-descriptions-item label="涂层类型">
+              <el-descriptions-item label="Nature and type of plastics coating(s)">
                 {{ selectedApplication.coating_type || '未填写' }}
               </el-descriptions-item>
-              <el-descriptions-item label="涂层厚度">
+              <el-descriptions-item label="Nominal thickness of plastic coating(s)">
                 {{ selectedApplication.coating_thick || '未填写' }}
               </el-descriptions-item>
-              <el-descriptions-item label="涂层颜色">
+              <el-descriptions-item label="Colouring of plastic coating(s)">
                 {{ selectedApplication.coating_color || '未填写' }}
               </el-descriptions-item>
-              <el-descriptions-item label="材料性质">
+              <el-descriptions-item label="Nature of the material">
                 {{ selectedApplication.material_nature || '未填写' }}
               </el-descriptions-item>
-              <el-descriptions-item label="安全等级">
+              <el-descriptions-item label="Class of safety-glass pane">
                 {{ selectedApplication.safety_class || '未填写' }}
               </el-descriptions-item>
-              <el-descriptions-item label="玻璃板描述">
+              <el-descriptions-item label="Description of glass pane">
                 {{ selectedApplication.pane_desc || '未填写' }}
               </el-descriptions-item>
             </el-descriptions>
             
-            <el-divider content-position="left">车辆信息</el-divider>
+            <el-divider content-position="left">Vehicle Information</el-divider>
             <div v-if="selectedApplication.vehicles && selectedApplication.vehicles.length > 0">
               <div v-for="(vehicle, index) in selectedApplication.vehicles" :key="index" class="vehicle-info">
                 <h4>车辆 {{ index + 1 }}</h4>
                 <el-descriptions :column="2" border>
-                  <el-descriptions-item label="车辆制造商">
+                  <el-descriptions-item label="Vehicle Manufacturer">
                     {{ vehicle.veh_mfr || '未填写' }}
                   </el-descriptions-item>
-                  <el-descriptions-item label="车辆类型">
+                  <el-descriptions-item label="Type of vehicle">
                     {{ vehicle.veh_type || '未填写' }}
                   </el-descriptions-item>
-                  <el-descriptions-item label="车辆类别">
+                  <el-descriptions-item label="Vehicle category">
                     {{ vehicle.veh_cat || '未填写' }}
                   </el-descriptions-item>
-                  <el-descriptions-item label="开发区域">
+                  <el-descriptions-item label="Developed area (F)">
                     {{ vehicle.dev_area || '未填写' }}
                   </el-descriptions-item>
                 </el-descriptions>
@@ -216,21 +271,21 @@
               <el-empty description="暂无车辆信息" />
             </div>
             
-            <el-divider content-position="left">备注</el-divider>
+            <el-divider content-position="left">Remarks</el-divider>
             <p>{{ selectedApplication.remarks || '暂无备注' }}</p>
             
-            <el-divider content-position="left">时间信息</el-divider>
+            <el-divider content-position="left">Time Information</el-divider>
             <el-descriptions :column="2" border>
-              <el-descriptions-item label="创建时间">
+              <el-descriptions-item label="Created At">
                 {{ formatDate(selectedApplication.created_at) }}
               </el-descriptions-item>
-              <el-descriptions-item label="更新时间">
+              <el-descriptions-item label="Updated At">
                 {{ formatDate(selectedApplication.updated_at) }}
               </el-descriptions-item>
-              <el-descriptions-item label="提交时间">
+              <el-descriptions-item label="Submitted At">
                 {{ formatDate(selectedApplication.submitted_at) || '未提交' }}
               </el-descriptions-item>
-              <el-descriptions-item label="批准时间">
+              <el-descriptions-item label="Approved At">
                 {{ formatDate(selectedApplication.approved_at) || '未批准' }}
               </el-descriptions-item>
             </el-descriptions>
@@ -263,7 +318,7 @@
 </template>
 
 <script setup lang="ts">
-import { Delete, Edit, Refresh, Search, View } from '@element-plus/icons-vue'
+import { Delete, Edit, Refresh, Search, View, Setting, ArrowDown } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import ApplicationEditor from '../components/ApplicationEditor.vue'
 import { onMounted, ref } from 'vue'
@@ -277,6 +332,32 @@ const showDetailDialog = ref(false)
 // 搜索和过滤
 const searchQuery = ref('')
 const statusFilter = ref('')
+
+// 列筛选
+const availableColumns = ref([
+  { key: 'application_number', label: '申请书编号', visible: true },
+  { key: 'approval_no', label: '批准号', visible: true },
+  { key: 'company_name', label: '公司名称', visible: true },
+  { key: 'created_at', label: '创建时间', visible: true },
+  { key: 'updated_at', label: '更新时间', visible: true }
+])
+
+const getColumnVisibility = (columnKey: string) => {
+  const column = availableColumns.value.find(col => col.key === columnKey)
+  return column ? column.visible : true
+}
+
+const handleColumnFilter = (command: string) => {
+  // 切换列的可见性
+  const column = availableColumns.value.find(col => col.key === command)
+  if (column) {
+    column.visible = !column.visible
+  }
+}
+
+const updateColumnVisibility = () => {
+  // 当checkbox状态改变时触发
+}
 
 // 分页
 const currentPage = ref(1)
@@ -492,5 +573,18 @@ const showEditor = ref(false)
 .vehicle-info h4 {
   margin: 0 0 1rem 0;
   color: #2A3B8F;
+}
+
+/* 操作栏样式 */
+.el-table .el-table__cell:last-child {
+  padding: 8px 12px;
+}
+
+.el-table .el-table__cell:last-child .el-button {
+  margin-right: 8px;
+}
+
+.el-table .el-table__cell:last-child .el-button:last-child {
+  margin-right: 0;
 }
 </style> 

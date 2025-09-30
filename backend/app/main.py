@@ -72,7 +72,7 @@ def create_app(config_name='default'):
     # 创建数据库表
     with app.app_context():
         # 只导入需要的模型
-        from .models import Document, DocumentUpload, FormData, Company
+        from .models import FormData, Company
         
         # 只创建FormData表和其他必要的表
         db.create_all()

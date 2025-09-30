@@ -3,7 +3,7 @@
     <!-- 页面标题 -->
     <div class="page-header">
       <div class="header-content">
-        <h1 class="page-title">智能文档处理系统</h1>
+        <h1 class="page-title">智能证书生成</h1>
         
 
       </div>
@@ -84,7 +84,7 @@
                 </el-upload>
               </div>
             </div>
-            <div class="step-actions" v-if="!applicationFiles.length || !aiExtractionResult">
+            <div class="step-actions" v-if="!applicationFiles.length || !extractionResult">
               <el-button 
                 type="primary"
                 size="large"
@@ -125,10 +125,13 @@
               >
               <!-- 玻璃类型信息 -->
                 <el-divider content-position="left">玻璃类型信息</el-divider>
-              <!-- 玻璃类型 (Glass Type) -->
+              <!-- 玻璃类型（please select glass type） -->
                 <el-row :gutter="20">
                   <el-col :span="24">
-                    <el-form-item label="玻璃类型 (Glass Type)" prop="glass_type">
+                    <el-form-item prop="glass_type">
+                      <template #label>
+                        please select glass type<br />请选择玻璃类型
+                      </template>
                       <el-select v-model="formData.glass_type" placeholder="请选择玻璃类型" style="width: 100%">
                         <el-option v-for="opt in glassTypeOptions" :key="opt" :label="opt" :value="opt" />
                       </el-select>
@@ -138,14 +141,17 @@
                 <!-- 重要日期信息 -->
                 <el-divider content-position="left">重要日期</el-divider>
                 
-                <!-- 批准日期 -->
+                <!-- 申请日期 -->
                 <el-row :gutter="20">
                   <el-col :span="24">
-                    <el-form-item label="批准日期 (Approval Date)" prop="approval_date">
+                    <el-form-item prop="approval_date">
+                      <template #label>
+                        Approval Date<br />申请日期
+                      </template>
                       <el-date-picker
                         v-model="formData.approval_date"
                         type="date"
-                        placeholder="选择批准日期"
+                        placeholder="选择申请日期"
                         style="width: 100%"
                         format="YYYY-MM-DD"
                         value-format="YYYY-MM-DD"
@@ -157,7 +163,10 @@
                 <!-- 测试日期 -->
                 <el-row :gutter="20">
                   <el-col :span="24">
-                    <el-form-item label="测试日期 (Test Date)" prop="test_date">
+                    <el-form-item prop="test_date">
+                      <template #label>
+                        Test Date<br />测试日期
+                      </template>
                       <el-date-picker
                         v-model="formData.test_date"
                         type="date"
@@ -173,7 +182,10 @@
                 <!-- 报告日期 -->
                 <el-row :gutter="20">
                   <el-col :span="24">
-                    <el-form-item label="报告日期 (Report Date)" prop="report_date">
+                    <el-form-item prop="report_date">
+                      <template #label>
+                        Report Date<br />报告日期
+                      </template>
                       <el-date-picker
                         v-model="formData.report_date"
                         type="date"
@@ -188,20 +200,36 @@
 
                 <!-- 基础信息 -->
                 <el-divider content-position="left">基础信息</el-divider>
-                
-                <!-- 报告号 (Report No.) -->
+                   <!-- 证书号（Approval No.） -->
                 <el-row :gutter="20">
                   <el-col :span="24">
-                    <el-form-item label="报告号 (Report No.)" prop="report_no">
+                    <el-form-item prop="approval_no">
+                      <template #label>
+                        Approval No.<br />证书号
+                      </template>
+                      <el-input v-model="formData.approval_no" placeholder="请输入证书号" />
+                    </el-form-item>
+                  </el-col>
+                </el-row>
+                <!-- 报告号（Report No.） -->
+                <el-row :gutter="20">
+                  <el-col :span="24">
+                    <el-form-item prop="report_no">
+                      <template #label>
+                        Report No.<br />报告号
+                      </template>
                       <el-input v-model="formData.report_no" placeholder="请输入报告号" />
                     </el-form-item>
                   </el-col>
                 </el-row>
                 
-                <!-- 选择公司 (Company) -->
+                <!-- 选择公司（Company） -->
                 <el-row :gutter="20">
                   <el-col :span="24">
-                    <el-form-item label="选择公司 (Company)" prop="company_id">
+                    <el-form-item prop="company_id">
+                      <template #label>
+                        Company<br />选择公司
+                      </template>
                       <el-select 
                         v-model="formData.company_id" 
                         placeholder="请选择公司"
@@ -219,13 +247,16 @@
                   </el-col>
                 </el-row>
                 
-                <!-- 公司地址 (Company Address) -->
+                <!-- 公司地址（Company Address） -->
                 <el-row :gutter="20">
                   <el-col :span="24">
-                    <el-form-item label="公司地址 (Company Address)" prop="company_address">
+                    <el-form-item prop="company_address">
+                      <template #label>
+                        Company Address<br />公司地址
+                      </template>
                       <el-input 
                         v-model="formData.company_address" 
-                        placeholder="请输入公司地址（会自动从选择的公司填充）"
+                        placeholder="请输入公司地址"
                         type="textarea"
                         :rows="3"
                         style="width: 100%"
@@ -234,10 +265,13 @@
                   </el-col>
                 </el-row>
                 
-                <!-- 商标名称或图案 (Trade Names or Marks) -->
+                <!-- 商标名称或图案（Trade Names or Marks） -->
                 <el-row :gutter="20">
                   <el-col :span="24">
-                    <el-form-item label="商标名称或图案 (Trade Names or Marks)">
+                    <el-form-item>
+                      <template #label>
+                        Trade Names or Marks<br />商标名称或图案
+                      </template>
                       <TradeInfoEditor 
                         v-model:trade-names-text="formData.trade_names"
                         v-model:trade-marks="formData.trade_marks"
@@ -247,29 +281,27 @@
                   </el-col>
                 </el-row>
                 
-                <!-- 批准号 (Approval No.) -->
+                
+                <!-- 信息文件名称（Information Folder No.） -->
                 <el-row :gutter="20">
                   <el-col :span="24">
-                    <el-form-item label="批准号 (Approval No.)" prop="approval_no">
-                      <el-input v-model="formData.approval_no" placeholder="请输入批准号" />
+                    <el-form-item prop="information_folder_no">
+                      <template #label>
+                        Information Folder No.<br />信息文件名称
+                      </template>
+                      <el-input v-model="formData.information_folder_no" placeholder="请输入信息文件名称" />
                     </el-form-item>
                   </el-col>
                 </el-row>
                 
-                <!-- 信息文件夹号 (Information Folder No.) -->
+                <!-- 玻璃类型（Class of safety-glass pane） -->
                 <el-row :gutter="20">
                   <el-col :span="24">
-                    <el-form-item label="信息文件夹号 (Information Folder No.)" prop="information_folder_no">
-                      <el-input v-model="formData.information_folder_no" placeholder="请输入信息文件夹号" />
-                    </el-form-item>
-                  </el-col>
-                </el-row>
-                
-                <!-- 安全等级 (Safety Class) -->
-                <el-row :gutter="20">
-                  <el-col :span="24">
-                    <el-form-item label="安全等级 (Safety Class)" prop="safety_class">
-                      <el-input v-model="formData.safety_class" placeholder="请输入安全等级" />
+                    <el-form-item prop="safety_class">
+                      <template #label>
+                        Class of safety-glass pane<br />玻璃类型
+                      </template>
+                      <el-input v-model="formData.safety_class" placeholder="请输入玻璃类型" />
                     </el-form-item>
                   </el-col>
                 </el-row>
@@ -277,153 +309,218 @@
                 <!-- 玻璃板描述 (Pane Description) - 锁定不可编辑 -->
                 <el-row :gutter="20">
                   <el-col :span="24">
-                    <el-form-item label="玻璃板描述 (Pane Description)" prop="pane_desc">
+                    <el-form-item prop="pane_desc">
+                      <template #label>
+                        Description of glass pane<br />玻璃板描述
+                      </template>
                       <el-input v-model="formData.pane_desc" placeholder="玻璃板描述（不可编辑）" :disabled="true" />
                     </el-form-item>
                   </el-col>
                 </el-row>
-
-                <!-- 玻璃层数 (Glass Layers) -->
+              <!-- 主要特性（Principal characteristics） -->
+                <el-divider content-position="left">主要特性（Principal characteristics）</el-divider>
+                <!-- 玻璃层数（Number of layers of glass） -->
                 <el-row :gutter="20">
                   <el-col :span="24">
-                    <el-form-item label="玻璃层数 (Glass Layers)" prop="glass_layers">
+                    <el-form-item prop="glass_layers">
+                      <template #label>
+                        Number of layers of glass<br />玻璃层数
+                      </template>
                       <el-input v-model="formData.glass_layers" placeholder="请输入玻璃层数" />
                     </el-form-item>
                   </el-col>
                 </el-row>
 
-                <!-- 夹层数 (Interlayer Layers) -->
+                <!-- 夹层数（Number of layers of interlayer） -->
                 <el-row :gutter="20">
                   <el-col :span="24">
-                    <el-form-item label="夹层数 (Interlayer Layers)" prop="interlayer_layers">
+                    <el-form-item prop="interlayer_layers">
+                      <template #label>
+                        Number of layers of interlayer<br />夹层数
+                      </template>
                       <el-input v-model="formData.interlayer_layers" placeholder="请输入夹层数" />
                     </el-form-item>
                   </el-col>
                 </el-row>
 
-                <!-- 风窗厚度 (Windscreen Thickness) -->
+                <!-- 风窗厚度（Nominal thickness of the windscreen） -->
                 <el-row :gutter="20">
                   <el-col :span="24">
-                    <el-form-item label="风窗厚度 (Windscreen Thickness)" prop="windscreen_thick">
-                      <el-input v-model="formData.windscreen_thick" placeholder="请输入风窗厚度" />
+                    <el-form-item prop="windscreen_thick">
+                      <template #label>
+                        Nominal thickness of the windscreen<br />挡风玻璃的标称厚度
+                      </template>
+                      <el-input v-model="formData.windscreen_thick" placeholder="请输入挡风玻璃的标称厚度">
+                        <template #suffix>
+                          <span class="unit-suffix unit-mm">mm</span>
+                        </template>
+                      </el-input>
                     </el-form-item>
                   </el-col>
                 </el-row>
 
-                <!-- 夹层厚度 (Interlayer Thickness) -->
+                <!-- 夹层厚度（Nominal thickness of interlayer(s)） -->
                 <el-row :gutter="20">
                   <el-col :span="24">
-                    <el-form-item label="夹层厚度 (Interlayer Thickness)" prop="interlayer_thick">
-                      <el-input v-model="formData.interlayer_thick" placeholder="请输入夹层厚度" />
+                    <el-form-item prop="interlayer_thick">
+                      <template #label>
+                        Nominal thickness of interlayer(s)<br />夹层厚度
+                      </template>
+                      <el-input v-model="formData.interlayer_thick" placeholder="请输入夹层厚度">
+                        <template #suffix>
+                          <span class="unit-suffix unit-mm">mm</span>
+                        </template>
+                      </el-input>
                     </el-form-item>
                   </el-col>
                 </el-row>
 
-                <!-- 玻璃处理 (Glass Treatment) -->
+                <!-- 玻璃处理（Special treatment of glass） -->
                 <el-row :gutter="20">
                   <el-col :span="24">
-                    <el-form-item label="玻璃处理 (Glass Treatment)" prop="glass_treatment">
-                      <el-input v-model="formData.glass_treatment" placeholder="请输入玻璃处理" />
+                    <el-form-item prop="glass_treatment">
+                      <template #label>
+                        Special treatment of glass<br />玻璃特殊处理
+                      </template>
+                      <el-input v-model="formData.glass_treatment" placeholder="请输入玻璃特殊处理" />
                     </el-form-item>
                   </el-col>
                 </el-row>
 
-                <!-- 夹层类型 (Interlayer Type) -->
+                <!-- 夹层性质和类型（Nature and type of interlayer(s)） -->
                 <el-row :gutter="20">
                   <el-col :span="24">
-                    <el-form-item label="夹层类型 (Interlayer Type)" prop="interlayer_type">
-                      <el-input v-model="formData.interlayer_type" placeholder="请输入夹层类型" />
+                    <el-form-item prop="interlayer_type">
+                      <template #label>
+                        Nature and type of interlayer(s)<br />夹层性质和类型
+                      </template>
+                      <el-input v-model="formData.interlayer_type" placeholder="请输入夹层性质和类型" />
                     </el-form-item>
                   </el-col>
                 </el-row>
 
-                <!-- 涂层类型 (Coating Type) -->
+                <!-- 塑料涂层性质和类型（Nature and type of plastics coating(s)） -->
                 <el-row :gutter="20">
                   <el-col :span="24">
-                    <el-form-item label="涂层类型 (Coating Type)" prop="coating_type">
-                      <el-input v-model="formData.coating_type" placeholder="请输入涂层类型" />
+                    <el-form-item prop="coating_type">
+                      <template #label>
+                        Nature and type of plastics coating(s)<br />塑料涂层性质和类型
+                      </template>
+                      <el-input v-model="formData.coating_type" placeholder="请输入塑料涂层性质和类型" />
                     </el-form-item>
                   </el-col>
                 </el-row>
 
-                <!-- 涂层厚度 (Coating Thickness) -->
+                <!-- 塑料涂层厚度（Nominal thickness of plastic coating(s)） -->
                 <el-row :gutter="20">
                   <el-col :span="24">
-                    <el-form-item label="涂层厚度 (Coating Thickness)" prop="coating_thick">
-                      <el-input v-model="formData.coating_thick" placeholder="请输入涂层厚度" />
+                    <el-form-item prop="coating_thick">
+                      <template #label>
+                        Nominal thickness of plastic coating(s)<br />塑料涂层厚度
+                      </template>
+                      <el-input v-model="formData.coating_thick" placeholder="请输入塑料涂层厚度" />
                     </el-form-item>
                   </el-col>
                 </el-row>
-
-                <!-- 材料性质 (Material Nature) -->
+                <!-- 次要特性（Secondary characteristics） -->
+                <el-divider content-position="left">次要特性（Secondary characteristics ）</el-divider>
+                <!-- 材料性质（Nature of the material） -->
                 <el-row :gutter="20">
                   <el-col :span="24">
-                    <el-form-item label="材料性质 (Material Nature)" prop="material_nature">
+                    <el-form-item prop="material_nature">
+                      <template #label>
+                        Nature of the material<br />材料性质
+                      </template>
                       <el-input v-model="formData.material_nature" placeholder="请输入材料性质" />
                     </el-form-item>
                   </el-col>
                 </el-row>
-
-                <!-- 涂层颜色 (Coating Color) -->
+               <!-- 玻璃颜色（Colouring of glass） -->
                 <el-row :gutter="20">
                   <el-col :span="24">
-                    <el-form-item label="涂层颜色 (Coating Color)" prop="coating_color">
-                      <el-input v-model="formData.coating_color" placeholder="请输入涂层颜色" />
-                    </el-form-item>
-                  </el-col>
-                </el-row>
-
-                <!-- 玻璃颜色选择 (Glass Color Choice) -->
-                <el-row :gutter="20">
-                  <el-col :span="24">
-                    <el-form-item label="玻璃颜色选择 (Glass Color Choice)" prop="glass_color_choice">
+                    <el-form-item prop="glass_color_choice">
+                      <template #label>
+                        Colouring of glass<br />玻璃颜色
+                      </template>
                       <el-checkbox-group v-model="formData.glass_color_choice">
-                        <el-checkbox label="tinted_struck">无色 (Colourless)</el-checkbox>
-                        <el-checkbox label="colourless_struck">有色 (Tinted)</el-checkbox>
+                        <el-checkbox label="colourless">Colourless</el-checkbox>
+                        <el-checkbox label="tinted">Tinted</el-checkbox>
+                        
                       </el-checkbox-group>
                     </el-form-item>
                   </el-col>
                 </el-row>
-
-                <!-- 导体选择 (Conductors Choice) -->
+                 <!-- 塑料涂层颜色（Colouring of plastic coating(s)） -->
                 <el-row :gutter="20">
                   <el-col :span="24">
-                    <el-form-item label="导体选择 (Conductors Choice)" prop="conductors_choice">
+                    <el-form-item prop="coating_color">
+                      <template #label>
+                         Colouring of plastic coating(s) <br />塑料涂层颜色
+                      </template>
+                       <el-input v-model="formData.coating_color" placeholder="请输入塑料涂层颜色" />
+                    </el-form-item>
+                  </el-col>
+                </el-row>
+
+
+                <!-- 导体选择（Conductors incorporated） -->
+                <el-row :gutter="20">
+                  <el-col :span="24">
+                    <el-form-item prop="conductors_choice">
+                      <template #label>
+                        Conductors incorporated <br />是否导线
+                      </template>
                       <el-checkbox-group v-model="formData.conductors_choice">
-                        <el-checkbox label="no_struck">有导体</el-checkbox>
-                        <el-checkbox label="yes_struck">无导体</el-checkbox>
+                        <el-checkbox label="yes">yes</el-checkbox>
+                        <el-checkbox label="no">no</el-checkbox>
+                        
                       </el-checkbox-group>
                     </el-form-item>
                   </el-col>
                 </el-row>
 
-                <!-- 不透明/模糊选择 (Opaque/Obscure Choice) -->
+                <!-- 不透明/模糊选择（Opaque obscuration incorporated） -->
                 <el-row :gutter="20">
                   <el-col :span="24">
-                    <el-form-item label="不透明/模糊选择 (Opaque/Obscure Choice)" prop="opaque_obscure_choice">
+                    <el-form-item prop="opaque_obscure_choice">
+                      <template #label>
+                        Opaque obscuration incorporated<br />是否不透明遮挡
+                      </template>
                       <el-checkbox-group v-model="formData.opaque_obscure_choice">
-                        <el-checkbox label="no_struck">有不透明/模糊</el-checkbox>
-                        <el-checkbox label="yes_struck">无不透明/模糊</el-checkbox>
+                               
+                        <el-checkbox label="yes">yes</el-checkbox>
+                        <el-checkbox label="no">no</el-checkbox>         
                       </el-checkbox-group>
                     </el-form-item>
                   </el-col>
                 </el-row>
 
-                <!-- 夹层相关选择 (Interlayer Options) -->
+                <!-- 夹层相关选择（Colouring of interlayer） -->
                 <el-row :gutter="20">
                   <el-col :span="24">
-                    <el-form-item label="夹层相关选择 (Interlayer Options)">
-                      <el-checkbox v-model="formData.interlayer_total">总夹层 (Total Interlayer)</el-checkbox>
-                      <el-checkbox v-model="formData.interlayer_partial">部分夹层 (Partial Interlayer)</el-checkbox>
-                      <el-checkbox v-model="formData.interlayer_colourless">无色夹层 (Colourless Interlayer)</el-checkbox>
+                    <el-form-item>
+                      <template #label>
+                        Colouring of interlayer<br />夹层颜色
+                      </template>
+                      <span style="margin-right: 30px;">&#40;</span>
+                      <el-checkbox v-model="formData.interlayer_total">Total</el-checkbox>
+                      <span style="margin-right: 30px;">/</span>
+                      <el-checkbox v-model="formData.interlayer_partial">Partial</el-checkbox>
+                      <span style="margin-right: 30px;">&#41;</span>
+                      <el-checkbox v-model="formData.interlayer_tinted">Tinted</el-checkbox>
+                      <span style="margin-right: 30px;">/</span>
+                      <el-checkbox v-model="formData.interlayer_colourless">Colourless</el-checkbox>
                     </el-form-item>
                   </el-col>
                 </el-row>
 
-                <!-- 备注 (Remarks) -->
+                <!-- 备注（Remarks） -->
                 <el-row :gutter="20">
                   <el-col :span="24">
-                    <el-form-item label="备注 (Remarks)" prop="remarks">
+                    <el-form-item prop="remarks">
+                      <template #label>
+                        Remarks<br/>备注
+                      </template>
                       <el-input 
                         v-model="formData.remarks" 
                         type="textarea" 
@@ -434,7 +531,7 @@
                   </el-col>
                 </el-row>
 
-                <!-- 车辆信息 -->
+                <!-- 车辆信息（Vehicle Information） -->
                 <el-divider content-position="left">
                   车辆信息
                   <el-button 
@@ -448,7 +545,7 @@
                   </el-button>
                 </el-divider>
                 
-                <!-- 车辆信息列表 -->
+                <!-- 车辆信息列表（Vehicle Information List） -->
                 <div v-for="(vehicle, index) in formData.vehicles" :key="index" class="vehicle-info-section">
                   <div class="vehicle-header">
                     <h4>车辆信息 {{ index + 1 }}</h4>
@@ -466,7 +563,10 @@
                   <!-- 车辆制造商 - 改为textarea -->
                   <el-row :gutter="20">
                     <el-col :span="24">
-                      <el-form-item :label="`车辆制造商 (Vehicle Manufacturer)`" :prop="`vehicles.${index}.veh_mfr`">
+                      <el-form-item :prop="`vehicles.${index}.veh_mfr`">
+                        <template #label>
+                          Vehicle Manufacturer<br />车辆制造商
+                        </template>
                         <el-input 
                           v-model="vehicle.veh_mfr" 
                           type="textarea" 
@@ -480,7 +580,10 @@
                   <!-- 车辆类型 - 改为textarea -->
                   <el-row :gutter="20">
                     <el-col :span="24">
-                      <el-form-item :label="`车辆类型 (Vehicle Type)`" :prop="`vehicles.${index}.veh_type`">
+                      <el-form-item :prop="`vehicles.${index}.veh_type`">
+                        <template #label>
+                          Type of vehicle<br />车辆类型
+                        </template>
                         <el-input 
                           v-model="vehicle.veh_type" 
                           type="textarea" 
@@ -493,7 +596,10 @@
 
                   <el-row :gutter="20">
                     <el-col :span="24">
-                      <el-form-item :label="`车辆类别 (Vehicle Category)`" :prop="`vehicles.${index}.veh_cat`">
+                      <el-form-item :prop="`vehicles.${index}.veh_cat`">
+                        <template #label>
+                          Vehicle category<br />车辆类别
+                        </template>
                         <el-input v-model="vehicle.veh_cat" placeholder="请输入车辆类别" />
                       </el-form-item>
                     </el-col>
@@ -501,48 +607,114 @@
 
                   <el-row :gutter="20">
                     <el-col :span="24">
-                      <el-form-item :label="`开发区域 (Development Area)`" :prop="`vehicles.${index}.dev_area`">
-                        <el-input v-model="vehicle.dev_area" placeholder="请输入开发区域" />
+                      <el-form-item :prop="`vehicles.${index}.dev_area`">
+                        <template #label>
+                          Developed area (F)<br />开发区域
+                        </template>
+                        <el-input v-model="vehicle.dev_area" placeholder="请输入开发区域">
+                          <template #suffix>
+                            <span class="unit-suffix unit-area">m²</span>
+                          </template>
+                        </el-input>
                       </el-form-item>
                     </el-col>
                   </el-row>
 
                   <el-row :gutter="20">
                     <el-col :span="24">
-                      <el-form-item :label="`段高度 (Segment Height)`" :prop="`vehicles.${index}.seg_height`">
-                        <el-input v-model="vehicle.seg_height" placeholder="请输入段高度" />
+                      <el-form-item :prop="`vehicles.${index}.seg_height`">
+                        <template #label>
+                          Height of segment (h)<br />段高度
+                        </template>
+                        <el-input v-model="vehicle.seg_height" placeholder="请输入段高度">
+                          <template #suffix>
+                            <span class="unit-suffix unit-mm">mm</span>
+                          </template>
+                        </el-input>
                       </el-form-item>
                     </el-col>
                   </el-row>
 
                   <el-row :gutter="20">
                     <el-col :span="24">
-                      <el-form-item :label="`曲率半径 (Curvature Radius)`" :prop="`vehicles.${index}.curv_radius`">
-                        <el-input v-model="vehicle.curv_radius" placeholder="请输入曲率半径" />
+                      <el-form-item :prop="`vehicles.${index}.curv_radius`">
+                        <template #label>
+                          Curvature (r)<br />曲率半径
+                        </template>
+                        <el-input v-model="vehicle.curv_radius" placeholder="请输入曲率半径">
+                          <template #suffix>
+                            <span class="unit-suffix unit-mm">mm</span>
+                          </template>
+                        </el-input>
                       </el-form-item>
                     </el-col>
                   </el-row>
 
                   <el-row :gutter="20">
                     <el-col :span="24">
-                      <el-form-item :label="`安装角度 (Installation Angle)`" :prop="`vehicles.${index}.inst_angle`">
-                        <el-input v-model="vehicle.inst_angle" placeholder="请输入安装角度" />
+                      <el-form-item :prop="`vehicles.${index}.inst_angle`">
+                        <template #label>
+                          Installation angle (α)<br />安装角度
+                        </template>
+                        <el-input v-model="vehicle.inst_angle" placeholder="请输入安装角度">
+                          <template #suffix>
+                            <span class="unit-suffix unit-angle">°</span>
+                          </template>
+                        </el-input>
                       </el-form-item>
                     </el-col>
                   </el-row>
 
                   <el-row :gutter="20">
                     <el-col :span="24">
-                      <el-form-item :label="`座椅角度 (Seat Angle)`" :prop="`vehicles.${index}.seat_angle`">
-                        <el-input v-model="vehicle.seat_angle" placeholder="请输入座椅角度" />
+                      <el-form-item :prop="`vehicles.${index}.seat_angle`">
+                        <template #label>
+                          Seat-back angle (β)<br />座椅角度
+                        </template>
+                        <el-input v-model="vehicle.seat_angle" placeholder="请输入座椅角度">
+                          <template #suffix>
+                            <span class="unit-suffix unit-angle">°</span>
+                          </template>
+                        </el-input>
                       </el-form-item>
                     </el-col>
                   </el-row>
 
                   <el-row :gutter="20">
                     <el-col :span="24">
-                      <el-form-item :label="`参考点坐标 (Reference Point Coordinates)`" :prop="`vehicles.${index}.rpoint_coords`">
-                        <el-input v-model="vehicle.rpoint_coords" placeholder="请输入参考点坐标" />
+                      <el-form-item :prop="`vehicles.${index}.rpoint_coords`">
+                        <template #label>
+                          R-point coordinates (A, B, C) <br />参考点坐标
+                        </template>
+                        <el-row :gutter="10">
+                          <el-col :span="8">
+                            <el-form-item :prop="`vehicles.${index}.rpoint_coords.A`">
+                              <el-input v-model="vehicle.rpoint_coords.A" placeholder="A坐标">
+                                <template #suffix>
+                                  <span class="unit-suffix unit-mm">mm</span>
+                                </template>
+                              </el-input>
+                            </el-form-item>
+                          </el-col>
+                          <el-col :span="8">
+                            <el-form-item :prop="`vehicles.${index}.rpoint_coords.B`">
+                              <el-input v-model="vehicle.rpoint_coords.B" placeholder="B坐标">
+                                <template #suffix>
+                                  <span class="unit-suffix unit-mm">mm</span>
+                                </template>
+                              </el-input>
+                            </el-form-item>
+                          </el-col>
+                          <el-col :span="8">
+                            <el-form-item :prop="`vehicles.${index}.rpoint_coords.C`">
+                              <el-input v-model="vehicle.rpoint_coords.C" placeholder="C坐标">
+                                <template #suffix>
+                                  <span class="unit-suffix unit-mm">mm</span>
+                                </template>
+                              </el-input>
+                            </el-form-item>
+                          </el-col>
+                        </el-row>
                       </el-form-item>
                     </el-col>
                   </el-row>
@@ -550,7 +722,10 @@
                   <!-- 开发描述 -->
                   <el-row :gutter="20">
                     <el-col :span="24">
-                      <el-form-item :label="`开发描述 (Development Description)`" :prop="`vehicles.${index}.dev_desc`">
+                      <el-form-item :prop="`vehicles.${index}.dev_desc`">
+                        <template #label>
+                          Description of the commercially available specific device<br />市售特定设备的描述
+                        </template>
                         <el-input 
                           v-model="vehicle.dev_desc" 
                           placeholder="请输入开发描述"
@@ -723,10 +898,6 @@
                         <strong>{{ docTypeDisplayName }}</strong>
                       </li>
                       <li>
-                        <span>文件名预览</span>
-                        <strong>{{ filenamePreview }}</strong>
-                      </li>
-                      <li>
                         <span>会话ID</span>
                         <strong>{{ sessionId || '未生成' }}</strong>
                       </li>
@@ -807,6 +978,7 @@
 import { Delete, Document, Download, Plus, UploadFilled, Refresh, EditPen, View, Collection } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox, ElLoading } from 'element-plus'
 import { computed, reactive, ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
+import { useRoute } from 'vue-router'
 import { mvpAPI } from '../api/mvp'
 import { companyAPI, type Company } from '../api/company'
 import { getServerBaseURL } from '../api'
@@ -836,6 +1008,7 @@ const steps = [
 ]
 
 // 响应式数据
+const route = useRoute()
 const currentStep = ref(0)
 const sessionId = ref('')
 
@@ -844,12 +1017,9 @@ const sessionId = ref('')
 const applicationFiles = ref<any[]>([])
 const reportFiles = ref<any[]>([])
 
-// 信息提取相关（已废弃）
-const extractionResult = ref<any>(null)
-
 // 文档提取相关变量
-const aiExtracting = ref(false)
-const aiExtractionResult = ref<any>(null)
+const extracting = ref(false)
+const extractionResult = ref<any>(null)
 
 // 表单相关
 const formRef = ref()
@@ -873,17 +1043,18 @@ const companyConfirmPromise = ref<{ resolve: (value: boolean) => void } | null>(
 const formData = reactive<{[key: string]: any}>({
   // 基础信息
   company_address: '',              // 公司地址
-  trade_names: '',                  // 商标名称（分号分隔的字符串）
+  trade_names: '',                  // 商标名称（分号 + 空格分隔的字符串）
   trade_marks: [] as string[],      // 商标图片URL数组
   
   // 新增日期字段
-  approval_date: '',                // 批准日期
+  approval_date: '',                // 申请日期
   test_date: '',                    // 测试日期
   report_date: '',                  // 报告日期
   
   // 核心字段 - 与后端提取格式保持一致
-  approval_no: '',                    // 批准号
+  approval_no: '',                    // 证书号
   information_folder_no: '',          // 信息文件夹号 (与后端字段名一致)
+  glass_type: '夹层前挡玻璃',          // 玻璃类型 - 默认第一个选项
   safety_class: '',                   // 安全等级
   pane_desc: '',                      // 玻璃板描述
   glass_layers: '',                   // 玻璃层数
@@ -895,17 +1066,18 @@ const formData = reactive<{[key: string]: any}>({
   coating_type: 'not applicable',     // 涂层类型 - 默认值
   coating_thick: 'not applicable',    // 涂层厚度 - 默认值
   material_nature: '',                // 材料性质
-  glass_color_choice: ['colourless_struck', 'tinted_struck'], // 玻璃颜色选择 (数组格式) - 默认全选
+  glass_color_choice: ['tinted', 'colourless'], // 玻璃颜色选择 (数组格式) - 默认全选
   coating_color: 'not applicable',    // 涂层颜色 - 默认值
   
   // 夹层相关选择
   interlayer_total: false,               // 总夹层
   interlayer_partial: false,             // 部分夹层
+  interlayer_tinted: false,              // 有色夹层
   interlayer_colourless: false,          // 无色夹层
   
   // 选择项数组 - 默认全选
-  conductors_choice: ['yes_struck', 'no_struck'],  // 导体选择 (数组格式) - 默认全选
-  opaque_obscure_choice: ['yes_struck', 'no_struck'], // 不透明/模糊选择 (数组格式) - 默认全选
+  conductors_choice: ['no', 'yes'],  // 导体选择 (数组格式) - 默认全选
+  opaque_obscure_choice: ['no', 'yes'], // 不透明/模糊选择 (数组格式) - 默认全选
   
   remarks: '',                        // 备注
   
@@ -925,8 +1097,12 @@ const formData = reactive<{[key: string]: any}>({
       curv_radius: '',                  // 曲率半径
       inst_angle: '',                   // 安装角度
       seat_angle: '',                   // 座椅角度
-      rpoint_coords: '',                // 参考点坐标
-      dev_desc: ''                      // 开发描述
+      rpoint_coords: {                  // 参考点坐标
+        A: '',
+        B: '',
+        C: ''
+      },
+      dev_desc: 'not applicable'                      // 开发描述
     }
   ],
   // 设备信息（随公司选择同步）
@@ -935,7 +1111,7 @@ const formData = reactive<{[key: string]: any}>({
 
 // 玻璃类型可选项（可从后端获取；先内置，与 system_params 同步）
 const glassTypeOptions = ref<string[]>([
-  'float', 'tempered', 'laminated', 'coated', 'other'
+  '夹层前挡玻璃', '夹层非前挡玻璃', '夹层非前挡玻璃 - 加强', '钢化玻璃'
 ])
 
 // =============== 本地草稿存储（纯前端） ===============
@@ -975,6 +1151,17 @@ const applyDraftForm = (form: any) => {
 const tryRestoreDraft = async () => {
   const draft = loadLocalDraft()
   if (!draft) return
+  
+  // 检查是否有提取的结果数据（表示刚完成识别）
+  const hasExtractionResult = extractionResult.value && 
+    (extractionResult.value.form_data || Object.keys(extractionResult.value).length > 0)
+  
+  if (hasExtractionResult) {
+    // 有提取结果，说明刚完成识别，不恢复草稿
+    return
+  }
+  
+  // 没有提取结果，询问用户是否恢复草稿
   try {
     await ElMessageBox.confirm('检测到本地草稿，是否恢复继续编辑？', '提示', {
       confirmButtonText: '恢复',
@@ -1056,7 +1243,7 @@ const setDefaultDates = () => {
   testDate.setDate(testDate.getDate() - 7)
   formData.test_date = formatDate(testDate)
   
-  // 批准日期 = 今天-14天
+  // 申请日期 = 今天-14天
   const approvalDate = new Date(today)
   approvalDate.setDate(approvalDate.getDate() - 14)
   formData.approval_date = formatDate(approvalDate)
@@ -1070,11 +1257,11 @@ const validateDateOrder = (rule: any, value: any, callback: any) => {
   
   if (formData.approval_date && formData.test_date && formData.report_date) {
     if (approvalDate > testDate) {
-      callback(new Error('批准日期不能晚于测试日期'))
+      callback(new Error('申请日期不能晚于测试日期'))
     } else if (testDate > reportDate) {
       callback(new Error('测试日期不能晚于报告日期'))
     } else if (approvalDate > reportDate) {
-      callback(new Error('批准日期不能晚于报告日期'))
+      callback(new Error('申请日期不能晚于报告日期'))
     } else {
       callback()
     }
@@ -1092,7 +1279,7 @@ const formRules = {
     { required: true, message: '请选择公司', trigger: 'change' }
   ],
   approval_date: [
-    { required: true, message: '请选择批准日期', trigger: 'change' },
+    { required: true, message: '请选择申请日期', trigger: 'change' },
     { validator: validateDateOrder, trigger: 'change' }
   ],
   test_date: [
@@ -1104,13 +1291,13 @@ const formRules = {
     { validator: validateDateOrder, trigger: 'change' }
   ],
   approval_no: [
-    { required: true, message: '请输入批准号', trigger: 'blur' }
+    { required: true, message: '请输入证书号', trigger: 'blur' }
   ],
   information_folder_no: [
     { required: true, message: '请输入信息文件夹号', trigger: 'blur' }
   ],
   safety_class: [
-    { required: true, message: '请输入安全等级', trigger: 'blur' }
+    { required: true, message: '请输入玻璃类型', trigger: 'blur' }
   ],
   pane_desc: [
     { required: true, message: '请输入玻璃板描述', trigger: 'blur' }
@@ -1185,7 +1372,10 @@ const formRules = {
       curv_radius: [{ required: true, message: '请输入曲率半径', trigger: 'blur' }],
       inst_angle: [{ required: true, message: '请输入安装角度', trigger: 'blur' }],
       seat_angle: [{ required: true, message: '请输入座椅角度', trigger: 'blur' }],
-      rpoint_coords: [{ required: true, message: '请输入参考点坐标', trigger: 'blur' }],
+      rpoint_coords: [{ required: false, message: '请输入参考点坐标', trigger: 'blur' }],
+      'rpoint_coords.A': [{ required: true, message: '请输入A坐标', trigger: 'blur' }],
+      'rpoint_coords.B': [{ required: true, message: '请输入B坐标', trigger: 'blur' }],
+      'rpoint_coords.C': [{ required: true, message: '请输入C坐标', trigger: 'blur' }],
       dev_desc: [{ required: false, message: '请输入开发描述', trigger: 'blur' }]
     }
   ]
@@ -1220,21 +1410,6 @@ const docTypeDisplayName = computed(() => {
   return `${baseName} ${selectedFormat.value === 'pdf' ? 'PDF' : 'Word'}`
 })
 
-const filenamePreview = computed(() => {
-  const prefixMap: Record<string, string> = {
-    // IF: 'IF-', CERT: 'CERT-', OTHER: 'OTHER-', TR: 'TR-', RCS: 'Review Control Sheet V7 ', TM: 'TM-'
-    IF: 'IF-', CERT: 'CERT-', OTHER: 'OTHER-', TR: 'TR-', RCS: 'Review Control Sheet V7 ', TM: 'TM-'
-  }
-  const prefix = prefixMap[selectedDocType.value]
-  const safeNo = (formData.approval_no || 'TEST')
-    .replace(/[^a-zA-Z0-9]/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/(^-|-$)/g, '')
-  const ext = selectedFormat.value === 'pdf' ? '.pdf' : '.docx'
-  return `${prefix}${safeNo}${ext}`
-})
-
-// 注意：canProceedToNext 计算属性已被移除，因为不再需要手动上传按钮
 
 // 方法
 const goToStep = (step: number) => {
@@ -1247,7 +1422,7 @@ const goToStep = (step: number) => {
 
 const handleApplicationChange = (file: any) => {
   applicationFiles.value = [file]
-  aiExtractionResult.value = null
+  extractionResult.value = null
   
   // 自动提取，使用正确的API
   if (file.raw) {
@@ -1267,7 +1442,7 @@ const uploadAndExtract = async (file: any) => {
   }
 
   // 设置提取状态
-  aiExtracting.value = true
+  extracting.value = true
   
   // 显示全局loading
   const loadingInstance = ElLoading.service({
@@ -1283,11 +1458,11 @@ const uploadAndExtract = async (file: any) => {
     
     if (response.success) {
       // 直接获取提取结果
-      aiExtractionResult.value = response.data
+      extractionResult.value = response.data
       
       
       // 自动应用结果到表单
-      await applyAIResult()
+      await applyExtractionResult()
       
       // 自动跳转到信息编辑步骤
       currentStep.value = 1
@@ -1302,7 +1477,7 @@ const uploadAndExtract = async (file: any) => {
   } finally {
     // 关闭全局loading
     loadingInstance.close()
-    aiExtracting.value = false
+    extracting.value = false
   }
 }
 
@@ -1319,8 +1494,12 @@ const addVehicleInfo = () => {
     curv_radius: '',
     inst_angle: '',
     seat_angle: '',
-    rpoint_coords: '',
-    dev_desc: ''
+      rpoint_coords: {
+        A: '',
+        B: '',
+        C: ''
+      },
+    dev_desc: 'not applicable'
   })
 }
 
@@ -1355,6 +1534,77 @@ const saveFormData = async () => {
         : formData.glass_color_choice[0],
       // 确保设备信息总是上传
       equipment: Array.isArray(formData.equipment) ? formData.equipment : []
+    }
+    
+    // 为需要单位的字段添加单位后缀
+    if (processedFormData.windscreen_thick && !processedFormData.windscreen_thick.endsWith('mm')) {
+      processedFormData.windscreen_thick += ' mm'
+    }
+    if (processedFormData.interlayer_thick && !processedFormData.interlayer_thick.endsWith('mm')) {
+      processedFormData.interlayer_thick += ' mm'
+    }
+    
+    // 处理车辆信息中的单位
+    if (processedFormData.vehicles && Array.isArray(processedFormData.vehicles)) {
+      processedFormData.vehicles = processedFormData.vehicles.map(vehicle => {
+        const processedVehicle = { ...vehicle }
+        
+        // 开发区域 - 添加 m² 单位
+        if (processedVehicle.dev_area && !processedVehicle.dev_area.endsWith('m²')) {
+          processedVehicle.dev_area += ' m²'
+        }
+        
+        // 段高度 - 添加 mm 单位
+        if (processedVehicle.seg_height && !processedVehicle.seg_height.endsWith('mm')) {
+          processedVehicle.seg_height += ' mm'
+        }
+        
+        // 曲率半径 - 添加 mm 单位
+        if (processedVehicle.curv_radius && !processedVehicle.curv_radius.endsWith('mm')) {
+          processedVehicle.curv_radius += ' mm'
+        }
+        
+        // 安装角度 - 添加 ° 单位
+        if (processedVehicle.inst_angle && !processedVehicle.inst_angle.endsWith('°')) {
+          processedVehicle.inst_angle += ' °'
+        }
+        
+        // 座椅角度 - 添加 ° 单位
+        if (processedVehicle.seat_angle && !processedVehicle.seat_angle.endsWith('°')) {
+          processedVehicle.seat_angle += ' °'
+        }
+        
+        // 参考点坐标 - 添加 mm 单位并拼接成字符串
+        if (processedVehicle.rpoint_coords && typeof processedVehicle.rpoint_coords === 'object') {
+          const coords = []
+          
+          if (processedVehicle.rpoint_coords.A) {
+            const aValue = processedVehicle.rpoint_coords.A.endsWith('mm') 
+              ? processedVehicle.rpoint_coords.A 
+              : processedVehicle.rpoint_coords.A + ' mm'
+            coords.push(`A: ${aValue}`)
+          }
+          
+          if (processedVehicle.rpoint_coords.B) {
+            const bValue = processedVehicle.rpoint_coords.B.endsWith('mm') 
+              ? processedVehicle.rpoint_coords.B 
+              : processedVehicle.rpoint_coords.B + ' mm'
+            coords.push(`B: ${bValue}`)
+          }
+          
+          if (processedVehicle.rpoint_coords.C) {
+            const cValue = processedVehicle.rpoint_coords.C.endsWith('mm') 
+              ? processedVehicle.rpoint_coords.C 
+              : processedVehicle.rpoint_coords.C + ' mm'
+            coords.push(`C: ${cValue}`)
+          }
+          
+          // 将坐标拼接成字符串格式 "A: A值 B: B值 C: C值"
+          processedVehicle.rpoint_coords = coords.join(' ')
+        }
+        
+        return processedVehicle
+      })
     }
     
     // 保存前清理本地草稿
@@ -1771,24 +2021,25 @@ const generateTestData = async () => {
     // 核心字段
     approval_no: "E4*43R01/12*2812*00",
     information_folder_no: "GZFUYAO-L4.76~5.09mm",
+    glass_type: "夹层前挡玻璃",
     safety_class: "Ordinary laminated-glass windscreen",
     pane_desc: "Please refer to Appendix 3 of ECE R43",
     glass_layers: "2",
     interlayer_layers: "1",
-    windscreen_thick: "4.76~5.09 mm",
-    interlayer_thick: "0.76~1.09 mm",
+    windscreen_thick: "4.76~5.09",
+    interlayer_thick: "0.76~1.09",
     glass_treatment: "not applicable",
     interlayer_type: "PVB (Sound insulation HUD)",
     coating_type: "not applicable",
     coating_thick: "not applicable",
     material_nature: "float",
     coating_color: "not applicable",
-    glass_color_choice: ["colourless_struck", "tinted_struck"],
+    glass_color_choice: ["tinted", "colourless"],
     interlayer_total: true,
     interlayer_partial: true,
     interlayer_colourless: true,
-    conductors_choice: ["yes_struck", "no_struck"],
-    opaque_obscure_choice: ["yes_struck", "no_struck"],
+    conductors_choice: ["no", "yes"],
+    opaque_obscure_choice: ["no", "yes"],
     remarks: "---",
     
     // 车辆信息
@@ -1799,12 +2050,16 @@ GAC AION NEW ENERGY AUTOMOBILE CO., LTD.
 `,
         veh_type: "AHT",
         veh_cat: "M1",
-        dev_area: "1.58 m²",
-        seg_height: "59.2 mm",
-        curv_radius: "1071 mm",
-        inst_angle: "61.6°",
-        seat_angle: "25°",
-        rpoint_coords: "A: 381.213 mm B: ±370 mm C: -871.85 mm",
+        dev_area: "1.58",
+        seg_height: "59.2",
+        curv_radius: "1071",
+        inst_angle: "61.6",
+        seat_angle: "25",
+        rpoint_coords: {
+          A: "381.213",
+          B: "±370",
+          C: "-871.85"
+        },
         dev_desc: "not applicable"
       },
       {
@@ -1812,11 +2067,15 @@ GAC AION NEW ENERGY AUTOMOBILE CO., LTD.
         veh_type: "SUV",
         veh_cat: "M1",
         dev_area: "前风窗",
-        seg_height: "120mm",
-        curv_radius: "600mm",
-        inst_angle: "50°",
-        seat_angle: "35°",
-        rpoint_coords: "150,250",
+        seg_height: "120",
+        curv_radius: "600",
+        inst_angle: "50",
+        seat_angle: "35",
+        rpoint_coords: {
+          A: "150",
+          B: "250",
+          C: "350"
+        },
         dev_desc: "示例车辆2的开发描述"
       },
       {
@@ -1824,11 +2083,15 @@ GAC AION NEW ENERGY AUTOMOBILE CO., LTD.
         veh_type: "SUV",
         veh_cat: "M1",
         dev_area: "前风窗",
-        seg_height: "120mm",
-        curv_radius: "600mm",
-        inst_angle: "50°",
-        seat_angle: "35°",
-        rpoint_coords: "150,250",
+        seg_height: "120",
+        curv_radius: "600",
+        inst_angle: "50",
+        seat_angle: "35",
+        rpoint_coords: {
+          A: "150",
+          B: "250",
+          C: "350"
+        },
         dev_desc: "示例车辆2的开发描述"
       }
     ]
@@ -1979,8 +2242,8 @@ const showAppleStyleCompanyConfirm = (companyName: string, companyAddress: strin
 }
 
 // 智能处理提取的公司信息
-const handleCompanyInfoFromAI = async (aiCompanyName: string, aiCompanyAddress: string) => {
-  if (!aiCompanyName) return
+const handleCompanyInfoFromExtraction = async (extractedCompanyName: string, extractedCompanyAddress: string) => {
+  if (!extractedCompanyName) return
   
   // 确保公司列表已加载
   if (companies.value.length === 0) {
@@ -1989,15 +2252,15 @@ const handleCompanyInfoFromAI = async (aiCompanyName: string, aiCompanyAddress: 
   
   // 查找是否已存在匹配的公司
   const matchedCompany = companies.value.find(company => 
-    company.name.toLowerCase().includes(aiCompanyName.toLowerCase()) ||
-    aiCompanyName.toLowerCase().includes(company.name.toLowerCase())
+    company.name.toLowerCase().includes(extractedCompanyName.toLowerCase()) ||
+    extractedCompanyName.toLowerCase().includes(company.name.toLowerCase())
   )
   
   if (matchedCompany) {
     // 找到匹配的公司，自动选择并填充信息
     formData.company_id = matchedCompany.id
     formData.company_name = matchedCompany.name
-    formData.company_address = matchedCompany.address || aiCompanyAddress
+    formData.company_address = matchedCompany.address || extractedCompanyAddress
     
     // 同步其他相关字段
     if (matchedCompany.trade_names && matchedCompany.trade_names.length > 0) {
@@ -2017,12 +2280,12 @@ const handleCompanyInfoFromAI = async (aiCompanyName: string, aiCompanyAddress: 
   } else {
     // 未找到匹配的公司，显示苹果风格的确认面板
     // 传递提取的完整数据作为额外信息
-    const shouldAddCompany = await showAppleStyleCompanyConfirm(aiCompanyName, aiCompanyAddress, aiExtractionResult.value)
+    const shouldAddCompany = await showAppleStyleCompanyConfirm(extractedCompanyName, extractedCompanyAddress, extractionResult.value)
     
     if (shouldAddCompany) {
       // 用户选择新增公司
       try {
-        const newCompany = await addNewCompany(aiCompanyName, aiCompanyAddress)
+        const newCompany = await addNewCompany(extractedCompanyName, extractedCompanyAddress)
         if (newCompany) {
           // 新增成功，自动选择新公司
           formData.company_id = newCompany.id
@@ -2104,10 +2367,10 @@ const addNewCompany = async (name: string, address: string) => {
   }
 }
 
-const applyAIResult = async () => {
-  if (!aiExtractionResult.value) return
+const applyExtractionResult = async () => {
+  if (!extractionResult.value) return
   
-  const r = aiExtractionResult.value
+  const r = extractionResult.value
 
   // 调试信息：显示提取的原始数据
   console.log('🔍 提取原始数据:', r)
@@ -2116,7 +2379,7 @@ const applyAIResult = async () => {
   const data = r.result || r
 
   // 智能处理公司信息
-  await handleCompanyInfoFromAI(data.company_name, data.company_address)
+  await handleCompanyInfoFromExtraction(data.company_name, data.company_address)
 
   // 优雅的字段映射：使用对象解构和默认值
   const fieldMappings = {
@@ -2156,7 +2419,7 @@ const applyAIResult = async () => {
     vehicles: Array.isArray(data.vehicles) && data.vehicles.length > 0 ? data.vehicles : [{
       veh_mfr: '', veh_type: '', veh_cat: '', dev_area: '', 
       seg_height: '', curv_radius: '', inst_angle: '', 
-      seat_angle: '', rpoint_coords: '', dev_desc: ''
+      seat_angle: '', rpoint_coords: { A: '', B: '', C: '' }, dev_desc: ''
     }]
   }
 
@@ -2170,12 +2433,12 @@ const applyAIResult = async () => {
   currentStep.value = 1
 }
 
-// 删除未使用的 clearAIResult
+// 删除未使用的 clearExtractionResult
 
 const skipToManualEdit = async () => {
-  // 停止AI状态并清理结果
-  aiExtracting.value = false
-  aiExtractionResult.value = null
+  // 停止状态并清理结果
+  extracting.value = false
+  extractionResult.value = null
   
   // 初始化必填/依赖字段，避免渲染异常
   const ensure = (k: keyof typeof formData, v: any) => {
@@ -2214,7 +2477,7 @@ const skipToManualEdit = async () => {
   ensure('interlayer_colourless', !!formData.interlayer_colourless)
   ensure('remarks', formData.remarks ?? '')
   ensure('vehicles', (Array.isArray(formData.vehicles) && formData.vehicles.length > 0) ? formData.vehicles : [{
-    veh_mfr: '', veh_type: '', veh_cat: '', dev_area: '', seg_height: '', curv_radius: '', inst_angle: '', seat_angle: '', rpoint_coords: '', dev_desc: ''
+    veh_mfr: '', veh_type: '', veh_cat: '', dev_area: '', seg_height: '', curv_radius: '', inst_angle: '', seat_angle: '', rpoint_coords: { A: '', B: '', C: '' }, dev_desc: ''
   }])
 
   // 需要公司下拉时，提前拉取，避免选择框报错
@@ -2231,6 +2494,13 @@ const skipToManualEdit = async () => {
 </script>
 
 <style scoped>
+:deep(.el-form-item__label){
+  height: 50px;
+  line-height: 25px;
+  display: block;
+  align-items: center;
+}
+
 /* 自动保存浮动提示 */
 .autosave-toast {
   position: fixed;
@@ -2293,52 +2563,6 @@ const skipToManualEdit = async () => {
   gap: 2rem;
 }
 
-.logo-section {
-  display: flex;
-  align-items: center;
-}
-
-.logo {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.logo-graphic {
-  width: 40px;
-  height: 40px;
-  background: linear-gradient(135deg, #2A3B8F 0%, #1e2a5e 100%);
-  border-radius: 8px;
-  position: relative;
-}
-
-.logo-graphic::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 20px;
-  height: 20px;
-  background: white;
-  border-radius: 4px;
-}
-
-.logo-text {
-  display: flex;
-  flex-direction: column;
-}
-
-.logo-main {
-  font-weight: 700;
-  font-size: 1.2rem;
-  color: #2A3B8F;
-}
-
-.logo-sub {
-  font-size: 0.8rem;
-  color: #666;
-}
 
 .page-title {
   margin: 0;
@@ -3318,5 +3542,92 @@ const skipToManualEdit = async () => {
 
 .ai-result-actions .el-button {
   flex: 1;
+}
+
+/* 单位后缀样式 */
+.unit-suffix {
+  color: #2A3B8F;
+  font-weight: 600;
+  font-size: 14px;
+  background: linear-gradient(135deg, #e3f2fd 0%, #f0f2ff 100%);
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid #2A3B8F;
+  box-shadow: 0 2px 4px rgba(42, 59, 143, 0.1);
+  position: relative;
+  display: inline-block;
+  min-width: 32px;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.unit-suffix::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(135deg, #2A3B8F, #409eff);
+  border-radius: 8px;
+  z-index: -1;
+  opacity: 0.1;
+}
+
+.unit-suffix:hover {
+  background: linear-gradient(135deg, #2A3B8F 0%, #409eff 100%);
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(42, 59, 143, 0.2);
+}
+
+/* 输入框聚焦时单位后缀的样式 */
+:deep(.el-input.is-focus .unit-suffix) {
+  background: linear-gradient(135deg, #2A3B8F 0%, #409eff 100%);
+  color: white;
+  box-shadow: 0 4px 8px rgba(42, 59, 143, 0.3);
+}
+
+/* 为不同单位类型添加不同颜色和样式 */
+.unit-mm {
+  background: linear-gradient(135deg, #409eff 0%, #66b1ff 100%);
+  border-color: #409eff;
+  color: white;
+  font-weight: 700;
+}
+
+.unit-area {
+  background: linear-gradient(135deg, #67c23a 0%, #85ce61 100%);
+  border-color: #67c23a;
+  color: white;
+  font-weight: 700;
+}
+
+.unit-angle {
+  background: linear-gradient(135deg, #e6a23c 0%, #f0c78a 100%);
+  border-color: #e6a23c;
+  color: white;
+  font-weight: 700;
+}
+
+/* 单位后缀的动画效果 */
+.unit-suffix {
+  animation: unitPulse 2s infinite;
+}
+
+@keyframes unitPulse {
+  0%, 100% {
+    box-shadow: 0 2px 4px rgba(42, 59, 143, 0.1);
+  }
+  50% {
+    box-shadow: 0 4px 8px rgba(42, 59, 143, 0.2);
+  }
+}
+
+/* 单位后缀样式优化 */
+.unit-suffix {
+  font-size: 13px;
+  padding: 3px 6px;
+  min-width: 28px;
 }
 </style> 

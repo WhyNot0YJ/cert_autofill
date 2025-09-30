@@ -48,15 +48,15 @@
         
         <!-- 编辑trade_names -->
         <div class="edit-group">
-          <label class="edit-label">商标名称（用分号分隔）：</label>
+          <label class="edit-label">商标名称（用分号+空格分隔）：</label>
           <el-input
             v-model="tradeNamesText"
             type="textarea"
             :rows="2"
-            placeholder="请输入商标名称，多个名称用分号(;)分隔"
+            placeholder="请输入商标名称，多个名称用分号(; )分隔"
             @input="handleTradeNamesChange"
           />
-          <div class="help-text">例如：主要商标;次要商标;备用商标</div>
+          <div class="help-text">例如：主要商标; 次要商标; 备用商标</div>
         </div>
 
         <!-- 编辑trade_marks -->

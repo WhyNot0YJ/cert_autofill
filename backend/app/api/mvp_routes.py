@@ -6,9 +6,10 @@ import uuid
 import zipfile
 import tempfile
 from datetime import datetime, date
-from ..models import Document, DocumentUpload, FormData
+from ..models import FormData
 from ..services.document_extract import document_extraction_service
 from ..services.system_config import system_config
+from ..services.file_upload_service import FileUploadService
 
 from ..services.generators import (
     generate_cert_document, create_cert_sample_data,
@@ -165,6 +166,24 @@ class DocumentGeneratorFactory:
 
 def _prepare_generation_data(form_data):
     """准备文档生成所需的数据（以表单数据为准，不覆盖）"""
+    # 获取公司信息（包括简称和设备信息）
+    company_contraction = ''
+    company_equipment = []
+    if form_data.company_id:
+        from ..models.company import Company
+        company = Company.query.get(form_data.company_id)
+        if company:
+            company_contraction = company.company_contraction or ''
+            # 从Company表获取最新的设备信息
+            if company.equipment:
+                import json
+                try:
+                    company_equipment = json.loads(company.equipment)
+                    if not isinstance(company_equipment, list):
+                        company_equipment = []
+                except (json.JSONDecodeError, TypeError):
+                    company_equipment = []
+    
     return {
         # 基本信息字段
         "approval_no": form_data.approval_no,
@@ -202,13 +221,14 @@ def _prepare_generation_data(form_data):
         "company_id": form_data.company_id,
         "company_name": form_data.company_name or '',
         "company_address": form_data.company_address or '',
+        "company_contraction": company_contraction,  # 从Company表获取公司简称
         "trade_names": form_data.trade_names or '',
         "trade_marks": form_data.trade_marks or [],
         "vehicles": form_data.vehicles or [],
         # 新增：玻璃类型
         "glass_type": getattr(form_data, 'glass_type', ''),
-        # 设备信息（从Company表获取）
-        "equipment": form_data.equipment or [],
+        # 设备信息（从Company表获取最新信息）
+        "equipment": company_equipment,  # 使用从Company表获取的最新设备信息
         # 系统参数 - 版本号（字符串）
         "version_1": getattr(form_data, 'version_1', '4'),
         "version_2": getattr(form_data, 'version_2', '8'),
@@ -637,50 +657,25 @@ def upload_file():
         if subcategory not in {'marks', 'picture', 'signature'}:
             return jsonify({"success": False, "error": "无效的子分类"}), 400
 
-        # 校验图片类型
-        if not allowed_image_file(file.filename):
-            return jsonify({"success": False, "error": "不支持的图片类型"}), 400
-
-        # 生成安全文件名
-        original_name = file.filename
-        filename = secure_filename(original_name)
-
-        # 添加时间戳与UUID，避免重名
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        unique_id = uuid.uuid4().hex[:8]
-        filename = f"{subcategory}_{timestamp}_{unique_id}_{filename}"
-
-        # 保存路径：uploads/company/<subcategory>/
-        base_dir = current_app.config['UPLOAD_FOLDER']
-        save_dir = os.path.join(base_dir, 'company', subcategory)
-        os.makedirs(save_dir, exist_ok=True)
-        file_path = os.path.join(save_dir, filename)
-
-        # 保存文件
-        file.save(file_path)
-
-        # 生成对外可访问的 URL（由 main.py 的 /uploads/<path> 提供）
-        public_path = f"company/{subcategory}/{filename}"
-        public_url = f"/uploads/{public_path}"
-
-        # 补充文件信息
-        size = os.path.getsize(file_path)
-        mime_type = 'image/' + filename.rsplit('.', 1)[1].lower()
+        # 使用文件上传服务
+        upload_result = FileUploadService.upload_company_file(file, subcategory)
 
         return jsonify({
             "success": True,
             "message": "文件上传成功",
             "data": {
-                "url": public_url,
-                "filename": filename,
-                "original_name": original_name,
+                "url": upload_result['public_url'],
+                "filename": upload_result['filename'],
+                "original_name": file.filename,
                 "category": category,
                 "subcategory": subcategory,
-                "size": size,
-                "mime_type": mime_type
+                "size": upload_result['file_size'],
+                "mime_type": upload_result['mime_type']
             }
         })
 
+    except ValueError as e:
+        return jsonify({"success": False, "error": str(e)}), 400
     except Exception as e:
         return jsonify({"success": False, "error": f"上传失败: {str(e)}"}), 500
 
@@ -863,11 +858,14 @@ def generate_tm():
         if form_data:
             # 获取公司简称
             company_contraction = ''
+            print(1,company_contraction)
             if form_data.company_id:
                 from ..models.company import Company
                 company = Company.query.get(form_data.company_id)
+                print(2,company_contraction)
                 if company:
                     company_contraction = company.company_contraction or ''
+                    print(3,company_contraction)
             
             # 只保留模板中实际存在的变量
             tm_data = {
@@ -1007,9 +1005,9 @@ def download_generated_document(filename):
         print(f"❌ 下载文件失败: {str(e)}")
         return jsonify({"error": f"下载失败: {str(e)}"}), 500
         
-@mvp_bp.route('/ai-extract', methods=['POST'])
-def ai_extract_document():
-    """AI文档信息提取"""
+@mvp_bp.route('/document-extract', methods=['POST'])
+def document_extract():
+    """文档信息提取"""
     try:
         # 检查是否有文件上传
         if 'file' not in request.files:
@@ -1034,16 +1032,10 @@ def ai_extract_document():
                 "error": f"不支持的文件类型: {file_ext}，仅支持: {', '.join(allowed_extensions)}"
             }), 400
         
-        # 保存上传的文件到临时目录
-        upload_dir = os.path.join(current_app.root_path, '..', 'uploads', 'temp')
-        os.makedirs(upload_dir, exist_ok=True)
-        
-        # 生成唯一文件名
-        temp_filename = f"{uuid.uuid4()}_{file.filename}"
-        temp_file_path = os.path.join(upload_dir, temp_filename)
-        
+        # 使用文件上传服务保存到临时目录
         try:
-            file.save(temp_file_path)
+            upload_result = FileUploadService.upload_document_file(file, temp_dir=True)
+            temp_file_path = upload_result['file_path']
             
             # 调用提取服务
             extraction_result = document_extraction_service.extract_from_document(temp_file_path)
@@ -1062,8 +1054,7 @@ def ai_extract_document():
                 
         finally:
             # 清理临时文件
-            if os.path.exists(temp_file_path):
-                os.remove(temp_file_path)
+            FileUploadService.cleanup_temp_file(temp_file_path)
                 
     except Exception as e:
         current_app.logger.error(f"提取失败: {str(e)}")

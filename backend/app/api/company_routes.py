@@ -6,18 +6,10 @@ from flask import Blueprint, request, jsonify
 from sqlalchemy.orm import sessionmaker
 from ..models import Company
 from ..main import db
-import os
-from werkzeug.utils import secure_filename
-from datetime import datetime
+from ..utils.json_handler import JSONFieldHandler
+from ..services.file_upload_service import FileUploadService
 
 company_bp = Blueprint('company', __name__)
-
-# 允许的图片文件扩展名
-ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'bmp'}
-
-def allowed_image_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_IMAGE_EXTENSIONS
 
 
 @company_bp.route('/companies', methods=['GET'])
@@ -127,35 +119,23 @@ def create_company():
         picture_path = None
         signature_path = None
         
-        if 'picture' in request.files:
-            file = request.files['picture']
-            if file and allowed_image_file(file.filename):
-                filename = secure_filename(file.filename)
-                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-                filename = f"company_picture_{timestamp}_{filename}"
-                
-                # 确保上传目录存在
-                upload_dir = os.path.join(os.getcwd(), 'uploads', 'companies')
-                os.makedirs(upload_dir, exist_ok=True)
-                
-                file_path = os.path.join(upload_dir, filename)
-                file.save(file_path)
-                picture_path = f"/uploads/companies/{filename}"
+        try:
+            if 'picture' in request.files:
+                file = request.files['picture']
+                if file and file.filename:
+                    upload_result = FileUploadService.upload_company_file(file, 'picture')
+                    picture_path = upload_result['public_url']
+        except ValueError as e:
+            return jsonify({"error": f"图片上传失败: {str(e)}"}), 400
         
-        if 'signature' in request.files:
-            file = request.files['signature']
-            if file and allowed_image_file(file.filename):
-                filename = secure_filename(file.filename)
-                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-                filename = f"company_signature_{timestamp}_{filename}"
-                
-                # 确保上传目录存在
-                upload_dir = os.path.join(os.getcwd(), 'uploads', 'companies')
-                os.makedirs(upload_dir, exist_ok=True)
-                
-                file_path = os.path.join(upload_dir, filename)
-                file.save(file_path)
-                signature_path = f"/uploads/companies/{filename}"
+        try:
+            if 'signature' in request.files:
+                file = request.files['signature']
+                if file and file.filename:
+                    upload_result = FileUploadService.upload_company_file(file, 'signature')
+                    signature_path = upload_result['public_url']
+        except ValueError as e:
+            return jsonify({"error": f"签名上传失败: {str(e)}"}), 400
         
         # 兼容：当前端已通过 /api/mvp/upload-file 得到 URL，直接写入
         if not picture_path and data.get('picture'):
@@ -163,79 +143,13 @@ def create_company():
         if not signature_path and data.get('signature'):
             signature_path = data.get('signature')
         
-        # 处理trade_names字段
-        trade_names_json = None
-        if 'trade_names' in data:
-            import json
-            try:
-                # 如果传入的是数组，转换为JSON字符串
-                if isinstance(data['trade_names'], list):
-                    trade_names_json = json.dumps(data['trade_names'])
-                elif isinstance(data['trade_names'], str):
-                    # 验证是否为有效的JSON数组
-                    trade_names_list = json.loads(data['trade_names'])
-                    if isinstance(trade_names_list, list):
-                        trade_names_json = data['trade_names']
-                    else:
-                        return jsonify({"error": "trade_names字段必须是字符串数组"}), 400
-                elif data['trade_names'] is None:
-                    trade_names_json = None
-                else:
-                    return jsonify({"error": "trade_names字段必须是字符串数组"}), 400
-            except json.JSONDecodeError:
-                return jsonify({"error": "trade_names字段格式错误，必须是有效的JSON数组"}), 400
-        
-        # 处理trade_marks字段
-        trade_marks_json = None
-        if 'trade_marks' in data:
-            import json
-            try:
-                # 如果传入的是数组，转换为JSON字符串
-                if isinstance(data['trade_marks'], list):
-                    trade_marks_json = json.dumps(data['trade_marks'])
-                elif isinstance(data['trade_marks'], str):
-                    # 验证是否为有效的JSON数组
-                    trade_marks_list = json.loads(data['trade_marks'])
-                    if isinstance(trade_marks_list, list):
-                        trade_marks_json = data['trade_marks']
-                    else:
-                        return jsonify({"error": "trade_marks字段必须是URL数组"}), 400
-                elif data['trade_marks'] is None:
-                    trade_marks_json = None
-                else:
-                    return jsonify({"error": "trade_marks字段必须是URL数组"}), 400
-            except json.JSONDecodeError:
-                return jsonify({"error": "trade_marks字段格式错误，必须是有效的JSON数组"}), 400
-        
-        # 处理equipment字段
-        equipment_json = None
-        if 'equipment' in data:
-            import json
-            try:
-                # 如果传入的是数组，转换为JSON字符串
-                if isinstance(data['equipment'], list):
-                    # 验证设备数据格式
-                    for item in data['equipment']:
-                        if not isinstance(item, dict) or 'no' not in item or 'name' not in item:
-                            return jsonify({"error": "设备信息格式错误，每个设备必须包含no(编号)和name(名称)字段"}), 400
-                    equipment_json = json.dumps(data['equipment'])
-                elif isinstance(data['equipment'], str):
-                    # 验证是否为有效的JSON数组
-                    equipment_list = json.loads(data['equipment'])
-                    if isinstance(equipment_list, list):
-                        # 验证设备数据格式
-                        for item in equipment_list:
-                            if not isinstance(item, dict) or 'no' not in item or 'name' not in item:
-                                return jsonify({"error": "设备信息格式错误，每个设备必须包含no(编号)和name(名称)字段"}), 400
-                        equipment_json = data['equipment']
-                    else:
-                        return jsonify({"error": "equipment字段必须是设备对象数组"}), 400
-                elif data['equipment'] is None:
-                    equipment_json = None
-                else:
-                    return jsonify({"error": "equipment字段必须是设备对象数组"}), 400
-            except json.JSONDecodeError:
-                return jsonify({"error": "equipment字段格式错误，必须是有效的JSON数组"}), 400
+        # 处理JSON字段
+        try:
+            trade_names_json = JSONFieldHandler.process_trade_names(data)
+            trade_marks_json = JSONFieldHandler.process_trade_marks(data)
+            equipment_json = JSONFieldHandler.process_equipment(data)
+        except ValueError as e:
+            return jsonify({"error": str(e)}), 400
         
         # 创建公司记录
         company = Company(
@@ -287,67 +201,16 @@ def update_company(company_id):
         if 'address' in data:
             company.address = data['address']
         
-        if 'trade_names' in data:
-            import json
-            try:
-                # 处理trade_names字段
-                if data['trade_names'] is None or data['trade_names'] == '':
-                    company.trade_names = None
-                elif isinstance(data['trade_names'], list):
-                    company.trade_names = json.dumps(data['trade_names'])
-                elif isinstance(data['trade_names'], str):
-                    # 验证是否为有效的JSON数组
-                    trade_names_list = json.loads(data['trade_names'])
-                    if isinstance(trade_names_list, list):
-                        company.trade_names = data['trade_names']
-                    else:
-                        return jsonify({"error": "trade_names字段必须是字符串数组"}), 400
-            except json.JSONDecodeError:
-                return jsonify({"error": "trade_names字段格式错误，必须是有效的JSON数组"}), 400
-        
-        if 'trade_marks' in data:
-            import json
-            try:
-                # 处理trade_marks字段
-                if data['trade_marks'] is None or data['trade_marks'] == '':
-                    company.trade_marks = None
-                elif isinstance(data['trade_marks'], list):
-                    company.trade_marks = json.dumps(data['trade_marks'])
-                elif isinstance(data['trade_marks'], str):
-                    # 验证是否为有效的JSON数组
-                    trade_marks_list = json.loads(data['trade_marks'])
-                    if isinstance(trade_marks_list, list):
-                        company.trade_marks = data['trade_marks']
-                    else:
-                        return jsonify({"error": "trade_marks字段必须是URL数组"}), 400
-            except json.JSONDecodeError:
-                return jsonify({"error": "trade_marks字段格式错误，必须是有效的JSON数组"}), 400
-        
-        if 'equipment' in data:
-            import json
-            try:
-                # 处理equipment字段
-                if data['equipment'] is None or data['equipment'] == '':
-                    company.equipment = None
-                elif isinstance(data['equipment'], list):
-                    # 验证设备数据格式
-                    for item in data['equipment']:
-                        if not isinstance(item, dict) or 'no' not in item or 'name' not in item:
-                            return jsonify({"error": "设备信息格式错误，每个设备必须包含no(编号)和name(名称)字段"}), 400
-                    company.equipment = json.dumps(data['equipment'])
-                elif isinstance(data['equipment'], str):
-                    # 验证是否为有效的JSON数组
-                    equipment_list = json.loads(data['equipment'])
-                    if isinstance(equipment_list, list):
-                        # 验证设备数据格式
-                        for item in equipment_list:
-                            if not isinstance(item, dict) or 'no' not in item or 'name' not in item:
-                                return jsonify({"error": "设备信息格式错误，每个设备必须包含no(编号)和name(名称)字段"}), 400
-                        company.equipment = data['equipment']
-                    else:
-                        return jsonify({"error": "equipment字段必须是设备对象数组"}), 400
-            except json.JSONDecodeError:
-                return jsonify({"error": "equipment字段格式错误，必须是有效的JSON数组"}), 400
+        # 处理JSON字段
+        try:
+            if 'trade_names' in data:
+                company.trade_names = JSONFieldHandler.process_trade_names(data)
+            if 'trade_marks' in data:
+                company.trade_marks = JSONFieldHandler.process_trade_marks(data)
+            if 'equipment' in data:
+                company.equipment = JSONFieldHandler.process_equipment(data)
+        except ValueError as e:
+            return jsonify({"error": str(e)}), 400
         
         if 'signature' in data:
             company.signature = data['signature']
@@ -355,35 +218,23 @@ def update_company(company_id):
             company.picture = data['picture']
         
         # 处理图片更新
-        if 'picture' in request.files:
-            file = request.files['picture']
-            if file and allowed_image_file(file.filename):
-                filename = secure_filename(file.filename)
-                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-                filename = f"company_picture_{timestamp}_{filename}"
-                
-                # 确保上传目录存在
-                upload_dir = os.path.join(os.getcwd(), 'uploads', 'companies')
-                os.makedirs(upload_dir, exist_ok=True)
-                
-                file_path = os.path.join(upload_dir, filename)
-                file.save(file_path)
-                company.picture = f"/uploads/companies/{filename}"
+        try:
+            if 'picture' in request.files:
+                file = request.files['picture']
+                if file and file.filename:
+                    upload_result = FileUploadService.upload_company_file(file, 'picture')
+                    company.picture = upload_result['public_url']
+        except ValueError as e:
+            return jsonify({"error": f"图片上传失败: {str(e)}"}), 400
         
-        if 'signature' in request.files:
-            file = request.files['signature']
-            if file and allowed_image_file(file.filename):
-                filename = secure_filename(file.filename)
-                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-                filename = f"company_signature_{timestamp}_{filename}"
-                
-                # 确保上传目录存在
-                upload_dir = os.path.join(os.getcwd(), 'uploads', 'companies')
-                os.makedirs(upload_dir, exist_ok=True)
-                
-                file_path = os.path.join(upload_dir, filename)
-                file.save(file_path)
-                company.signature = f"/uploads/companies/{filename}"
+        try:
+            if 'signature' in request.files:
+                file = request.files['signature']
+                if file and file.filename:
+                    upload_result = FileUploadService.upload_company_file(file, 'signature')
+                    company.signature = upload_result['public_url']
+        except ValueError as e:
+            return jsonify({"error": f"签名上传失败: {str(e)}"}), 400
         
         db.session.commit()
         

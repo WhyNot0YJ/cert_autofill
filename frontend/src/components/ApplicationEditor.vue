@@ -1,55 +1,55 @@
 <template>
   <div class="application-editor">
     <el-form ref="formRef" :model="localForm" :rules="formRules" label-width="240px" class="editor-form">
-      <el-divider content-position="left">基础信息 (Basic Information)</el-divider>
+      <el-divider content-position="left">基础信息（Basic Information）</el-divider>
       
-      <el-form-item label="公司 (Company)" prop="company_id">
+      <el-form-item label="Company" prop="company_id">
         <el-select v-model="localForm.company_id" placeholder="请选择公司" filterable @change="onCompanyChange">
           <el-option v-for="c in companies" :key="c.id" :label="c.name" :value="c.id" />
         </el-select>
       </el-form-item>
-      <el-form-item label="公司地址 (Company Address)">
+      <el-form-item label="Company Address">
         <el-input v-model="localForm.company_address" type="textarea" :rows="2" />
       </el-form-item>
 
-      <el-divider content-position="left">证书参数 (Certificate Parameters)</el-divider>
-      <el-form-item label="批准号 (Approval No.)" prop="approval_no">
+      <el-divider content-position="left">证书参数（Certificate Parameters）</el-divider>
+      <el-form-item label="Approval No." prop="approval_no">
         <el-input v-model="localForm.approval_no" />
       </el-form-item>
-      <el-form-item label="信息文件夹号 (Information Folder No.)" prop="information_folder_no">
+      <el-form-item label="Information Folder No." prop="information_folder_no">
         <el-input v-model="localForm.information_folder_no" />
       </el-form-item>
-      <el-form-item label="备注 (Remarks)">
+      <el-form-item label="Remarks">
         <el-input v-model="localForm.remarks" type="textarea" :rows="2" />
       </el-form-item>
 
-      <el-divider content-position="left">车辆信息 (Vehicle Information)</el-divider>
+      <el-divider content-position="left">车辆信息（Vehicle Information）</el-divider>
       <div v-for="(vehicle, index) in localForm.vehicles" :key="index" class="vehicle-block">
         <div class="vehicle-header">
           <h4>车辆 {{ index + 1 }}</h4>
           <el-button type="danger" size="small" @click="removeVehicle(index)" :disabled="localForm.vehicles.length === 1">删除</el-button>
         </div>
-        <el-form-item label="车辆制造商 (Vehicle Manufacturer)"><el-input v-model="vehicle.veh_mfr" /></el-form-item>
-        <el-form-item label="车辆类型 (Vehicle Type)"><el-input v-model="vehicle.veh_type" /></el-form-item>
-        <el-form-item label="车辆类别 (Vehicle Category)"><el-input v-model="vehicle.veh_cat" /></el-form-item>
-        <el-form-item label="开发区域 (Development Area)"><el-input v-model="vehicle.dev_area" /></el-form-item>
-        <el-form-item label="段高度 (Segment Height)"><el-input v-model="vehicle.seg_height" /></el-form-item>
-        <el-form-item label="曲率半径 (Curvature Radius)"><el-input v-model="vehicle.curv_radius" /></el-form-item>
-        <el-form-item label="安装角度 (Installation Angle)"><el-input v-model="vehicle.inst_angle" /></el-form-item>
-        <el-form-item label="座椅角度 (Seat Angle)"><el-input v-model="vehicle.seat_angle" /></el-form-item>
-        <el-form-item label="参考点坐标 (Reference Point Coordinates)"><el-input v-model="vehicle.rpoint_coords" /></el-form-item>
-        <el-form-item label="开发描述 (Development Description)"><el-input v-model="vehicle.dev_desc" type="textarea" :rows="2" /></el-form-item>
+        <el-form-item label="Vehicle Manufacturer"><el-input v-model="vehicle.veh_mfr" /></el-form-item>
+        <el-form-item label="Type of vehicle"><el-input v-model="vehicle.veh_type" /></el-form-item>
+        <el-form-item label="Vehicle category"><el-input v-model="vehicle.veh_cat" /></el-form-item>
+        <el-form-item label="Developed area (F)"><el-input v-model="vehicle.dev_area" /></el-form-item>
+        <el-form-item label="Height of segment (h)"><el-input v-model="vehicle.seg_height" /></el-form-item>
+        <el-form-item label="Curvature (r)"><el-input v-model="vehicle.curv_radius" /></el-form-item>
+        <el-form-item label="Installation angle (α)"><el-input v-model="vehicle.inst_angle" /></el-form-item>
+        <el-form-item label="Seat-back angle (β)"><el-input v-model="vehicle.seat_angle" /></el-form-item>
+        <el-form-item label="R-point coordinates (A, B, C)"><el-input v-model="vehicle.rpoint_coords" /></el-form-item>
+        <el-form-item label="Description of the commercially available specific device"><el-input v-model="vehicle.dev_desc" type="textarea" :rows="2" /></el-form-item>
       </div>
       <el-button type="primary" plain size="small" @click="addVehicle">添加车辆</el-button>
 
-      <el-divider content-position="left">重要日期 (Important Dates)</el-divider>
-      <el-form-item label="批准日期 (Approval Date)" prop="approval_date">
+      <el-divider content-position="left">重要日期（Important Dates）</el-divider>
+      <el-form-item label="Approval Date" prop="approval_date">
         <el-date-picker v-model="localForm.approval_date" type="date" value-format="YYYY-MM-DD" />
       </el-form-item>
-      <el-form-item label="测试日期 (Test Date)" prop="test_date">
+      <el-form-item label="Test Date" prop="test_date">
         <el-date-picker v-model="localForm.test_date" type="date" value-format="YYYY-MM-DD" />
       </el-form-item>
-      <el-form-item label="报告日期 (Report Date)" prop="report_date">
+      <el-form-item label="Report Date" prop="report_date">
         <el-date-picker v-model="localForm.report_date" type="date" value-format="YYYY-MM-DD" />
       </el-form-item>
     </el-form>

@@ -2,7 +2,7 @@
   <div class="company-management">
     <!-- 页面标题 -->
     <div class="page-header">
-      <h1>公司信息管理</h1>
+      <h1 class="page-title">公司信息管理</h1>
       <el-button type="primary" @click="showCreateDialog = true" :icon="Plus">
         添加公司
       </el-button>
@@ -44,6 +44,32 @@
         <el-col :span="4">
           <el-button @click="resetSearch" :icon="Refresh">重置</el-button>
         </el-col>
+        <el-col :span="4">
+          <el-dropdown @command="handleColumnFilter" trigger="click">
+            <el-button>
+              <el-icon><Setting /></el-icon>
+              列筛选
+              <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+            </el-button>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item 
+                  v-for="column in availableColumns" 
+                  :key="column.key"
+                  :command="column.key"
+                >
+                  <el-checkbox 
+                    v-model="column.visible" 
+                    @change="updateColumnVisibility"
+                    @click.stop
+                  >
+                    {{ column.label }}
+                  </el-checkbox>
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+        </el-col>
       </el-row>
     </div>
 
@@ -55,10 +81,25 @@
         stripe 
         style="width: 100%"
         @sort-change="handleTableSort"
+        :border="true"
+        :resizable="true"
+        :show-overflow-tooltip="true"
       >
-        <el-table-column prop="id" label="ID" width="80" sortable="custom" />
+        <el-table-column 
+          v-if="getColumnVisibility('id')"
+          prop="id" 
+          label="ID" 
+          min-width="80" 
+          sortable="custom" 
+        />
         
-        <el-table-column prop="name" label="公司名称" min-width="200" sortable="custom">
+        <el-table-column 
+          v-if="getColumnVisibility('name')"
+          prop="name" 
+          label="公司名称" 
+          min-width="200" 
+          sortable="custom"
+        >
           <template #default="{ row }">
             <div class="company-name">
               <el-image 
@@ -76,9 +117,19 @@
           </template>
         </el-table-column>
         
-        <el-table-column prop="address" label="公司地址" min-width="250" show-overflow-tooltip />
+        <el-table-column 
+          v-if="getColumnVisibility('address')"
+          prop="address" 
+          label="公司地址" 
+          min-width="250" 
+          show-overflow-tooltip 
+        />
         
-        <el-table-column label="商标名称/图案" width="200">
+        <el-table-column 
+          v-if="getColumnVisibility('trade_info')"
+          label="商标名称/图案" 
+          min-width="200"
+        >
           <template #default="{ row }">
             <TradeNamesMarksDisplay 
               :trade-names="row.trade_names" 
@@ -89,7 +140,11 @@
           </template>
         </el-table-column>
         
-        <el-table-column label="设备信息" width="150">
+        <el-table-column 
+          v-if="getColumnVisibility('equipment')"
+          label="设备信息" 
+          min-width="150"
+        >
           <template #default="{ row }">
             <div class="equipment-info">
               <el-tag v-if="row.equipment && row.equipment.length > 0" type="success" size="small">
@@ -100,7 +155,11 @@
           </template>
         </el-table-column>
         
-        <el-table-column label="图片信息" width="120">
+        <el-table-column 
+          v-if="getColumnVisibility('image_info')"
+          label="图片信息" 
+          min-width="120"
+        >
           <template #default="{ row }">
             <div class="image-info">
               <el-tag v-if="row.picture" type="success" size="small">有图片</el-tag>
@@ -111,19 +170,31 @@
           </template>
         </el-table-column>
         
-        <el-table-column prop="created_at" label="创建时间" width="180" sortable="custom">
+        <el-table-column 
+          v-if="getColumnVisibility('created_at')"
+          prop="created_at" 
+          label="创建时间" 
+          min-width="180" 
+          sortable="custom"
+        >
           <template #default="{ row }">
             {{ formatDate(row.created_at) }}
           </template>
         </el-table-column>
         
-        <el-table-column prop="updated_at" label="更新时间" width="180" sortable="custom">
+        <el-table-column 
+          v-if="getColumnVisibility('updated_at')"
+          prop="updated_at" 
+          label="更新时间" 
+          min-width="180" 
+          sortable="custom"
+        >
           <template #default="{ row }">
             {{ formatDate(row.updated_at) }}
           </template>
         </el-table-column>
         
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column label="操作" width="250" fixed="right">
           <template #default="{ row }">
             <el-button size="small" @click="handleView(row)" :icon="View">查看</el-button>
             <el-button size="small" type="primary" @click="handleEdit(row)" :icon="Edit">编辑</el-button>
@@ -205,6 +276,15 @@
             <el-icon><Plus /></el-icon>
             添加设备
           </el-button>
+          <el-button 
+            type="success" 
+            size="small" 
+            @click="showBatchAddDialog = true"
+            style="margin-left: 10px;"
+          >
+            <el-icon><Plus /></el-icon>
+            批量添加
+          </el-button>
         </el-divider>
         
         <!-- 设备信息列表 -->
@@ -215,7 +295,6 @@
               type="danger" 
               size="small" 
               @click="removeEquipment(index)"
-              :disabled="companyForm.equipment.length === 1"
             >
               <el-icon><Delete /></el-icon>
               删除
@@ -375,13 +454,63 @@
         </div>
       </div>
     </el-dialog>
+
+    <!-- 批量添加设备对话框 -->
+    <el-dialog v-model="showBatchAddDialog" title="批量添加设备" width="600px">
+      <div class="batch-add-container">
+        <el-alert
+          title="使用说明"
+          type="info"
+          :closable="false"
+          style="margin-bottom: 20px;"
+        >
+          <template #default>
+            <p>请按照以下格式输入设备信息，每行一个设备：</p>
+            <p><strong>格式：</strong> no. 设备编号: 设备名称 或 no. 设备编号：设备名称</p>
+            <p><strong>示例：</strong> no. FYGZT09007: High and low temperature damp heat test chamber</p>
+            <p><strong>支持：</strong> 半角冒号(:) 和 全角冒号(：)</p>
+          </template>
+        </el-alert>
+        
+        <el-form-item label="设备信息">
+          <el-input
+            v-model="batchEquipmentText"
+            type="textarea"
+            :rows="10"
+            placeholder="请输入设备信息，每行一个设备，格式：no. 设备编号: 设备名称 或 no. 设备编号：设备名称"
+            style="width: 100%;"
+          />
+        </el-form-item>
+        
+        <div v-if="parsedEquipment.length > 0" class="parsed-equipment">
+          <h4>解析结果预览：</h4>
+          <div class="equipment-preview">
+            <div 
+              v-for="(equipment, index) in parsedEquipment" 
+              :key="index" 
+              class="equipment-preview-item"
+            >
+              <el-tag type="success" size="small">{{ equipment.no }}</el-tag>
+              <span>{{ equipment.name }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <template #footer>
+        <el-button @click="showBatchAddDialog = false">取消</el-button>
+        <el-button type="primary" @click="handleBatchAdd" :disabled="parsedEquipment.length === 0">
+          确认添加 {{ parsedEquipment.length }} 个设备
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Plus, Search, Refresh, View, Edit, Delete, Upload } from '@element-plus/icons-vue'
+import { Plus, Search, Refresh, View, Edit, Delete, Upload, Setting, ArrowDown } from '@element-plus/icons-vue'
 import { companyAPI, type Company, type CompanyListParams, type CreateCompanyRequest, type UpdateCompanyRequest, type Equipment } from '@/api/company'
 import { uploadAPI } from '@/api/upload'
 import { getServerBaseURL } from '@/api'
@@ -395,8 +524,38 @@ const submitting = ref(false)
 const companyList = ref<Company[]>([])
 const showCreateDialog = ref(false)
 const showViewDialog = ref(false)
+const showBatchAddDialog = ref(false)
 const editingCompany = ref<Company | null>(null)
 const viewingCompany = ref<Company | null>(null)
+
+// 列筛选
+const availableColumns = ref([
+  { key: 'id', label: 'ID', visible: true },
+  { key: 'name', label: '公司名称', visible: true },
+  { key: 'address', label: '公司地址', visible: true },
+  { key: 'trade_info', label: '商标名称/图案', visible: true },
+  { key: 'equipment', label: '设备信息', visible: true },
+  { key: 'image_info', label: '图片信息', visible: true },
+  { key: 'created_at', label: '创建时间', visible: true },
+  { key: 'updated_at', label: '更新时间', visible: true }
+])
+
+const getColumnVisibility = (columnKey: string) => {
+  const column = availableColumns.value.find(col => col.key === columnKey)
+  return column ? column.visible : true
+}
+
+const handleColumnFilter = (command: string) => {
+  // 切换列的可见性
+  const column = availableColumns.value.find(col => col.key === command)
+  if (column) {
+    column.visible = !column.visible
+  }
+}
+
+const updateColumnVisibility = () => {
+  // 当checkbox状态改变时触发
+}
 
 // 搜索参数
 const searchParams = reactive<CompanyListParams>({
@@ -434,6 +593,10 @@ const companyForm = reactive<CreateCompanyRequest & { signature?: File | string;
 // 图片预览
 const previewPicture = ref<string>('')
 const previewSignature = ref<string>('')
+
+// 批量添加设备
+const batchEquipmentText = ref<string>('')
+const parsedEquipment = ref<Equipment[]>([])
 
 // 表单引用
 const companyFormRef = ref()
@@ -599,9 +762,55 @@ const addEquipment = () => {
 }
 
 const removeEquipment = (index: number) => {
-  if (companyForm.equipment && companyForm.equipment.length > 1) {
+  if (companyForm.equipment && companyForm.equipment.length > 0) {
     companyForm.equipment.splice(index, 1)
   }
+}
+
+// 批量添加设备相关方法
+const parseEquipmentText = (text: string): Equipment[] => {
+  const lines = text.split('\n').filter(line => line.trim())
+  const equipment: Equipment[] = []
+  
+  for (const line of lines) {
+    // 匹配格式：no. 设备编号: 设备名称 或 no. 设备编号：设备名称
+    // 支持全角冒号（：）和半角冒号（:）
+    const match = line.match(/no\.\s*([^:：]+)[:：]\s*(.+)/i)
+    if (match) {
+      const no = match[1].trim()
+      const name = match[2].trim()
+      if (no && name) {
+        equipment.push({ no, name })
+      }
+    }
+  }
+  
+  return equipment
+}
+
+const handleBatchAdd = () => {
+  if (parsedEquipment.value.length === 0) {
+    ElMessage.warning('没有可添加的设备')
+    return
+  }
+  
+  // 将解析的设备添加到表单中
+  if (!companyForm.equipment) {
+    companyForm.equipment = []
+  }
+  
+  // 如果当前只有一个空设备，先清空
+  if (companyForm.equipment.length === 1 && !companyForm.equipment[0].no && !companyForm.equipment[0].name) {
+    companyForm.equipment = []
+  }
+  
+  // 添加解析的设备
+  companyForm.equipment.push(...parsedEquipment.value)
+  
+  ElMessage.success(`成功添加 ${parsedEquipment.value.length} 个设备`)
+  showBatchAddDialog.value = false
+  batchEquipmentText.value = ''
+  parsedEquipment.value = []
 }
 
 const handleSubmit = async () => {
@@ -689,6 +898,15 @@ watch(() => searchParams.per_page, () => {
   pagination.per_page = searchParams.per_page
 })
 
+// 监听批量添加文本变化，实时解析设备信息
+watch(batchEquipmentText, (newText) => {
+  if (newText.trim()) {
+    parsedEquipment.value = parseEquipmentText(newText)
+  } else {
+    parsedEquipment.value = []
+  }
+})
+
 // 组件挂载时加载数据
 onMounted(() => {
   loadCompanies()
@@ -713,9 +931,12 @@ onMounted(() => {
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-.page-header h1 {
+
+.page-title {
   margin: 0;
-  color: #333;
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: #2A3B8F;
 }
 
 .search-bar {
@@ -913,5 +1134,49 @@ onMounted(() => {
   color: #666;
   font-size: 12px;
   line-height: 1.4;
+}
+
+/* 批量添加设备样式 */
+.batch-add-container {
+  padding: 10px 0;
+}
+
+.parsed-equipment {
+  margin-top: 20px;
+  padding: 15px;
+  background: #f5f7fa;
+  border-radius: 8px;
+  border: 1px solid #e4e7ed;
+}
+
+.parsed-equipment h4 {
+  margin: 0 0 15px 0;
+  color: #333;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.equipment-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.equipment-preview-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  background: white;
+  border-radius: 4px;
+  border: 1px solid #e4e7ed;
+}
+
+.equipment-preview-item span {
+  flex: 1;
+  font-size: 13px;
+  color: #333;
 }
 </style>
