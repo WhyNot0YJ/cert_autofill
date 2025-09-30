@@ -166,23 +166,22 @@ class DocumentGeneratorFactory:
 
 def _prepare_generation_data(form_data):
     """准备文档生成所需的数据（以表单数据为准，不覆盖）"""
-    # 获取公司信息（包括简称和设备信息）
+    # 获取公司信息（简洁方式：使用 to_dict 统一解析字段）
     company_contraction = ''
     company_equipment = []
+    signature_name = ''
+    place = ''
+    email_address = ''
     if form_data.company_id:
         from ..models.company import Company
         company = Company.query.get(form_data.company_id)
         if company:
-            company_contraction = company.company_contraction or ''
-            # 从Company表获取最新的设备信息
-            if company.equipment:
-                import json
-                try:
-                    company_equipment = json.loads(company.equipment)
-                    if not isinstance(company_equipment, list):
-                        company_equipment = []
-                except (json.JSONDecodeError, TypeError):
-                    company_equipment = []
+            c = company.to_dict()
+            company_contraction = c.get('company_contraction', '') or ''
+            company_equipment = c.get('equipment', []) or []
+            signature_name = c.get('signature_name', '') or ''
+            place = c.get('place', '') or ''
+            email_address = c.get('email_address', '') or ''
     
     return {
         # 基本信息字段
@@ -222,6 +221,9 @@ def _prepare_generation_data(form_data):
         "company_name": form_data.company_name or '',
         "company_address": form_data.company_address or '',
         "company_contraction": company_contraction,  # 从Company表获取公司简称
+        "signature_name": signature_name,  # 公司签名人名称
+        "place": place,  # 公司位置
+        "email_address": email_address,  # 联系邮箱
         "trade_names": form_data.trade_names or '',
         "trade_marks": form_data.trade_marks or [],
         "vehicles": form_data.vehicles or [],
@@ -744,51 +746,10 @@ def generate_tr():
     try:
         data = request.get_json(silent=True) or {}
         session_id = data.get('session_id')
-        format_type = data.get('format', 'docx')  # 支持docx和pdf格式
-        form_data = FormData.query.filter_by(session_id=session_id).first() if session_id else None
-        
-        # 准备TR测试报告数据（使用通用生成数据，确保包含equipment等最新公司信息）
-        if form_data:
-            tr_data = _prepare_generation_data(form_data)
-        else:
-            # 使用示例数据
-            tr_data = create_tr_sample_data()
-
-        # 调试输出：TR即将使用的设备信息
-        try:
-            eq = tr_data.get('equipment', []) if isinstance(tr_data, dict) else []
-            eq_preview = eq[:3] if isinstance(eq, list) else []
-            print(f"[DEBUG] TR generate endpoint equipment count={len(eq) if isinstance(eq, list) else 0}, preview={eq_preview}")
-        except Exception:
-            pass
-        
-        # 生成输出路径
-        output_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], 'generated_files')
-        os.makedirs(output_dir, exist_ok=True)
-        file_ext = '.pdf' if format_type == 'pdf' else '.docx'
-        
-        # 使用安全的approval_no生成文件名
-        if form_data:
-            safe_approval_no = _make_safe_approval_no(form_data, 'TR-2024-001')
-        else:
-            safe_approval_no = 'TR-2024-001'
-            
-        filename = f"TR-{safe_approval_no}{file_ext}"
-        output_path = os.path.join(output_dir, filename)
-        
-        # 生成TR测试报告
-        result = generate_tr_document(tr_data, output_path, format_type)
-        
-        if result["success"]:
-            payload = {
-                "filename": filename,
-                "file_path": output_path,
-                "download_url": f"/api/mvp/download/{filename}"
-            }
-            return jsonify({"success": True, "message": "TR测试报告生成成功", "data": payload})
-        else:
-            return jsonify({"error": result["message"]}), 500
-            
+        format_type = data.get('format', 'docx')
+        if not session_id:
+            return jsonify({"error": "缺少会话ID"}), 400
+        return _generate_single_document_by_type('tr', session_id, format_type)
     except Exception as e:
         return jsonify({"error": f"TR测试报告生成失败: {str(e)}"}), 500
 
@@ -850,73 +811,10 @@ def generate_tm():
     try:
         data = request.get_json(silent=True) or {}
         session_id = data.get('session_id')
-        format_type = data.get('format', 'docx')  # 支持docx和pdf格式
-        form_data = FormData.query.filter_by(session_id=session_id).first() if session_id else None
-        
-        # 准备TM测试记录数据
-        tm_data = {}
-        if form_data:
-            # 获取公司简称
-            company_contraction = ''
-            print(1,company_contraction)
-            if form_data.company_id:
-                from ..models.company import Company
-                company = Company.query.get(form_data.company_id)
-                print(2,company_contraction)
-                if company:
-                    company_contraction = company.company_contraction or ''
-                    print(3,company_contraction)
-            
-            # 只保留模板中实际存在的变量
-            tm_data = {
-                'test_date': form_data.test_date,
-                'windscreen_thick': form_data.windscreen_thick,
-                'glass_layers': form_data.glass_layers,
-                'interlayer_layers': form_data.interlayer_layers,
-                'interlayer_thick': form_data.interlayer_thick,
-                'glass_treatment': form_data.glass_treatment,
-                'interlayer_type': form_data.interlayer_type,
-                'coating_type': form_data.coating_type,
-                'coating_thick': form_data.coating_thick,
-                'material_nature': form_data.material_nature,
-                'coating_color': form_data.coating_color,
-                'interlayer_total': form_data.interlayer_total,
-                'conductors_choice': form_data.conductors_choice,
-                'opaque_obscure_choice': form_data.opaque_obscure_choice,
-                'glass_color_choice': form_data.glass_color_choice,
-                'company_contraction': company_contraction
-            }
-        else:
-            # 使用示例数据
-            tm_data = create_tm_sample_data()
-        
-        # 生成输出路径
-        output_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], 'generated_files')
-        os.makedirs(output_dir, exist_ok=True)
-        file_ext = '.pdf' if format_type == 'pdf' else '.docx'
-        
-        # 使用安全的approval_no生成文件名
-        if form_data:
-            safe_approval_no = _make_safe_approval_no(form_data, 'TM-2024-001')
-        else:
-            safe_approval_no = 'TM-2024-001'
-            
-        filename = f"TM-{safe_approval_no}{file_ext}"
-        output_path = os.path.join(output_dir, filename)
-        
-        # 生成TM测试记录
-        result = generate_tm_document(tm_data, output_path, format_type)
-        
-        if result["success"]:
-            payload = {
-                "filename": filename,
-                "file_path": output_path,
-                "download_url": f"/api/mvp/download/{filename}"
-            }
-            return jsonify({"success": True, "message": "TM测试记录生成成功", "data": payload})
-        else:
-            return jsonify({"error": result["message"]}), 500
-            
+        format_type = data.get('format', 'docx')
+        if not session_id:
+            return jsonify({"error": "缺少会话ID"}), 400
+        return _generate_single_document_by_type('tm', session_id, format_type)
     except Exception as e:
         return jsonify({"error": f"TM测试记录生成失败: {str(e)}"}), 500
 

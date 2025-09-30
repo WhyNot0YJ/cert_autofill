@@ -17,6 +17,9 @@ export interface Company {
   name: string
   company_contraction?: string
   address?: string
+  signature_name?: string
+  place?: string
+  email_address?: string
   signature?: string
   picture?: string
   trade_names?: string[]
@@ -28,12 +31,15 @@ export interface Company {
 
 export interface CreateCompanyRequest {
   name: string
-  company_contraction?: string
-  address?: string
-  signature?: File | string
-  picture?: File | string
-  trade_names?: string[]
-  trade_marks?: string[]
+  company_contraction: string
+  address: string
+  signature_name: string
+  place: string
+  email_address: string
+  signature: File | string | undefined
+  picture: File | string | undefined
+  trade_names: string[]
+  trade_marks: string[]
   equipment?: Equipment[]
 }
 
@@ -41,6 +47,9 @@ export interface UpdateCompanyRequest {
   name?: string
   company_contraction?: string
   address?: string
+  signature_name?: string
+  place?: string
+  email_address?: string
   signature?: File | string
   picture?: File | string
   trade_names?: string[]
@@ -107,9 +116,12 @@ class CompanyAPI {
       name: data.name,
       company_contraction: data.company_contraction,
       address: data.address,
-      trade_names: data.trade_names || [],
-      trade_marks: data.trade_marks || [],
-      equipment: data.equipment || []
+      signature_name: data.signature_name,
+      place: data.place,
+      email_address: data.email_address,
+      trade_names: data.trade_names,
+      trade_marks: data.trade_marks,
+      equipment: data.equipment ?? []
     }
     // 仅当为字符串URL时发送（文件上传请先走 /mvp/upload-file）
     if (typeof data.picture === 'string' && data.picture) requestData.picture = data.picture
@@ -127,6 +139,9 @@ class CompanyAPI {
     if (data.name !== undefined) requestData.name = data.name
     if (data.company_contraction !== undefined) requestData.company_contraction = data.company_contraction
     if (data.address !== undefined) requestData.address = data.address
+    if (data.signature_name !== undefined) requestData.signature_name = data.signature_name
+    if (data.place !== undefined) requestData.place = data.place
+    if (data.email_address !== undefined) requestData.email_address = data.email_address
     if (data.trade_names !== undefined) requestData.trade_names = data.trade_names || []
     if (data.trade_marks !== undefined) requestData.trade_marks = data.trade_marks || []
     if (data.equipment !== undefined) requestData.equipment = data.equipment || []

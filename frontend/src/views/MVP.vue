@@ -443,8 +443,8 @@
                         Colouring of glass<br />玻璃颜色
                       </template>
                       <el-checkbox-group v-model="formData.glass_color_choice">
-                        <el-checkbox label="colourless">Colourless</el-checkbox>
-                        <el-checkbox label="tinted">Tinted</el-checkbox>
+                        <el-checkbox label="colourless">colourless</el-checkbox>
+                        <el-checkbox label="tinted">tinted</el-checkbox>
                         
                       </el-checkbox-group>
                     </el-form-item>
@@ -503,13 +503,13 @@
                         Colouring of interlayer<br />夹层颜色
                       </template>
                       <span style="margin-right: 30px;">&#40;</span>
-                      <el-checkbox v-model="formData.interlayer_total">Total</el-checkbox>
+                      <el-checkbox v-model="formData.interlayer_total">total</el-checkbox>
                       <span style="margin-right: 30px;">/</span>
-                      <el-checkbox v-model="formData.interlayer_partial">Partial</el-checkbox>
+                      <el-checkbox v-model="formData.interlayer_partial">partial</el-checkbox>
                       <span style="margin-right: 30px;">&#41;</span>
-                      <el-checkbox v-model="formData.interlayer_tinted">Tinted</el-checkbox>
+                      <el-checkbox v-model="formData.interlayer_tinted">tinted</el-checkbox>
                       <span style="margin-right: 30px;">/</span>
-                      <el-checkbox v-model="formData.interlayer_colourless">Colourless</el-checkbox>
+                      <el-checkbox v-model="formData.interlayer_colourless">colourless</el-checkbox>
                     </el-form-item>
                   </el-col>
                 </el-row>
@@ -975,7 +975,7 @@
 </template>
 
 <script setup lang="ts">
-import { Delete, Document, Download, Plus, UploadFilled, Refresh, EditPen, View, Collection } from '@element-plus/icons-vue'
+import { Delete, Document, Download, Plus, UploadFilled, EditPen, View, Collection } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox, ElLoading } from 'element-plus'
 import { computed, reactive, ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
@@ -1040,6 +1040,7 @@ const pendingCompanyName = ref('')
 const pendingCompanyAddress = ref('')
 const pendingCompanyAdditionalInfo = ref<any>(null)
 const companyConfirmPromise = ref<{ resolve: (value: boolean) => void } | null>(null)
+// 移除旧的两步对话框数据与校验（已合并至 AppleStyleConfirm）
 const formData = reactive<{[key: string]: any}>({
   // 基础信息
   company_address: '',              // 公司地址
@@ -2208,13 +2209,55 @@ onMounted(() => {
 // 删除未使用的 ensureFormDefaults
 
 // 处理公司确认事件
-const handleCompanyConfirm = () => {
+const handleCompanyConfirm = async (payload?: {
+  name: string
+  company_contraction: string
+  address: string
+  signature_name: string
+  place: string
+  email_address: string
+  trade_names: string[]
+  trade_marks?: string[]
+  signature?: string
+  picture?: string
+  equipment?: { no: string; name: string }[]
+}) => {
   showCompanyConfirm.value = false
   if (companyConfirmPromise.value) {
     companyConfirmPromise.value.resolve(true)
     companyConfirmPromise.value = null
   }
+  // 若带有表单负载，直接创建公司
+  if (payload) {
+    try {
+      const response = await companyAPI.createCompany({
+        name: payload.name,
+        company_contraction: payload.company_contraction,
+        address: payload.address,
+        signature_name: payload.signature_name,
+        place: payload.place,
+        email_address: payload.email_address,
+        trade_names: payload.trade_names || [],
+        trade_marks: payload.trade_marks || [],
+        equipment: payload.equipment || [],
+        signature: payload.signature,
+        picture: payload.picture,
+      })
+      if (response.success) {
+        await loadCompanies()
+        const created = response.data
+        formData.company_id = created.id
+        formData.company_name = created.name
+        formData.company_address = created.address || ''
+        ElMessage.success(`已新增并选择公司: ${created.name}`)
+      }
+    } catch (e: any) {
+      ElMessage.error(e?.message || '创建公司失败')
+    }
+  }
 }
+
+// 旧 submitNewCompany 逻辑已移除（由 AppleStyleConfirm 的 confirm 直接创建公司）
 
 // 处理公司取消事件
 const handleCompanyCancel = () => {
@@ -2283,24 +2326,8 @@ const handleCompanyInfoFromExtraction = async (extractedCompanyName: string, ext
     const shouldAddCompany = await showAppleStyleCompanyConfirm(extractedCompanyName, extractedCompanyAddress, extractionResult.value)
     
     if (shouldAddCompany) {
-      // 用户选择新增公司
-      try {
-        const newCompany = await addNewCompany(extractedCompanyName, extractedCompanyAddress)
-        if (newCompany) {
-          // 新增成功，自动选择新公司
-          formData.company_id = newCompany.id
-          formData.company_name = newCompany.name
-          formData.company_address = newCompany.address
-          ElMessage.success(`已新增并选择公司: ${newCompany.name}`)
-        }
-      } catch (error) {
-        console.error('新增公司失败:', error)
-        ElMessage.error('新增公司失败，请手动处理')
-        // 新增失败，不填充公司信息
-        formData.company_name = ''
-        formData.company_address = ''
-        formData.company_id = null
-      }
+      // 用户选择新增公司：打开完善信息弹窗，由 submitNewCompany 完成创建
+      await addNewCompany(extractedCompanyName, extractedCompanyAddress)
     } else {
       // 用户选择不新增，不填充公司信息
       ElMessage.info('已跳过公司信息，请手动选择或填写')
@@ -2311,60 +2338,12 @@ const handleCompanyInfoFromExtraction = async (extractedCompanyName: string, ext
   }
 }
 
-// 新增公司到数据库
+// 新增公司改为走完善信息对话框，由 submitNewCompany 执行真正创建
 const addNewCompany = async (name: string, address: string) => {
-  try {
-    console.log('🚀 开始创建公司:', { name, address })
-    
-    const response = await companyAPI.createCompany({
-      name: name,
-      address: address || '',
-      trade_names: [],
-      trade_marks: []
-    })
-    
-    console.log('📡 API响应:', response)
-    
-    // 检查响应结构 - 现在API直接返回业务数据
-    console.log('🔍 响应结构分析:', {
-      hasResponse: !!response,
-      success: response?.success,
-      message: response?.message,
-      data: response?.data
-    })
-    
-    if (response && response.success) {
-      // 新增成功后，重新加载公司列表
-      await loadCompanies()
-      console.log('✅ 公司创建成功:', response.data)
-      return response.data
-    } else {
-      // 处理业务逻辑错误
-      const errorMessage = response?.message || '新增公司失败'
-      console.error('❌ 业务逻辑错误:', errorMessage)
-      throw new Error(errorMessage)
-    }
-  } catch (error: any) {
-    console.error('❌ 新增公司API调用失败:', error)
-    console.error('错误详情:', {
-      message: error.message,
-      response: error.response,
-      status: error.response?.status,
-      data: error.response?.data
-    })
-    
-    // 尝试从错误响应中提取具体错误信息
-    let errorMessage = '新增公司失败'
-    if (error.response?.data?.error) {
-      errorMessage = error.response.data.error
-    } else if (error.response?.data?.message) {
-      errorMessage = error.response.data.message
-    } else if (error.message) {
-      errorMessage = error.message
-    }
-    
-    throw new Error(errorMessage)
-  }
+  pendingCompanyName.value = name
+  pendingCompanyAddress.value = address || ''
+  handleCompanyConfirm()
+  return null
 }
 
 const applyExtractionResult = async () => {

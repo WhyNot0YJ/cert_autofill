@@ -255,6 +255,18 @@
             placeholder="请输入公司地址" 
           />
         </el-form-item>
+
+        <el-form-item label="签名人名称" prop="signature_name">
+          <el-input v-model="companyForm.signature_name" placeholder="请输入签名人名称" />
+        </el-form-item>
+
+        <el-form-item label="公司位置" prop="place">
+          <el-input v-model="companyForm.place" placeholder="请输入公司位置" />
+        </el-form-item>
+
+        <el-form-item label="联系邮箱" prop="email_address">
+          <el-input v-model="companyForm.email_address" placeholder="请输入联系邮箱" />
+        </el-form-item>
         
         <el-form-item label="商标名称" prop="trade_names">
           <TradeNamesEditor v-model="companyForm.trade_names" />
@@ -583,9 +595,12 @@ const companyForm = reactive<CreateCompanyRequest & { signature?: File | string;
   name: '',
   company_contraction: '',
   address: '',
+  signature_name: '',
+  place: '',
+  email_address: '',
   trade_names: [],  // 改为数组
   trade_marks: [],
-  equipment: [{ no: '', name: '' }],  // 设备信息数组，默认有一个空项
+  equipment: [],  // 设备信息数组，可为空
   signature: undefined,
   picture: undefined
 })
@@ -602,11 +617,56 @@ const parsedEquipment = ref<Equipment[]>([])
 const companyFormRef = ref()
 
 // 表单验证规则
+const requireMessage = (field: string) => `${field}为必填项`
+
+const validateNonEmptyArray = (_: any, value: any, callback: any) => {
+  if (Array.isArray(value) && value.length > 0) return callback()
+  callback(new Error('至少填写一项'))
+}
+
+const validateEquipmentArray = (_: any, value: any, callback: any) => {
+  // 可为空；若非空则每项需包含编号与名称
+  if (!Array.isArray(value) || value.length === 0) return callback()
+  const invalid = value.some((e: any) => !e || !e.no || !e.name)
+  if (invalid) return callback(new Error('设备项需包含编号与名称'))
+  callback()
+}
+
+const validateString = (min: number, max: number) => ({ required: true, min, max, message: `长度应在${min}-${max}个字符之间`, trigger: 'blur' })
+
 const companyFormRules = {
   name: [
-    { required: true, message: '请输入公司名称', trigger: 'blur' },
-    { min: 2, max: 255, message: '公司名称长度应在2-255个字符之间', trigger: 'blur' }
-  ]
+    { required: true, message: requireMessage('公司名称'), trigger: 'blur' },
+    validateString(2, 255)
+  ],
+  company_contraction: [
+    { required: true, message: requireMessage('公司简称'), trigger: 'blur' },
+    validateString(1, 100)
+  ],
+  address: [
+    { required: true, message: requireMessage('公司地址'), trigger: 'blur' }
+  ],
+  signature_name: [
+    { required: true, message: requireMessage('签名人名称'), trigger: 'blur' },
+    validateString(1, 255)
+  ],
+  place: [
+    { required: true, message: requireMessage('公司位置'), trigger: 'blur' },
+    validateString(1, 255)
+  ],
+  email_address: [
+    { required: true, message: requireMessage('联系邮箱'), trigger: 'blur' },
+    { type: 'email', message: '邮箱格式不正确', trigger: ['blur', 'change'] }
+  ],
+  trade_names: [
+    { validator: validateNonEmptyArray, trigger: 'change' }
+  ],
+  trade_marks: [
+    { validator: validateNonEmptyArray, trigger: 'change' }
+  ],
+  equipment: [
+    { validator: validateEquipmentArray, trigger: 'change' }
+  ],
 }
 
 // 搜索防抖
@@ -690,6 +750,9 @@ const handleEdit = (company: Company) => {
     name: company.name,
     company_contraction: company.company_contraction || '',
     address: company.address || '',
+    signature_name: company.signature_name || '',
+    place: company.place || '',
+    email_address: company.email_address || '',
     trade_names: company.trade_names || [],  // 改为数组
     trade_marks: company.trade_marks || [],
     equipment: company.equipment || [],  // 设备信息
@@ -826,6 +889,9 @@ const handleSubmit = async () => {
         name: companyForm.name,
         company_contraction: companyForm.company_contraction,
         address: companyForm.address,
+        signature_name: companyForm.signature_name,
+        place: companyForm.place,
+        email_address: companyForm.email_address,
         trade_names: companyForm.trade_names,
         trade_marks: companyForm.trade_marks,
         equipment: companyForm.equipment
@@ -841,8 +907,20 @@ const handleSubmit = async () => {
         loadCompanies()
       }
     } else {
-      // 创建公司
-      const response = await companyAPI.createCompany(companyForm)
+      // 创建公司（确保所有必填字段已在表单中）
+      const response = await companyAPI.createCompany({
+        name: companyForm.name,
+        company_contraction: companyForm.company_contraction,
+        address: companyForm.address,
+        signature_name: companyForm.signature_name,
+        place: companyForm.place,
+        email_address: companyForm.email_address,
+        signature: companyForm.signature,
+        picture: companyForm.picture,
+        trade_names: companyForm.trade_names,
+        trade_marks: companyForm.trade_marks,
+        equipment: companyForm.equipment,
+      })
       if (response.success) {
         ElMessage.success('创建成功')
         showCreateDialog.value = false
@@ -862,9 +940,12 @@ const resetForm = () => {
     name: '',
     company_contraction: '',
     address: '',
+    signature_name: '',
+    place: '',
+    email_address: '',
     trade_names: [],  // 改为数组
     trade_marks: [],
-    equipment: [{ no: '', name: '' }],  // 设备信息，默认有一个空项
+    equipment: [],  // 设备信息可为空
     signature: undefined,
     picture: undefined
   })

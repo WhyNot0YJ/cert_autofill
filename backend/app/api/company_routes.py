@@ -156,6 +156,9 @@ def create_company():
             name=data['name'],
             company_contraction=data.get('company_contraction', ''),
             address=data.get('address', ''),
+            signature_name=data.get('signature_name', ''),
+            place=data.get('place', ''),
+            email_address=data.get('email_address', ''),
             trade_names=trade_names_json,
             trade_marks=trade_marks_json,
             equipment=equipment_json,
@@ -200,6 +203,12 @@ def update_company(company_id):
         
         if 'address' in data:
             company.address = data['address']
+        if 'signature_name' in data:
+            company.signature_name = data['signature_name']
+        if 'place' in data:
+            company.place = data['place']
+        if 'email_address' in data:
+            company.email_address = data['email_address']
         
         # 处理JSON字段
         try:

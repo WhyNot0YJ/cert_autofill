@@ -33,8 +33,8 @@ def ensure_backup(db_path: Path) -> Path:
     return backup_path
 
 
-def get_existing_columns(cur) -> dict:
-    cur.execute("PRAGMA table_info(form_data)")
+def get_existing_columns(cur, table: str) -> dict:
+    cur.execute(f"PRAGMA table_info({table})")
     rows = cur.fetchall()
     return {row[1]: row for row in rows}
 
@@ -79,7 +79,7 @@ def main():
     conn = sqlite3.connect(str(db_path))
     try:
         cur = conn.cursor()
-        existing = get_existing_columns(cur)
+        existing = get_existing_columns(cur, "form_data")
         print("现有列:", ", ".join(sorted(existing.keys())))
 
         added = []
@@ -106,6 +106,51 @@ def main():
     finally:
         conn.close()
         print("完成。")
+
+
+def ensure_company_columns():
+    """为 companies 表添加缺失的新列。"""
+    db_path = find_db_file()
+    print(f"目标数据库: {db_path}")
+    if not db_path.exists():
+        print("警告: 数据库文件不存在。请确认后再运行本脚本。")
+        return
+
+    ensure_backup(db_path)
+
+    conn = sqlite3.connect(str(db_path))
+    try:
+        cur = conn.cursor()
+        existing = get_existing_columns(cur, "companies")
+        print("companies 现有列:", ", ".join(sorted(existing.keys())))
+
+        required_company_columns = {
+            "signature_name": "TEXT",
+            "place": "TEXT",
+            "email_address": "TEXT",
+        }
+
+        added = []
+        for col, typ in required_company_columns.items():
+            if col not in existing:
+                sql = f"ALTER TABLE companies ADD COLUMN {col} {typ}"
+                print("执行:", sql)
+                cur.execute(sql)
+                added.append(col)
+
+        conn.commit()
+        if added:
+            print("companies 已新增列:", ", ".join(added))
+        else:
+            print("companies 未新增任何列；表结构已是最新。")
+    finally:
+        conn.close()
+
+
+if __name__ == "__main__":
+    # 兼容旧入口
+    main()
+    ensure_company_columns()
 
 
 if __name__ == "__main__":

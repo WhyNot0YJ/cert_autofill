@@ -1,7 +1,7 @@
 <template>
   <Teleport to="body">
     <Transition name="confirm-dialog">
-      <div v-if="visible" class="confirm-overlay" @click="handleOverlayClick">
+      <div v-if="visible" class="confirm-overlay">
         <div class="confirm-dialog" @click.stop>
           <!-- 头部 -->
           <div class="dialog-header">
@@ -49,6 +49,187 @@
             <div class="description">
               <strong>💡 提示：</strong>{{ description }}
             </div>
+
+          <!-- 在弹窗中直接完善公司信息（必填） -->
+          <div class="edit-form">
+            <div class="form-row">
+              <label>公司名称</label>
+              <input v-model="form.name" disabled />
+            </div>
+            <div class="form-row">
+              <label>公司地址</label>
+              <textarea v-model="form.address" rows="2" placeholder="请输入公司地址"></textarea>
+            </div>
+            <div class="form-row">
+              <label>公司简称</label>
+              <input v-model="form.company_contraction" placeholder="请输入公司简称" />
+            </div>
+            <div class="form-row">
+              <label>签名人名称</label>
+              <input v-model="form.signature_name" placeholder="请输入签名人名称" />
+            </div>
+            <div class="form-row">
+              <label>公司位置</label>
+              <input v-model="form.place" placeholder="请输入公司位置" />
+            </div>
+            <div class="form-row">
+              <label>联系邮箱</label>
+              <input v-model="form.email_address" placeholder="请输入联系邮箱" />
+            </div>
+            <div class="form-row">
+              <label>商标名称</label>
+              <textarea v-model="form.trade_names_text" rows="2" placeholder="以分号; 分隔（示例：名称1; 名称2）"></textarea>
+            </div>
+            <div class="form-row">
+              <label>商标图案</label>
+              <div class="flex-1">
+                <MarksEditor v-model="form.trade_marks" />
+              </div>
+            </div>
+            <div class="form-row">
+              <label>公司图片</label>
+              <div class="flex-1 upload-wrap">
+                <el-upload
+                  :auto-upload="false"
+                  :show-file-list="false"
+                  :on-change="handlePictureChange"
+                  accept="image/*"
+                >
+                  <el-button>选择图片</el-button>
+                </el-upload>
+                <div v-if="form.picture || previewPicture" class="image-preview">
+                  <el-image :src="previewPicture || getImageUrl(form.picture)" class="preview-image" fit="cover" />
+                  <el-button size="small" type="danger" @click="clearPicture">删除</el-button>
+                </div>
+              </div>
+            </div>
+            <div class="form-row">
+              <label>签名图片</label>
+              <div class="flex-1 upload-wrap">
+                <el-upload
+                  :auto-upload="false"
+                  :show-file-list="false"
+                  :on-change="handleSignatureChange"
+                  accept="image/*"
+                >
+                  <el-button>选择签名</el-button>
+                </el-upload>
+                <div v-if="form.signature || previewSignature" class="image-preview">
+                  <el-image :src="previewSignature || getImageUrl(form.signature)" class="preview-image" fit="cover" />
+                  <el-button size="small" type="danger" @click="clearSignature">删除</el-button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 设备信息（可选，结构与公司管理一致，支持添加/删除） -->
+            <el-divider content-position="left">
+              设备信息
+              <el-button 
+                type="primary" 
+                size="small" 
+                @click="addEquipment"
+                style="margin-left: 10px;"
+              >
+                添加设备
+              </el-button>
+              <el-button 
+                type="success" 
+                size="small" 
+                @click="showBatchAddDialog = true"
+                style="margin-left: 10px;"
+              >
+                批量添加
+              </el-button>
+            </el-divider>
+
+            <div 
+              v-for="(equipment, index) in form.equipment" 
+              :key="index" 
+              class="equipment-info-section"
+            >
+              <div class="equipment-header">
+                <h4>设备信息 {{ index + 1 }}</h4>
+                <el-button 
+                  type="danger" 
+                  size="small" 
+                  @click="removeEquipment(index)"
+                >
+                  删除
+                </el-button>
+              </div>
+
+              <el-row :gutter="20">
+                <el-col :span="24">
+                  <el-form-item :label="`设备编号`">
+                    <el-input 
+                      v-model="equipment.no" 
+                      placeholder="请输入设备编号，如：TST2017223"
+                    />
+                  </el-form-item>
+                </el-col>
+              </el-row>
+
+              <el-row :gutter="20">
+                <el-col :span="24">
+                  <el-form-item :label="`设备名称`">
+                    <el-input 
+                      v-model="equipment.name" 
+                      placeholder="请输入设备名称"
+                    />
+                  </el-form-item>
+                </el-col>
+              </el-row>
+            </div>
+          </div>
+          <!-- 批量添加设备对话框 -->
+          <el-dialog v-model="showBatchAddDialog" title="批量添加设备" width="600px">
+            <div class="batch-add-container">
+              <el-alert
+                title="使用说明"
+                type="info"
+                :closable="false"
+                style="margin-bottom: 20px;"
+              >
+                <template #default>
+                  <p>请按照以下格式输入设备信息，每行一个设备：</p>
+                  <p><strong>格式：</strong> no. 设备编号: 设备名称 或 no. 设备编号：设备名称</p>
+                  <p><strong>示例：</strong> no. FYGZT09007: High and low temperature damp heat test chamber</p>
+                  <p><strong>支持：</strong> 半角冒号(:) 和 全角冒号(：)</p>
+                </template>
+              </el-alert>
+
+              <el-form-item label="设备信息">
+                <el-input
+                  v-model="batchEquipmentText"
+                  type="textarea"
+                  :rows="10"
+                  placeholder="请输入设备信息，每行一个设备，格式：no. 设备编号: 设备名称 或 no. 设备编号：设备名称"
+                  style="width: 100%;"
+                />
+              </el-form-item>
+
+              <div v-if="parsedEquipment.length > 0" class="parsed-equipment">
+                <h4>解析结果预览：</h4>
+                <div class="equipment-preview">
+                  <div 
+                    v-for="(equipment, index) in parsedEquipment" 
+                    :key="index" 
+                    class="equipment-preview-item"
+                  >
+                    <el-tag type="success" size="small">{{ equipment.no }}</el-tag>
+                    <span>{{ equipment.name }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <template #footer>
+              <el-button @click="showBatchAddDialog = false">取消</el-button>
+              <el-button type="primary" @click="handleBatchAdd" :disabled="parsedEquipment.length === 0">
+                确认添加 {{ parsedEquipment.length }} 个设备
+              </el-button>
+            </template>
+          </el-dialog>
           </div>
           
           <!-- 按钮区域 -->
@@ -67,7 +248,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted } from 'vue'
+import { computed, onMounted, onUnmounted, reactive, watch, ref } from 'vue'
+import MarksEditor from './MarksEditor.vue'
+import { getServerBaseURL } from '../api'
+import { uploadAPI } from '../api/upload'
 
 interface Props {
   visible: boolean
@@ -82,7 +266,19 @@ interface Props {
 }
 
 interface Emits {
-  (e: 'confirm'): void
+  (e: 'confirm', payload: {
+    name: string
+    company_contraction: string
+    address: string
+    signature_name: string
+    place: string
+    email_address: string
+    trade_names: string[]
+    trade_marks?: string[]
+    signature?: string
+    picture?: string
+    equipment?: Array<{ no: string; name: string }>
+  }): void
   (e: 'cancel'): void
 }
 
@@ -95,6 +291,137 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const emit = defineEmits<Emits>()
+
+// 可编辑表单（在当前弹窗中完善公司信息）
+const form = reactive({
+  name: '',
+  company_contraction: '',
+  address: '',
+  signature_name: '',
+  place: '',
+  email_address: '',
+  trade_names_text: '',
+  trade_marks: [] as string[],
+  picture: '',
+  signature: ''
+})
+
+// 设备信息（可为空）
+const formAny: any = form
+if (!Array.isArray(formAny.equipment)) {
+  formAny.equipment = []
+}
+
+const addEquipment = () => {
+  if (!Array.isArray(formAny.equipment)) formAny.equipment = []
+  formAny.equipment.push({ no: '', name: '' })
+}
+
+const removeEquipment = (index: number) => {
+  if (Array.isArray(formAny.equipment) && index >= 0 && index < formAny.equipment.length) {
+    formAny.equipment.splice(index, 1)
+  }
+}
+
+// 批量添加设备
+const showBatchAddDialog = ref(false)
+const batchEquipmentText = ref<string>('')
+const parsedEquipment = ref<Array<{ no: string; name: string }>>([])
+
+const parseEquipmentText = (text: string): Array<{ no: string; name: string }> => {
+  const lines = text.split('\n').filter(line => line.trim())
+  const result: Array<{ no: string; name: string }> = []
+  for (const line of lines) {
+    const match = line.match(/no\.\s*([^:：]+)[:：]\s*(.+)/i)
+    if (match) {
+      const no = match[1].trim()
+      const name = match[2].trim()
+      if (no && name) result.push({ no, name })
+    }
+  }
+  return result
+}
+
+watch(batchEquipmentText, (newText) => {
+  if (newText && newText.trim()) parsedEquipment.value = parseEquipmentText(newText)
+  else parsedEquipment.value = []
+})
+
+const handleBatchAdd = () => {
+  if (!Array.isArray(formAny.equipment)) formAny.equipment = []
+  if (parsedEquipment.value.length > 0) {
+    formAny.equipment.push(...parsedEquipment.value)
+  }
+  showBatchAddDialog.value = false
+  batchEquipmentText.value = ''
+  parsedEquipment.value = []
+}
+
+// 预览/工具
+const previewPicture = ref<string>('')
+const previewSignature = ref<string>('')
+
+const getImageUrl = (path?: string) => {
+  if (!path) return ''
+  if (path.startsWith('http')) return path
+  const base = getServerBaseURL()
+  return path.startsWith('/') ? `${base}${path}` : `${base}/${path}`
+}
+
+const handlePictureChange = async (file: any) => {
+  try {
+    const res = await uploadAPI.uploadCompanyPicture(file.raw)
+    if (res.success) {
+      form.picture = res.data.url
+      previewPicture.value = res.data.url
+    } else {
+      alert(res.message || '公司图片上传失败')
+    }
+  } catch (e: any) {
+    alert(e?.message || '公司图片上传失败')
+  }
+}
+
+const handleSignatureChange = async (file: any) => {
+  try {
+    const res = await uploadAPI.uploadCompanySignature(file.raw)
+    if (res.success) {
+      form.signature = res.data.url
+      previewSignature.value = res.data.url
+    } else {
+      alert(res.message || '签名图片上传失败')
+    }
+  } catch (e: any) {
+    alert(e?.message || '签名图片上传失败')
+  }
+}
+
+const clearPicture = () => {
+  form.picture = ''
+  previewPicture.value = ''
+}
+
+const clearSignature = () => {
+  form.signature = ''
+  previewSignature.value = ''
+}
+
+// 初始填充：名称、地址来源于 props
+watch(
+  () => [props.companyName, props.companyAddress, props.additionalInfo],
+  () => {
+    form.name = props.companyName || ''
+    form.address = props.companyAddress || ''
+    try {
+      const info = props.additionalInfo || {}
+      if (Array.isArray(info.trade_names)) {
+        form.trade_names_text = info.trade_names.join('; ')
+      }
+      // 其余字段留空，由用户补齐
+    } catch {}
+  },
+  { immediate: true }
+)
 
 // 计算关键信息列表
 const keyInfo = computed(() => {
@@ -109,9 +436,36 @@ const keyInfo = computed(() => {
   return info
 })
 
-// 处理确认
+// 基础校验
+const isEmail = (val: string) => /.+@.+\..+/.test(val)
+
+// 处理确认：在当前弹窗中直接回传完善后的必填信息
 const handleConfirm = () => {
-  emit('confirm')
+  if (!form.name || !form.address || !form.company_contraction || !form.signature_name || !form.place || !form.email_address) {
+    alert('请完善公司名称、地址、简称、签名人名称、公司位置、联系邮箱等必填信息')
+    return
+  }
+  if (!isEmail(form.email_address)) {
+    alert('联系邮箱格式不正确')
+    return
+  }
+  const tradeNames = form.trade_names_text
+    ? form.trade_names_text.split(';').map(s => s.trim()).filter(Boolean)
+    : []
+  const tradeMarks = Array.isArray(form.trade_marks) ? form.trade_marks : []
+  emit('confirm', {
+    name: form.name,
+    company_contraction: form.company_contraction,
+    address: form.address,
+    signature_name: form.signature_name,
+    place: form.place,
+    email_address: form.email_address,
+    trade_names: tradeNames,
+    trade_marks: tradeMarks,
+    equipment: Array.isArray(formAny.equipment) ? formAny.equipment : [],
+    signature: form.signature || undefined,
+    picture: form.picture || undefined
+  })
 }
 
 // 处理取消
@@ -173,6 +527,9 @@ onUnmounted(() => {
   box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
   border: 1px solid rgba(255, 255, 255, 0.2);
   overflow: hidden;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
 }
 
 /* 头部样式 */
@@ -208,6 +565,7 @@ onUnmounted(() => {
 .dialog-content {
   padding: 24px;
   background: white;
+  overflow: auto;
 }
 
 /* 信息卡片样式 */
@@ -322,6 +680,37 @@ onUnmounted(() => {
   background: rgba(52, 152, 219, 0.1);
   border-radius: 12px;
   border-left: 4px solid #3498db;
+}
+
+/* 简易内嵌表单样式 */
+.edit-form {
+  margin-top: 12px;
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.form-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.form-row label {
+  width: 96px;
+  color: #333;
+  font-weight: 600;
+}
+
+.form-row input,
+.form-row textarea {
+  flex: 1;
+  padding: 8px 10px;
+  border: 1px solid #e4e7ed;
+  border-radius: 8px;
+  font-size: 14px;
 }
 
 /* 按钮区域样式 */
