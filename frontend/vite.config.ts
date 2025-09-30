@@ -13,7 +13,7 @@ export default defineConfig(({ command, mode }) => {
     : parseInt(env.FRONTEND_PORT_DEV || '80')
   
   const backendPort = mode === 'production'
-    ? parseInt(env.BACKEND_PORT_PROD || '5001')
+    ? parseInt(env.BACKEND_PORT_PROD || '5000')
     : parseInt(env.BACKEND_PORT_DEV || '5000')
   
   // 优先使用前端 .env 中的 VITE_ 变量作为后端地址与端口

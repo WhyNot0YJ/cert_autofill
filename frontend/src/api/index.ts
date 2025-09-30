@@ -8,14 +8,13 @@ const getBackendPort = (): string => {
     return import.meta.env.VITE_BACKEND_PORT;
   }
   
-  // 使用注入的全局变量
+  // 使用注入的全局变量（来自vite.config.ts）
   if (typeof __BACKEND_PORT__ !== 'undefined') {
     return __BACKEND_PORT__;
   }
   
-  // 默认端口 - 根据环境判断
-  const isProduction = import.meta.env.PROD;
-  return isProduction ? '5001' : '5000';
+  // 默认端口 - 统一使用5000端口（与环境变量配置一致）
+  return '5000';
 };
 
 // 获取后端基础URL

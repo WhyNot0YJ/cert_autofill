@@ -12,9 +12,17 @@ migrate = Migrate()
 login_manager = LoginManager()
 bcrypt = Bcrypt()
 
-def create_app(config_name='default'):
+def create_app(config_name=None):
     """应用工厂函数"""
     app = Flask(__name__)
+    
+    # 根据环境变量自动选择配置
+    if config_name is None:
+        env = os.environ.get('FLASK_ENV', 'development')
+        if env == 'production':
+            config_name = 'production'
+        else:
+            config_name = 'development'
     
     # 配置
     from .config import config
