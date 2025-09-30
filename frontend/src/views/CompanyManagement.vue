@@ -14,7 +14,7 @@
         <el-col :span="8">
           <el-input
             v-model="searchParams.search"
-            placeholder="搜索公司名称、简称或地址"
+            placeholder="搜索公司名称、简称、地址或国家"
             clearable
             @input="handleSearch"
             :prefix-icon="Search"
@@ -122,6 +122,14 @@
           prop="address" 
           label="公司地址" 
           min-width="250" 
+          show-overflow-tooltip 
+        />
+
+        <el-table-column 
+          v-if="getColumnVisibility('country')"
+          prop="country" 
+          label="国家/地区" 
+          min-width="120" 
           show-overflow-tooltip 
         />
         
@@ -254,6 +262,10 @@
             :rows="3" 
             placeholder="请输入公司地址" 
           />
+        </el-form-item>
+
+        <el-form-item label="国家/地区" prop="country">
+          <el-input v-model="companyForm.country" placeholder="请输入国家/地区" />
         </el-form-item>
 
         <el-form-item label="签名人名称" prop="signature_name">
@@ -545,6 +557,7 @@ const availableColumns = ref([
   { key: 'id', label: 'ID', visible: true },
   { key: 'name', label: '公司名称', visible: true },
   { key: 'address', label: '公司地址', visible: true },
+  { key: 'country', label: '国家/地区', visible: true },
   { key: 'trade_info', label: '商标名称/图案', visible: true },
   { key: 'equipment', label: '设备信息', visible: true },
   { key: 'image_info', label: '图片信息', visible: true },
@@ -598,6 +611,7 @@ const companyForm = reactive<CreateCompanyRequest & { signature?: File | string;
   signature_name: '',
   place: '',
   email_address: '',
+  country: '',
   trade_names: [],  // 改为数组
   trade_marks: [],
   equipment: [],  // 设备信息数组，可为空
@@ -657,6 +671,9 @@ const companyFormRules = {
   email_address: [
     { required: true, message: requireMessage('联系邮箱'), trigger: 'blur' },
     { type: 'email', message: '邮箱格式不正确', trigger: ['blur', 'change'] }
+  ],
+  country: [
+    { required: true, message: requireMessage('国家/地区'), trigger: 'blur' }
   ],
   trade_names: [
     { validator: validateNonEmptyArray, trigger: 'change' }
@@ -753,6 +770,7 @@ const handleEdit = (company: Company) => {
     signature_name: company.signature_name || '',
     place: company.place || '',
     email_address: company.email_address || '',
+    country: company.country || '',
     trade_names: company.trade_names || [],  // 改为数组
     trade_marks: company.trade_marks || [],
     equipment: company.equipment || [],  // 设备信息
@@ -892,6 +910,7 @@ const handleSubmit = async () => {
         signature_name: companyForm.signature_name,
         place: companyForm.place,
         email_address: companyForm.email_address,
+        country: companyForm.country,
         trade_names: companyForm.trade_names,
         trade_marks: companyForm.trade_marks,
         equipment: companyForm.equipment
@@ -915,6 +934,7 @@ const handleSubmit = async () => {
         signature_name: companyForm.signature_name,
         place: companyForm.place,
         email_address: companyForm.email_address,
+        country: companyForm.country,
         signature: companyForm.signature,
         picture: companyForm.picture,
         trade_names: companyForm.trade_names,
@@ -943,6 +963,7 @@ const resetForm = () => {
     signature_name: '',
     place: '',
     email_address: '',
+    country: '',
     trade_names: [],  // 改为数组
     trade_marks: [],
     equipment: [],  // 设备信息可为空

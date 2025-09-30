@@ -19,6 +19,7 @@ class Company(db.Model):
     signature_name = Column(String(255), nullable=True, comment='签名人名称')
     place = Column(String(255), nullable=True, comment='公司位置')
     email_address = Column(String(255), nullable=True, comment='联系邮箱')
+    country = Column(String(100), nullable=True, comment='国家/地区')
     signature = Column(String(500), nullable=True, comment='签名图片路径')
     picture = Column(String(500), nullable=True, comment='公司图片路径')
     trade_names = Column(Text, nullable=True, comment='商标名称数组(JSON格式)')
@@ -108,6 +109,7 @@ class Company(db.Model):
             'signature_name': self.signature_name,
             'place': self.place,
             'email_address': self.email_address,
+            'country': self.country,
             'signature': signature_url,
             'picture': picture_url,
             'trade_names': trade_names_list,  # 返回解析后的数组

@@ -35,7 +35,8 @@ def get_companies():
             query = query.filter(
                 Company.name.like(search_filter) | 
                 Company.company_contraction.like(search_filter) |
-                Company.address.like(search_filter)
+                Company.address.like(search_filter) |
+                Company.country.like(search_filter)
             )
         
         # 排序
@@ -152,13 +153,14 @@ def create_company():
             return jsonify({"error": str(e)}), 400
         
         # 创建公司记录
-        company = Company(
+            company = Company(
             name=data['name'],
             company_contraction=data.get('company_contraction', ''),
             address=data.get('address', ''),
             signature_name=data.get('signature_name', ''),
             place=data.get('place', ''),
             email_address=data.get('email_address', ''),
+                country=data.get('country', ''),
             trade_names=trade_names_json,
             trade_marks=trade_marks_json,
             equipment=equipment_json,
@@ -209,6 +211,8 @@ def update_company(company_id):
             company.place = data['place']
         if 'email_address' in data:
             company.email_address = data['email_address']
+        if 'country' in data:
+            company.country = data['country']
         
         # 处理JSON字段
         try:

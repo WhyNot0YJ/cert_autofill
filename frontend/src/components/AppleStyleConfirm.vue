@@ -73,6 +73,10 @@
               <input v-model="form.place" placeholder="请输入公司位置" />
             </div>
             <div class="form-row">
+              <label>国家/地区</label>
+              <input v-model="form.country" placeholder="请输入国家/地区" />
+            </div>
+            <div class="form-row">
               <label>联系邮箱</label>
               <input v-model="form.email_address" placeholder="请输入联系邮箱" />
             </div>
@@ -273,6 +277,7 @@ interface Emits {
     signature_name: string
     place: string
     email_address: string
+  country?: string
     trade_names: string[]
     trade_marks?: string[]
     signature?: string
@@ -300,6 +305,7 @@ const form = reactive({
   signature_name: '',
   place: '',
   email_address: '',
+  country: '',
   trade_names_text: '',
   trade_marks: [] as string[],
   picture: '',
@@ -442,7 +448,7 @@ const isEmail = (val: string) => /.+@.+\..+/.test(val)
 // 处理确认：在当前弹窗中直接回传完善后的必填信息
 const handleConfirm = () => {
   if (!form.name || !form.address || !form.company_contraction || !form.signature_name || !form.place || !form.email_address) {
-    alert('请完善公司名称、地址、简称、签名人名称、公司位置、联系邮箱等必填信息')
+    alert('请完善公司名称、地址、简称、签名人名称、公司位置、国家/地区、联系邮箱等必填信息')
     return
   }
   if (!isEmail(form.email_address)) {
@@ -459,6 +465,7 @@ const handleConfirm = () => {
     address: form.address,
     signature_name: form.signature_name,
     place: form.place,
+    country: form.country || '',
     email_address: form.email_address,
     trade_names: tradeNames,
     trade_marks: tradeMarks,

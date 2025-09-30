@@ -20,6 +20,7 @@ export interface Company {
   signature_name?: string
   place?: string
   email_address?: string
+  country?: string
   signature?: string
   picture?: string
   trade_names?: string[]
@@ -36,6 +37,7 @@ export interface CreateCompanyRequest {
   signature_name: string
   place: string
   email_address: string
+  country: string
   signature: File | string | undefined
   picture: File | string | undefined
   trade_names: string[]
@@ -50,6 +52,7 @@ export interface UpdateCompanyRequest {
   signature_name?: string
   place?: string
   email_address?: string
+  country?: string
   signature?: File | string
   picture?: File | string
   trade_names?: string[]
@@ -119,6 +122,7 @@ class CompanyAPI {
       signature_name: data.signature_name,
       place: data.place,
       email_address: data.email_address,
+      country: data.country,
       trade_names: data.trade_names,
       trade_marks: data.trade_marks,
       equipment: data.equipment ?? []
@@ -142,6 +146,7 @@ class CompanyAPI {
     if (data.signature_name !== undefined) requestData.signature_name = data.signature_name
     if (data.place !== undefined) requestData.place = data.place
     if (data.email_address !== undefined) requestData.email_address = data.email_address
+    if (data.country !== undefined) requestData.country = data.country
     if (data.trade_names !== undefined) requestData.trade_names = data.trade_names || []
     if (data.trade_marks !== undefined) requestData.trade_marks = data.trade_marks || []
     if (data.equipment !== undefined) requestData.equipment = data.equipment || []

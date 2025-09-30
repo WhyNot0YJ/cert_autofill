@@ -128,6 +128,7 @@ def ensure_company_columns():
             "signature_name": "TEXT",
             "place": "TEXT",
             "email_address": "TEXT",
+            "country": "TEXT",
         }
 
         added = []

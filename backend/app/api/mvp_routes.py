@@ -172,6 +172,7 @@ def _prepare_generation_data(form_data):
     signature_name = ''
     place = ''
     email_address = ''
+    country = ''
     if form_data.company_id:
         from ..models.company import Company
         company = Company.query.get(form_data.company_id)
@@ -182,6 +183,7 @@ def _prepare_generation_data(form_data):
             signature_name = c.get('signature_name', '') or ''
             place = c.get('place', '') or ''
             email_address = c.get('email_address', '') or ''
+            country = c.get('country', '') or ''
     
     return {
         # 基本信息字段
@@ -224,6 +226,7 @@ def _prepare_generation_data(form_data):
         "signature_name": signature_name,  # 公司签名人名称
         "place": place,  # 公司位置
         "email_address": email_address,  # 联系邮箱
+        "country": country,  # 国家/地区
         "trade_names": form_data.trade_names or '',
         "trade_marks": form_data.trade_marks or [],
         "vehicles": form_data.vehicles or [],
