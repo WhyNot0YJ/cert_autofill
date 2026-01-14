@@ -908,7 +908,11 @@ def download_generated_document(filename):
         
 @mvp_bp.route('/document-extract', methods=['POST'])
 def document_extract():
-    """文档信息提取"""
+    """文档信息提取（仅规则引擎）
+    
+    请求参数：
+    - file: 上传的文档文件
+    """
     try:
         # 检查是否有文件上传
         if 'file' not in request.files:
@@ -939,9 +943,10 @@ def document_extract():
             upload_result = FileUploadService.upload_document_file(file, temp_dir=True)
             temp_file_path = upload_result['file_path']
             
-            # 调用提取服务
+            # 调用提取服务，指定提取方式
             processed_path = temp_file_path
             extraction_result = document_extraction_service.extract_from_document(temp_file_path)
+            
             # 如果预处理生成了 .clean.docx，提取结束后尝试清理
             try:
                 if processed_path and processed_path.endswith('.docx'):
@@ -955,13 +960,15 @@ def document_extract():
             if extraction_result["success"]:
                 return jsonify({
                     "success": True,
-                    "message": "提取成功",
-                    "data": extraction_result["data"]
+                    "message": "使用RULES方式提取成功",
+                    "data": extraction_result["data"],
+                    "extraction_mode": extraction_result.get("mode", "rules")
                 })
             else:
                 return jsonify({
                     "success": False,
-                    "error": extraction_result.get("error", "提取失败")
+                    "error": extraction_result.get("error", "提取失败"),
+                    "extraction_mode": "rules"
                 }), 500
                 
         finally:
@@ -974,4 +981,4 @@ def document_extract():
         return jsonify({
             "success": False,
             "error": f"提取失败: {str(e)}"
-        }), 500 
+        }), 500

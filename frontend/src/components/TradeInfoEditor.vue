@@ -40,23 +40,16 @@
       <div class="editable-section">
         <div class="editable-header">
           <el-icon><Edit /></el-icon>
-          <span>手动编辑调整</span>
-          <el-tooltip content="可以在此处手动调整商标名称和图片，会覆盖公司关联的信息">
+          <span>识别信息</span>
+          <el-tooltip content="将覆盖公司关联信息">
             <el-icon class="help-icon"><QuestionFilled /></el-icon>
           </el-tooltip>
         </div>
         
         <!-- 编辑trade_names -->
         <div class="edit-group">
-          <label class="edit-label">商标名称（用分号+空格分隔）：</label>
-          <el-input
-            v-model="tradeNamesText"
-            type="textarea"
-            :rows="2"
-            placeholder="请输入商标名称，多个名称用分号(; )分隔"
-            @input="handleTradeNamesChange"
-          />
-          <div class="help-text">例如：主要商标; 次要商标; 备用商标</div>
+          <label class="edit-label">商标名称：</label>
+          <TradeNamesEditor v-model="localTradeNames" @update:modelValue="handleTradeNamesChange" />
         </div>
 
         <!-- 编辑trade_marks -->
@@ -89,10 +82,11 @@
 import { computed, ref, watch } from 'vue'
 import { InfoFilled, Edit, QuestionFilled, View, Picture } from '@element-plus/icons-vue'
 import MarksEditor from './MarksEditor.vue'
+import TradeNamesEditor from './TradeNamesEditor.vue'
 import TradeNamesMarksDisplay from './TradeNamesMarksDisplay.vue'
 
 interface Props {
-  tradeNamesText?: string  // 改为字符串格式（分号分隔）
+  tradeNamesText?: string  // 字符串格式（分号分隔）
   tradeMarks?: string[]
   readonlyCompanyData?: {
     trade_names?: string[]
@@ -101,7 +95,7 @@ interface Props {
 }
 
 interface Emits {
-  (e: 'update:tradeNamesText', value: string): void  // 改为字符串
+  (e: 'update:tradeNamesText', value: string): void
   (e: 'update:tradeMarks', value: string[]): void
   (e: 'update', data: { trade_names: string[], trade_marks: string[] }): void
 }
@@ -116,11 +110,21 @@ const emit = defineEmits<Emits>()
 
 // 本地编辑状态
 const localTradeMarks = ref<string[]>([...props.tradeMarks])
-const tradeNamesText = ref(props.tradeNamesText || '')
+const localTradeNames = ref<string[]>([])
+
+// 初始化本地商标名称数组
+const initializeLocalTradeNames = () => {
+  if (props.tradeNamesText && props.tradeNamesText.trim()) {
+    // 从分号分隔的字符串转换为数组
+    localTradeNames.value = props.tradeNamesText.split('; ').map(name => name.trim()).filter(name => name)
+  } else {
+    localTradeNames.value = []
+  }
+}
 
 // 监听props变化
-watch(() => props.tradeNamesText, (newValue) => {
-  tradeNamesText.value = newValue || ''
+watch(() => props.tradeNamesText, () => {
+  initializeLocalTradeNames()
 }, { immediate: true })
 
 watch(() => props.tradeMarks, (newValue) => {
@@ -137,9 +141,9 @@ const companyTradeNamesText = computed(() => {
 
 // 计算最终的trade_names（优先使用手动编辑的）
 const finalTradeNames = computed(() => {
-  if (tradeNamesText.value.trim()) {
-    // 手动编辑的数据（按 "; " 分割）
-    return tradeNamesText.value.split('; ').map(name => name.trim()).filter(name => name)
+  if (localTradeNames.value.length > 0) {
+    // 手动编辑的数据
+    return localTradeNames.value
   } else if (props.readonlyCompanyData?.trade_names && props.readonlyCompanyData.trade_names.length > 0) {
     // 公司关联的数据
     return props.readonlyCompanyData.trade_names
@@ -152,8 +156,13 @@ const finalTradeMarks = computed(() => {
   if (localTradeMarks.value.length > 0) {
     // 手动编辑的数据
     return localTradeMarks.value
-  } else if (props.readonlyCompanyData?.trade_marks && props.readonlyCompanyData.trade_marks.length > 0) {
-    // 公司关联的数据
+  }
+  // 优先使用识别结果（来自父组件的 v-model:trade-marks）
+  if (props.tradeMarks && props.tradeMarks.length > 0) {
+    return props.tradeMarks
+  }
+  // 其次回退到公司关联的数据
+  if (props.readonlyCompanyData?.trade_marks && props.readonlyCompanyData.trade_marks.length > 0) {
     return props.readonlyCompanyData.trade_marks
   }
   return []
@@ -165,8 +174,11 @@ const hasAnyData = computed(() => {
 })
 
 // 处理商标名称变化
-const handleTradeNamesChange = () => {
-  emit('update:tradeNamesText', tradeNamesText.value)
+const handleTradeNamesChange = (names: string[]) => {
+  localTradeNames.value = names
+  // 将数组转换为分号+空格分隔的字符串发送给父组件
+  const tradeNamesText = names.join('; ')
+  emit('update:tradeNamesText', tradeNamesText)
   emitUpdate()
 }
 
@@ -176,10 +188,10 @@ const handleTradeMarksChange = (marks: string[]) => {
   emitUpdate()
 }
 
-// 发送更新事件（现在只在手动操作时调用，不自动监听）
+// 发送更新事件
 const emitUpdate = () => {
   emit('update', {
-    trade_names: finalTradeNames.value,  // 这里还是数组格式，供内部处理使用
+    trade_names: finalTradeNames.value,
     trade_marks: finalTradeMarks.value
   })
 }

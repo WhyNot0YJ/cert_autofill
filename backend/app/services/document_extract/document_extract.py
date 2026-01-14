@@ -1,20 +1,9 @@
 import os
-import json
-import requests
-from typing import Dict, Any, Optional
-import logging
 import zipfile
 import platform
 import xml.etree.ElementTree as ET
-
-# =============== 新架构：预处理 + 策略（DIFY / 规则引擎） ===============
-from enum import Enum
-
-
-class ExtractionMode(str, Enum):
-    """提取模式：DIFY 或 规则引擎（正则）。"""
-    DIFY = "dify"
-    RULES = "rules"
+from typing import Dict, Any, Optional
+import logging
 
 
 class BasePreprocessor:
@@ -39,25 +28,15 @@ class BaseExtractionStrategy:
         raise NotImplementedError
 
 
-class RuleEngineExtractionStrategy(BaseExtractionStrategy):
-    """规则引擎（正则）提取策略 - 架构占位。
-
-    后续这里将实现：
-    - 针对常见模板的关键字段正则匹配
-    - 多语言/多模板的规则集合与优先级
-    - 命中置信度与冲突合并策略
-    目前保持占位，不改变现有功能。
-    """
-
-    def extract(self, file_path: str) -> Dict[str, Any]:
-        raise NotImplementedError("Rule-engine extraction is not implemented yet.")
+# 导入策略实现
+from .templates.ordinary_laminated_glass_windscreen_template import OrdinaryLaminatedGlassWindscreenTemplate
 
 logger = logging.getLogger(__name__)
 
 
 class DefaultPreprocessor(BasePreprocessor):
     """默认预处理器：
-    - 若为 .docx 文件：读取正文文本，过滤隐藏内容（w:vanish），输出到日志，并生成旁路 .txt 供排查；不修改原文件。
+    - 若为 .docx 文件：读取正文文本，过滤隐藏内容（w:vanish）与删除线内容（w:strike/w:dstrike），输出到日志，并生成旁路 .txt 供排查；不修改原文件。
     - 其它类型：直接返回。
     """
 
@@ -78,11 +57,11 @@ class DefaultPreprocessor(BasePreprocessor):
 
             if ext == '.docx' and os.path.isfile(file_path):
                 print(f"[Preprocess] Enter DOCX preprocessing: {file_path}", flush=True)
-                # 1) 抽取可见文本（过滤 w:vanish），仅用于日志
+                # 1) 抽取可见文本（过滤 w:vanish 与 w:strike/w:dstrike），仅用于日志
                 text = self._extract_docx_text_without_hidden(file_path)
-                print(f"[Preprocess] Extracted DOCX text (hidden filtered), length={len(text)}", flush=True)
+                print(f"[Preprocess] Extracted DOCX text (hidden/strikethrough filtered), length={len(text)}", flush=True)
                 print("[Preprocess] Text Content BEGIN\n" + text + "\n[Preprocess] Text Content END", flush=True)
-                # 2) 生成去除隐藏内容后的临时 docx，供下游提取使用
+                # 2) 生成去除隐藏与删除线内容后的临时 docx，供下游提取使用
                 cleaned_path = self._create_clean_docx_without_hidden(file_path)
                 if cleaned_path:
                     print(f"[Preprocess] Cleaned DOCX generated: {cleaned_path}", flush=True)
@@ -96,7 +75,7 @@ class DefaultPreprocessor(BasePreprocessor):
         return file_path
 
     def _extract_docx_text_without_hidden(self, file_path: str) -> str:
-        # 直接解析 docx (zip) 的 word/document.xml，过滤带 w:vanish 的 run
+        # 直接解析 docx (zip) 的 word/document.xml，过滤带 w:vanish 与 w:strike/w:dstrike 的 run
         ns = {
             'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'
         }
@@ -110,10 +89,17 @@ class DefaultPreprocessor(BasePreprocessor):
             for p in root.findall('.//w:p', ns):
                 parts: list[str] = []
                 for r in p.findall('w:r', ns):
-                    # 检查隐藏属性 w:rPr/w:vanish
+                    # 检查隐藏属性 w:rPr/w:vanish 与删除线 w:strike/w:dstrike
                     rpr = r.find('w:rPr', ns)
-                    if rpr is not None and rpr.find('w:vanish', ns) is not None:
-                        continue  # 跳过隐藏文字
+                    def _is_true(el: Optional[ET.Element]) -> bool:
+                        if el is None:
+                            return False
+                        val = el.get(f"{{{ns['w']}}}val")
+                        return val is None or str(val).lower() not in ('false', '0')
+
+                    if rpr is not None:
+                        if (rpr.find('w:vanish', ns) is not None) or _is_true(rpr.find('w:strike', ns)) or _is_true(rpr.find('w:dstrike', ns)):
+                            continue  # 跳过隐藏或带删除线文字
                     # 收集 run 中的所有 w:t 文本
                     for t in r.findall('w:t', ns):
                         parts.append(t.text or '')
@@ -128,7 +114,7 @@ class DefaultPreprocessor(BasePreprocessor):
             return ''
 
     def _create_clean_docx_without_hidden(self, file_path: str) -> str:
-        """返回一个新的 .docx 路径：其中隐藏 run (w:vanish) 已被移除。"""
+        """返回一个新的 .docx 路径：其中隐藏 (w:vanish) 与删除线 (w:strike/w:dstrike) 的 run 已被移除。"""
         ns = {
             'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'
         }
@@ -139,13 +125,19 @@ class DefaultPreprocessor(BasePreprocessor):
                     tree = ET.parse(f)
                 root = tree.getroot()
 
-                # 删除带 vanish 的 run
+                # 删除带 vanish 或 strike 的 run
                 for p in root.findall('.//w:p', ns):
                     runs = list(p.findall('w:r', ns))
                     for r in runs:
                         rpr = r.find('w:rPr', ns)
-                        if rpr is not None and rpr.find('w:vanish', ns) is not None:
-                            p.remove(r)
+                        if rpr is not None:
+                            def _is_true(el: Optional[ET.Element]) -> bool:
+                                if el is None:
+                                    return False
+                                val = el.get(f"{{{ns['w']}}}val")
+                                return val is None or str(val).lower() not in ('false', '0')
+                            if (rpr.find('w:vanish', ns) is not None) or _is_true(rpr.find('w:strike', ns)) or _is_true(rpr.find('w:dstrike', ns)):
+                                p.remove(r)
 
                 # 写入临时文件
                 dir_name = os.path.dirname(file_path)
@@ -215,42 +207,44 @@ class DefaultPreprocessor(BasePreprocessor):
             return ''
 
 class DocumentExtractionService:
-    """文档信息提取服务
+    """文档信息提取服务（仅规则引擎）"""
 
-    - 新增：预处理器 + 策略模式（DIFY / 规则）
-    - 默认行为保持与原来一致：仍使用 DIFY 进行提取
-    """
-
-    def __init__(self, mode: ExtractionMode = ExtractionMode.DIFY, preprocessor: Optional[BasePreprocessor] = None):
+    def __init__(self, preprocessor: Optional[BasePreprocessor] = None):
         # 预处理器
         self.preprocessor = preprocessor or DefaultPreprocessor()
+        # 固定策略：普通层压玻璃挡风玻璃模板
+        self._strategy = OrdinaryLaminatedGlassWindscreenTemplate()
 
-        # 策略选择（默认 DIFY 保持原功能）
-        self.mode = mode
-        self.strategy: BaseExtractionStrategy
-        if self.mode == ExtractionMode.RULES:
-            # 规则引擎策略（当前未实现，后续填充）
-            self.strategy = RuleEngineExtractionStrategy()
-        else:
-            # DIFY 策略使用现有实现
-            self.strategy = _DifyExtractionStrategy()
+    # 兼容旧接口保留，但内部仅返回规则引擎
+    def _get_strategy(self) -> BaseExtractionStrategy:
+        return self._strategy
 
     def extract_from_document(self, file_path: str) -> Dict[str, Any]:
-        """从单个文档中提取结构化信息（包含预处理与策略调用）。"""
+        """从单个文档中提取结构化信息（包含预处理与策略调用）。
+        
+        Args:
+            file_path: 文档文件路径
+            mode: 提取模式，如果为None则使用默认模式
+            
+        Returns:
+            包含提取结果的字典
+        """
         try:
             # 1) 统一预处理
             processed_path = self.preprocessor.preprocess(file_path)
 
-            # 2) 调用策略提取
-            response = self.strategy.extract(processed_path)
+            # 2) 获取策略并调用提取（仅规则引擎）
+            strategy = self._get_strategy()
+            response = strategy.extract(processed_path)
 
-            # 3) 解析响应（保持与旧版相同的下游接口）
-            extracted_data = self._parse_dify_response(response)
+            # 3) 解析响应
+            extracted_data = self._parse_response(response)
 
             return {
                 "success": True,
                 "data": extracted_data,
-                "raw_response": response
+                "raw_response": response,
+                "mode": "rules"
             }
 
         except Exception as e:
@@ -261,18 +255,18 @@ class DocumentExtractionService:
                 "data": {}
             }
     
-    # 兼容旧接口的解析函数（沿用原逻辑）
-    def _parse_dify_response(self, response: Dict[str, Any]) -> Dict[str, Any]:
+    # 解析函数
+    def _parse_response(self, response: Dict[str, Any]) -> Dict[str, Any]:
         try:
             return response['result']
         except Exception as e:
-            logger.error(f"解析Dify响应失败: {str(e)}")
+            logger.error(f"解析响应失败: {str(e)}")
             return self._get_default_structure()
 
     def _get_default_structure(self) -> Dict[str, Any]:
         return {
             "approval_no": "",
-            "info_folder_no": "",
+            "information_folder_no": "",
             "safety_class": "",
             "pane_desc": "",
             "trade_names": "",
@@ -287,101 +281,27 @@ class DocumentExtractionService:
             "coating_type": "",
             "coating_thick": "",
             "material_nature": "",
-            "glass_color_choice": "",
+            "glass_color_choice": "colourless",
             "coating_color": "",
             "interlayer_total": False,
             "interlayer_partial": False,
             "interlayer_colourless": False,
-            "conductors_choice": [],
-            "opaque_obscure_choice": [],
+            "conductors_choice": "no",
+            "opaque_obscure_choice": "no",
             "remarks": "",
             "vehicles": []
         }
 
-    # =============== DIFY 策略实现（封装原有逻辑，保持行为不变） ===============
+    def extract_with_rules(self, file_path: str) -> Dict[str, Any]:
+        """使用规则引擎模式提取文档"""
+        return self.extract_from_document(file_path)
 
-
-class _DifyExtractionStrategy(BaseExtractionStrategy):
-    def __init__(self):
-        self.api_key = os.environ.get('DIFY_API_KEY', 'app-aOHstplRYJhO3uadmVwKnf8E')
-        self.api_base = os.environ.get('DIFY_API_BASE', 'https://api.dify.ai/v1')
-
-    def extract(self, file_path: str) -> Dict[str, Any]:
-        if not self.api_key:
-            raise Exception("Dify API密钥未配置")
-        # 1) 上传文件以获取 file_id
-        file_id = self._upload_file_to_dify(file_path)
-        if not file_id:
-            raise Exception("文件上传到Dify失败，未获取到file_id")
-
-        # 2) 调用工作流运行接口（JSON请求）
-        url = f"{self.api_base}/workflows/run"
-        headers = {
-            'Authorization': f'Bearer {self.api_key}',
-            'Content-Type': 'application/json'
-        }
-        payload = {
-            "inputs": {
-                "file": {
-                    "type": "document",
-                    "transfer_method": "local_file",
-                    "upload_file_id": file_id
-                }
-            },
-            "response_mode": "blocking",
-            "user": "web-user"
-        }
-
-        resp = requests.post(url, headers=headers, data=json.dumps(payload), timeout=120)
-        if resp.status_code != 200:
-            logger.error(f"Dify 工作流调用失败({resp.status_code})，payload={payload}，响应={resp.text}")
-            raise Exception(f"Dify 工作流调用失败: {resp.status_code} - {resp.text}")
-        data = resp.json()
-
-        # 规范化返回，确保下游解析时含有 'result'
-        if isinstance(data, dict):
-            if 'data' in data and isinstance(data['data'], dict):
-                outputs = data['data'].get('outputs')
-                if isinstance(outputs, dict) and 'result' in outputs:
-                    return { 'result': outputs['result'] }
-                if isinstance(outputs, dict):
-                    return { 'result': outputs }
-            if 'result' in data:
-                return { 'result': data['result'] }
-
-        # 未命中已知结构
-        raise Exception("Dify 工作流返回结构不包含期望的 result 字段")
-
-    def _upload_file_to_dify(self, file_path: str) -> str:
-        url = f"{self.api_base}/files/upload"
-        headers = { 'Authorization': f'Bearer {self.api_key}' }
-        filename = os.path.basename(file_path)
-        ext = os.path.splitext(filename)[1].lower()
-        mime = 'application/octet-stream'
-        if ext == '.pdf':
-            mime = 'application/pdf'
-        elif ext == '.docx':
-            mime = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-        elif ext == '.doc':
-            mime = 'application/msword'
-
-        with open(file_path, 'rb') as f:
-            files = { 'file': (filename, f, mime) }
-            data = { 'type': 'document', 'user': 'web-user' }
-            resp = requests.post(url, headers=headers, files=files, data=data, timeout=120)
-        if resp.status_code not in (200, 201):
-            raise Exception(f"Dify 文件上传失败: {resp.status_code} - {resp.text}")
-        body = resp.json()
-        if isinstance(body, dict):
-            if 'data' in body and isinstance(body['data'], dict) and 'id' in body['data']:
-                return body['data']['id']
-            if 'id' in body:
-                return body['id']
-        raise Exception("Dify 文件上传响应中未找到 file_id")
-    
-    # 解析与默认结构由外层服务提供
+    # =============== 策略实现已移至独立文件 ===============
         
 
-# 创建全局实例
+# 创建全局服务实例（单例）
 document_extraction_service = DocumentExtractionService()
+
+# 为了向后兼容，创建别名（指向同一个实例）
+rule_engine_service = document_extraction_service
 

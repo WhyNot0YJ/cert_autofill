@@ -97,7 +97,7 @@ export interface FileUploadResponse {
 }
 
 // 提取结果
-export interface AIExtractionResult {
+export interface extractionResult {
   enterprise_info: {
     name: string
     english_name?: string

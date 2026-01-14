@@ -21,15 +21,6 @@ export type {
   ApplicationListResponse
 } from './application'
 
-export type {
-  MVPFormData,
-  DocumentUploadRequest,
-  DocumentUploadResponse,
-  AIExtractionRequest,
-  AIExtractionResponse,
-  FormDataSaveRequest,
-  FormDataResponse
-} from './mvp'
 
 
 
@@ -48,7 +39,7 @@ export type {
   PaginationInfo,
   ListResponse,
   FileUploadResponse,
-  AIExtractionResult,
+  extractionResult,
   DocumentGenerationRequest,
   DocumentGenerationResponse,
   SessionInfo

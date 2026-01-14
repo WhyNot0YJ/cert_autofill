@@ -41,6 +41,8 @@
             <div class="upload-section">
               <div class="upload-card">
                 <h3>申请书文件</h3>
+                
+                
                 <el-upload
                   ref="applicationUpload"
                   :auto-upload="false"
@@ -445,7 +447,7 @@
                       <el-checkbox-group v-model="formData.glass_color_choice">
                         <el-checkbox label="colourless">colourless</el-checkbox>
                         <el-checkbox label="tinted">tinted</el-checkbox>
-                        
+
                       </el-checkbox-group>
                     </el-form-item>
                   </el-col>
@@ -507,7 +509,7 @@
                       <span style="margin-right: 30px;">/</span>
                       <el-checkbox v-model="formData.interlayer_partial">partial</el-checkbox>
                       <span style="margin-right: 30px;">&#41;</span>
-                      <el-checkbox v-model="formData.interlayer_tinted">tinted</el-checkbox>
+                      <el-checkbox v-model="interlayerTintedComputed" disabled>tinted</el-checkbox>
                       <span style="margin-right: 30px;">/</span>
                       <el-checkbox v-model="formData.interlayer_colourless">colourless</el-checkbox>
                     </el-form-item>
@@ -1020,6 +1022,7 @@ const reportFiles = ref<any[]>([])
 // 文档提取相关变量
 const extracting = ref(false)
 const extractionResult = ref<any>(null)
+// 仅规则引擎提取
 
 // 表单相关
 const formRef = ref()
@@ -1073,7 +1076,6 @@ const formData = reactive<{[key: string]: any}>({
   // 夹层相关选择
   interlayer_total: false,               // 总夹层
   interlayer_partial: false,             // 部分夹层
-  interlayer_tinted: false,              // 有色夹层
   interlayer_colourless: false,          // 无色夹层
   
   // 选择项数组 - 默认全选
@@ -1411,6 +1413,11 @@ const docTypeDisplayName = computed(() => {
   return `${baseName} ${selectedFormat.value === 'pdf' ? 'PDF' : 'Word'}`
 })
 
+// 计算属性：当 interlayer_total 或 interlayer_partial 为 true 时，interlayer_tinted 显示为勾选
+const interlayerTintedComputed = computed(() => {
+  return formData.interlayer_total || formData.interlayer_partial
+})
+
 
 // 方法
 const goToStep = (step: number) => {
@@ -1455,7 +1462,7 @@ const uploadAndExtract = async (file: any) => {
   
   try {
     // 直接调用提取API，后端会自动处理文件上传和解析
-    const response = await mvpAPI.aiExtract(file.raw)
+    const response = await mvpAPI.documentExtraction(file.raw)
     
     if (response.success) {
       // 直接获取提取结果
@@ -1482,7 +1489,7 @@ const uploadAndExtract = async (file: any) => {
   }
 }
 
-// 注意：aiExtract 函数已被移除，现在只使用自动触发的 uploadAndExtract 函数
+// 注意：documentExtraction 函数现在用于文档信息提取
 
 
 const addVehicleInfo = () => {
@@ -2169,8 +2176,8 @@ const handleCompanyChange = (companyId: number) => {
     formData.trade_names = selectedCompany.trade_names && selectedCompany.trade_names.length > 0 
       ? selectedCompany.trade_names.join('; ') + '; '
       : ''
-    
-    // 直接设置trade_marks数组
+
+    // 切换公司时，按需求总是覆盖为公司商标
     formData.trade_marks = selectedCompany.trade_marks || []
     
     // 同步到显示字段（保持向后兼容）
@@ -2368,8 +2375,7 @@ const applyExtractionResult = async () => {
     safety_class: data.safety_class || '',
     pane_desc: data.pane_desc || '',
     trade_names: data.trade_names || '',
-    // 注意：company_name 和 company_address 已在上面处理
-    
+    trade_marks: Array.isArray(data.trade_marks) ? data.trade_marks : [],
     // 技术规格
     glass_layers: String(data.glass_layers || ''),
     interlayer_layers: String(data.interlayer_layers || ''),
@@ -2404,6 +2410,7 @@ const applyExtractionResult = async () => {
 
   // 批量更新表单数据
   Object.assign(formData, fieldMappings)
+
 
   // 调试信息：显示映射后的表单数据
   console.log('📝 映射后的表单数据:', formData)
@@ -2695,6 +2702,17 @@ const skipToManualEdit = async () => {
   margin: 0 0 1rem 0;
   color: #2A3B8F;
   font-size: 1.1rem;
+}
+
+/* 提取方式选择器样式 */
+.extraction-mode-section {
+  margin-bottom: 1rem;
+}
+
+.mode-label {
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #2A3B8F;
 }
 
 .extraction-section,

@@ -27,14 +27,14 @@ class FormData(db.Model):
     coating_color = Column(String(50))                   # 涂层颜色
     
     # 新增字段 - 玻璃颜色和夹层相关
-    glass_color_choice = Column(String(20), default='tinted_struck')  # 玻璃颜色选择
+    glass_color_choice = Column(String(20), default='colourless')  # 玻璃颜色选择
     interlayer_total = Column(Boolean, default=False)                  # 总夹层
     interlayer_partial = Column(Boolean, default=False)               # 部分夹层
     interlayer_colourless = Column(Boolean, default=False)            # 无色夹层
     
     # 新增字段 - 导体和不透明相关
-    conductors_choice = Column(String(20), default='yes_struck')      # 导体选择
-    opaque_obscure_choice = Column(String(20), default='yes_struck')  # 不透明/模糊选择
+    conductors_choice = Column(String(20), default='no')      # 导体选择
+    opaque_obscure_choice = Column(String(20), default='no')  # 不透明/模糊选择
     
     remarks = Column(Text)                               # 备注
     

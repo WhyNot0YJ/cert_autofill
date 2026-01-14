@@ -37,10 +37,15 @@ class OtherGenerator(BaseGenerator):
         # 从 company 数据库搜索对应的 signature
         signature_image = self._get_company_signature(fields)
         
+        # 处理statement_address，去掉company_address最后一个逗号后的值
+        company_address = fields.get('company_address', '')
+        statement_address = self._process_statement_address(company_address)
+        print(statement_address)
         # 准备上下文数据
         context.update({
             'approval_no': approval_no,
-            'signature': signature_image
+            'signature': signature_image,
+            'statement_address': statement_address
         })
         return context
     
@@ -84,6 +89,29 @@ class OtherGenerator(BaseGenerator):
             context['signature'] = '[签名图片处理失败]'
             return context
     
+    def _process_statement_address(self, company_address: str) -> str:
+        """
+        处理statement_address，去掉最后一个逗号后的值
+        
+        Args:
+            company_address: 公司地址
+            
+        Returns:
+            str: 处理后的地址
+        """
+        if not company_address:
+            return ''
+        
+        # 找到最后一个逗号的位置
+        last_comma_index = company_address.rfind(',')
+        
+        if last_comma_index != -1:
+            # 去掉最后一个逗号及其后面的内容
+            return company_address[:last_comma_index].strip()
+        else:
+            # 如果没有逗号，返回原地址
+            return company_address.strip()
+    
     def create_sample_data(self) -> Dict[str, Any]:
         """
         创建OTHER文档示例数据
@@ -99,7 +127,8 @@ class OtherGenerator(BaseGenerator):
             'approval_date': today - timedelta(days=14),
             'test_date': today - timedelta(days=7),
             'report_date': today,
-            'signature': '[签名图片]'
+            'signature': '[签名图片]',
+            'statement_address': '北京市朝阳区汽车工业园区示例路123号'
         }
     
     def generate_docx(self, fields: Dict[str, Any], output_path: str) -> Dict[str, Any]:
