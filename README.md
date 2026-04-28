@@ -60,18 +60,32 @@
 ## 安装和运行
 
 ### 环境要求
+- Windows 10/11（后端强依赖 Windows Word COM 组件生成文档）
 - Node.js 16+
 - Python 3.8+
 - pip
+- Microsoft Word（用于 DOCX → PDF 转换）
 
-### 前端启动
+### 🚀 一键启动（推荐）
+在项目根目录双击 `start.bat` 即可自动安装依赖并启动前后端服务：
+```bat
+start.bat
+```
+停止服务请运行：
+```bat
+stop.bat
+```
+
+### 手动启动
+
+#### 前端启动
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
 
-### 后端启动
+#### 后端启动
 ```bash
 cd backend
 pip install -r requirements.txt
@@ -250,9 +264,9 @@ cert_autofill/
 │   ├── dist/               # 构建输出
 │   ├── package.json        # 项目配置
 │   └── vite.config.ts      # Vite配置
-├── nginx/                  # Nginx配置
-├── docker-compose.yml      # Docker编排文件
-├── Dockerfile              # Docker镜像文件
+├── nginx/                  # Nginx 反向代理配置（预留，未来原生部署可用）
+├── start.bat               # Windows 一键启动脚本
+├── stop.bat                # Windows 一键停止脚本
 └── README.md               # 项目说明
 ```
 
