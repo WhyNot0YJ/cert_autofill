@@ -216,7 +216,7 @@ class FileUploadService:
         temp_dir: bool = False
     ) -> Dict[str, Any]:
         """
-        上传文档文件（用于AI提取）
+        上传文档文件（用于规则引擎提取）
         
         Args:
             file: 上传的文件对象

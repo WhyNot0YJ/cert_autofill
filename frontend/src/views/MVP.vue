@@ -3449,46 +3449,6 @@ const skipToManualEdit = async () => {
   margin-bottom: 1.5rem;
 }
 
-.ai-extraction-section {
-  margin-top: 2rem;
-  padding: 1.5rem;
-  background: #f8f9fa;
-  border-radius: 12px;
-  border: 2px dashed #ddd;
-  transition: all 0.3s ease;
-}
-
-.ai-extraction-options {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-
-.ai-extraction-options .el-button {
-  flex: 1;
-}
-
-.ai-extraction-status {
-  text-align: center;
-  padding: 2rem;
-}
-
-.ai-extraction-status p {
-  margin-top: 1rem;
-  color: #606266;
-  font-size: 1rem;
-}
-
-.ai-extraction-result {
-  margin-top: 2rem;
-  padding: 1.5rem;
-  background: #f8f9fa;
-  border-radius: 12px;
-  border: 2px dashed #ddd;
-  transition: all 0.3s ease;
-}
-
 .result-title {
   display: flex;
   align-items: center;
@@ -3528,17 +3488,6 @@ const skipToManualEdit = async () => {
 
 .result-item span {
   color: #111827;
-}
-
-.ai-result-actions {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-top: 1rem;
-}
-
-.ai-result-actions .el-button {
-  flex: 1;
 }
 
 /* 单位后缀样式 */
