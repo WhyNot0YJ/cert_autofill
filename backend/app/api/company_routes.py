@@ -153,14 +153,14 @@ def create_company():
             return jsonify({"error": str(e)}), 400
         
         # 创建公司记录
-            company = Company(
+        company = Company(
             name=data['name'],
             company_contraction=data.get('company_contraction', ''),
             address=data.get('address', ''),
             signature_name=data.get('signature_name', ''),
             place=data.get('place', ''),
             email_address=data.get('email_address', ''),
-                country=data.get('country', ''),
+            country=data.get('country', ''),
             trade_names=trade_names_json,
             trade_marks=trade_marks_json,
             equipment=equipment_json,

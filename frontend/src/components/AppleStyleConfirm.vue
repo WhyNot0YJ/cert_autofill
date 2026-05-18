@@ -54,7 +54,7 @@
           <div class="edit-form">
             <div class="form-row">
               <label>公司名称</label>
-              <input v-model="form.name" disabled />
+              <input v-model="form.name" placeholder="请输入公司名称" />
             </div>
             <div class="form-row">
               <label>公司地址</label>
