@@ -117,47 +117,42 @@ class OrdinaryLaminatedGlassWindscreenTemplate(RuleEngineExtractionStrategy):
         return extracted_data
 
     def _extract_vehicles(self, text: str) -> list:
-        """提取车辆信息列表 - 整段匹配模式"""
+        """提取车辆信息列表 - 独立块和独立字段匹配模式"""
         vehicles = []
         
-        # 查找车辆信息段落 - 使用整段正则表达式匹配
-        vehicle_sections = re.findall(
-            r'Vehicle\s+manufacturer\s*:\s*([^:\n]+)'
-            r'.*?Type\s+of\s+vehicle\s*:\s*([^:\n]+)'
-            r'.*?Vehicle\s+category\s*:\s*([^:\n]+)'
-            r'.*?Developed\s+area\s*\(F\)[\s\S]*?([0-9.]+)\s*m[2²]'
-            r'.*?Height\s+of\s+segment\s*\(h\)[\s\S]*?([0-9.]+)\s*mm'
-            r'.*?Curvature\s*\(r\)[\s\S]*?([0-9.]+)\s*mm'
-            r'.*?Installation\s+angle\s*\([^)]+\)[\s\S]*?([0-9.]+)\s*°?'
-            r'.*?Seat-back\s+angle\s*\([^)]+\)[\s\S]*?([0-9.]+)\s*°?'
-            r'.*?R-point\s+coordinates[\s\S]*?A:\s*([-+±]?\s*[0-9.]+)\s*mm'
-            r'[\s\S]*?B:\s*([-+±]?\s*[0-9.]+)\s*mm'
-            r'[\s\S]*?C:\s*([-+±]?\s*[0-9.]+)\s*mm'
-            r'.*?Description\s+of\s+the\s+commercially\s+available\s+specific\s+device[^:]*:\s*([^\n:]*)',
-            text,
-            re.IGNORECASE | re.DOTALL
-        )
+        # 以 "Vehicle manufacturer" 为界，将文本拆分为多个独立的车辆区块
+        blocks = re.split(r'(?=Vehicle\s+manufacturer\s*:)', text, flags=re.IGNORECASE)
         
-        # 处理每个匹配到的车辆段落
-        for section in vehicle_sections:
-            # 所有字段都是必需的，直接访问即可
+        for block in blocks:
+            # 过滤掉非车辆内容的无效切片
+            if not block.strip() or not re.search(r'Vehicle\s+manufacturer\s*:', block, re.IGNORECASE):
+                continue
+                
+            # 在块内独立匹配各个属性（任意一项匹配不到为空格即可，互不影响）
+            def get_val(pattern):
+                match = re.search(pattern, block, re.IGNORECASE)
+                return match.group(1).strip() if match else ""
+                
             vehicle = {
-                'veh_mfr': section[0].strip(),
-                'veh_type': section[1].strip(),
-                'veh_cat': section[2].strip(),
-                'dev_area': section[3].strip(),
-                'seg_height': section[4].strip(),
-                'curv_radius': section[5].strip(),
-                'inst_angle': section[6].strip(),
-                'seat_angle': section[7].strip(),
+                'veh_mfr': get_val(r'Vehicle\s+manufacturer\s*:\s*([^\n]+)'),
+                'veh_type': get_val(r'Type\s+of\s+vehicle\s*:\s*([^\n]+)'),
+                'veh_cat': get_val(r'Vehicle\s+category\s*:\s*([^\n]+)'),
+                'dev_area': get_val(r'Developed\s+area\s*\(F\)[\s\S]*?([0-9.]+)\s*m[2²]'),
+                'seg_height': get_val(r'Height\s+of\s+segment\s*\(h\)[\s\S]*?([0-9.]+)\s*mm'),
+                'curv_radius': get_val(r'Curvature\s*\(r\)[\s\S]*?([0-9.]+)\s*mm'),
+                'inst_angle': get_val(r'Installation\s+angle\s*\([^)]+\)[\s\S]*?([0-9.]+)\s*°?'),
+                'seat_angle': get_val(r'Seat-back\s+angle\s*\([^)]+\)[\s\S]*?([0-9.]+)\s*°?'),
                 'rpoint_coords': {
-                    'A': section[8].strip(),
-                    'B': section[9].strip(),
-                    'C': section[10].strip()
+                    'A': get_val(r'R-point\s+coordinates[\s\S]*?A:\s*([-+±]?\s*[0-9.]+)\s*mm'),
+                    'B': get_val(r'R-point\s+coordinates[\s\S]*?B:\s*([-+±]?\s*[0-9.]+)\s*mm'),
+                    'C': get_val(r'R-point\s+coordinates[\s\S]*?C:\s*([-+±]?\s*[0-9.]+)\s*mm')
                 },
-                'dev_desc': section[11].strip()
+                'dev_desc': get_val(r'Description\s+of\s+the\s+commercially\s+available[^:]*:\s*([^\n]*)')
             }
-            vehicles.append(vehicle)
+            
+            # 只要制造商或车辆类型存在，就认为有效
+            if vehicle['veh_mfr'] or vehicle['veh_type']:
+                vehicles.append(vehicle)
         
         return vehicles
 
