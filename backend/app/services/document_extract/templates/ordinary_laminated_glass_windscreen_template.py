@@ -130,9 +130,9 @@ class OrdinaryLaminatedGlassWindscreenTemplate(RuleEngineExtractionStrategy):
             r'.*?Curvature\s*\(r\)[\s\S]*?([0-9.]+)\s*mm'
             r'.*?Installation\s+angle\s*\([^)]+\)[\s\S]*?([0-9.]+)\s*°?'
             r'.*?Seat-back\s+angle\s*\([^)]+\)[\s\S]*?([0-9.]+)\s*°?'
-            r'.*?R-point\s+coordinates[\s\S]*?A:\s*([0-9.]+)\s*mm'
-            r'[\s\S]*?B:\s*±?([0-9.]+)\s*mm'
-            r'[\s\S]*?C:\s*([0-9.]+)\s*mm'
+            r'.*?R-point\s+coordinates[\s\S]*?A:\s*([-+±]?\s*[0-9.]+)\s*mm'
+            r'[\s\S]*?B:\s*([-+±]?\s*[0-9.]+)\s*mm'
+            r'[\s\S]*?C:\s*([-+±]?\s*[0-9.]+)\s*mm'
             r'.*?Description\s+of\s+the\s+commercially\s+available\s+specific\s+device[^:]*:\s*([^\n:]+)',
             text,
             re.IGNORECASE | re.DOTALL
