@@ -125,7 +125,7 @@ class OrdinaryLaminatedGlassWindscreenTemplate(RuleEngineExtractionStrategy):
             r'Vehicle\s+manufacturer\s*:\s*([^:\n]+)'
             r'.*?Type\s+of\s+vehicle\s*:\s*([^:\n]+)'
             r'.*?Vehicle\s+category\s*:\s*([^:\n]+)'
-            r'.*?Developed\s+area\s*\(F\)[\s\S]*?([0-9.]+)\s*m2'
+            r'.*?Developed\s+area\s*\(F\)[\s\S]*?([0-9.]+)\s*m[2²]'
             r'.*?Height\s+of\s+segment\s*\(h\)[\s\S]*?([0-9.]+)\s*mm'
             r'.*?Curvature\s*\(r\)[\s\S]*?([0-9.]+)\s*mm'
             r'.*?Installation\s+angle\s*\([^)]+\)[\s\S]*?([0-9.]+)\s*°?'
@@ -133,7 +133,7 @@ class OrdinaryLaminatedGlassWindscreenTemplate(RuleEngineExtractionStrategy):
             r'.*?R-point\s+coordinates[\s\S]*?A:\s*([-+±]?\s*[0-9.]+)\s*mm'
             r'[\s\S]*?B:\s*([-+±]?\s*[0-9.]+)\s*mm'
             r'[\s\S]*?C:\s*([-+±]?\s*[0-9.]+)\s*mm'
-            r'.*?Description\s+of\s+the\s+commercially\s+available\s+specific\s+device[^:]*:\s*([^\n:]+)',
+            r'.*?Description\s+of\s+the\s+commercially\s+available\s+specific\s+device[^:]*:\s*([^\n:]*)',
             text,
             re.IGNORECASE | re.DOTALL
         )
